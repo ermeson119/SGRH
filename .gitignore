@@ -1,0 +1,33 @@
+# Ambiente virtual
+venv/
+.env
+
+# Arquivos do sistema
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+
+# Editor
+.vscode/
+../../Desktop/SGRH/.idea/
+
+# Arquivos de log
+*.log
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Pytest / cobertura de testes
+htmlcov/
+.tox/
+.nox/
+.coverage
+.cache
+.pytest_cache/
+
+# Arquivos criados pelo Flask
+instance/
