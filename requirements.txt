@@ -5,3 +5,5 @@ flask_wtf
 email-validator
 psycopg2-binary
 python-dotenv
+flask-migrate
+
