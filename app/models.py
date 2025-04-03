@@ -1,27 +1,34 @@
-from app import db
+from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
+
+db = SQLAlchemy()
+
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(100), nullable=False)
+
+class Pessoa(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=False)
+    profissao_id = db.Column(db.Integer, db.ForeignKey('profissao.id'), nullable=False)
+    profissao = db.relationship('Profissao', backref='pessoas')
 
 class Profissao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100))
+    nome = db.Column(db.String(100), nullable=False)
 
-class Pessoa(UserMixin, db.Model):
+class Folha(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100))
-    email = db.Column(db.String(120), unique=True)
-    senha = db.Column(db.String(60))
-    profissao_id = db.Column(db.Integer, db.ForeignKey('profissao.id'))
-    profissao = db.relationship('Profissao', backref=db.backref('pessoas'))
+    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False)
+    valor = db.Column(db.Float, nullable=False)
+    data = db.Column(db.Date, nullable=False)
+    pessoa = db.relationship('Pessoa', backref='folhas')
 
 class Capacitacao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100))
-    carga_horaria = db.Column(db.Integer)
-    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'))
-
-class FolhaPagamento(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    salario = db.Column(db.Float)
-    bonus = db.Column(db.Float)
-    desconto = db.Column(db.Float)
-    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'))
+    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False)
+    descricao = db.Column(db.String(200), nullable=False)
+    data = db.Column(db.Date, nullable=False)
+    pessoa = db.relationship('Pessoa', backref='capacitacoes')

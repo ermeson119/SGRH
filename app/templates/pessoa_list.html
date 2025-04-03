@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Lista de Pessoas{% endblock %}
+{% block content %}
+<h2 class="mb-4">Pessoas</h2>
+<a href="{{ url_for('main.pessoa_create') }}" class="btn btn-primary mb-3">Adicionar Pessoa</a>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for pessoa in pessoas %}
+            <tr>
+                <td>{{ pessoa.id }}</td>
+                <td>{{ pessoa.nome }}</td>
+                <td>{{ pessoa.email }}</td>
+                <td>
+                    <a href="{{ url_for('main.pessoa_edit', id=pessoa.id) }}" class="btn btn-warning btn-sm">Editar</a>
+                    <a href="{{ url_for('main.pessoa_delete', id=pessoa.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza?')">Excluir</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Lista de Profissões/Cargos{% endblock %}
+{% block content %}
+<h2 class="mb-4">Profissões/Cargos</h2>
+<a href="{{ url_for('main.profissao_create') }}" class="btn btn-primary mb-3">Adicionar Profissão</a>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for profissao in profissoes %}
+            <tr>
+                <td>{{ profissao.id }}</td>
+                <td>{{ profissao.nome }}</td>
+                <td>
+                    <a href="{{ url_for('main.profissao_edit', id=profissao.id) }}" class="btn btn-warning btn-sm">Editar</a>
+                    <a href="{{ url_for('main.profissao_delete', id=profissao.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza?')">Excluir</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
