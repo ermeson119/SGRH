@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from dotenv import load_dotenv
+from datetime import datetime
 import os
 
 # Carrega variáveis de ambiente do .env
@@ -42,5 +43,9 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+
+    @app.context_processor
+    def inject_now():
+        return {'now': datetime.now}
 
     return app
