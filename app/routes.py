@@ -3,6 +3,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from app.models import User, Pessoa, Profissao, Folha, Capacitacao
 from app.forms import LoginForm, PessoaForm, ProfissaoForm, FolhaForm, CapacitacaoForm, RegisterForm
+from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
 
 # Cria um Blueprint para as rotas
@@ -232,9 +233,22 @@ def capacitacao_delete(id):
 @bp.route('/relatorio/completo')
 @login_required
 def relatorio_completo():
-    pessoas = Pessoa.query.options(
+    page = request.args.get('page', 1, type=int)
+    busca = request.args.get('busca', '', type=str)
+    per_page = 2
+
+    query = Pessoa.query.options(
         db.joinedload(Pessoa.capacitacoes),
         db.joinedload(Pessoa.folhas),
         db.joinedload(Pessoa.profissao)
-    ).all()
-    return render_template('relatorio_completo.html', pessoas=pessoas)
+    )
+
+    if busca:
+        query = query.filter(Pessoa.nome.ilike(f'%{busca}%'))
+
+    pagination = query.order_by(Pessoa.nome).paginate(page=page, per_page=per_page)
+
+    return render_template('relatorio_completo.html',
+                           pessoas=pagination.items,
+                           pagination=pagination,
+                           busca=busca)

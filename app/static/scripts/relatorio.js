@@ -1,12 +1,18 @@
 document.addEventListener('DOMContentLoaded', function () {
     const input = document.getElementById('filtro');
-    input.addEventListener('input', function () {
-        const termo = input.value.toLowerCase();
-        const cards = document.querySelectorAll('.funcionario-card');
+    let timeout = null;
 
-        cards.forEach(function (card) {
-            const nome = card.querySelector('.nome').textContent.toLowerCase();
-            card.style.display = nome.includes(termo) ? '' : 'none';
-        });
+    input.addEventListener('input', function () {
+        clearTimeout(timeout);
+
+        timeout = setTimeout(function () {
+            const busca = input.value;
+            const url = new URL(window.location.href);
+
+            url.searchParams.set('busca', busca);
+            url.searchParams.delete('page');
+
+            window.location.href = url.toString();
+        }, 500);
     });
 });
