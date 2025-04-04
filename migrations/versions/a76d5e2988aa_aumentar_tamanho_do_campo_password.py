@@ -1,8 +1,8 @@
-"""criando tabelas
+"""aumentar tamanho do campo password
 
-Revision ID: 5c39decdf7b2
+Revision ID: a76d5e2988aa
 Revises: 
-Create Date: 2025-04-04 11:20:46.744037
+Create Date: 2025-04-04 11:31:40.111829
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '5c39decdf7b2'
+revision = 'a76d5e2988aa'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -26,7 +26,7 @@ def upgrade():
     op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('email', sa.String(length=100), nullable=False),
-    sa.Column('password', sa.String(length=100), nullable=False),
+    sa.Column('password', sa.String(length=255), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )

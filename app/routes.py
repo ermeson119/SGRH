@@ -228,3 +228,13 @@ def capacitacao_delete(id):
     db.session.commit()
     flash('Capacitação excluída com sucesso!', 'success')
     return redirect(url_for('main.capacitacao_list'))
+
+@bp.route('/relatorio/completo')
+@login_required
+def relatorio_completo():
+    pessoas = Pessoa.query.options(
+        db.joinedload(Pessoa.capacitacoes),
+        db.joinedload(Pessoa.folhas),
+        db.joinedload(Pessoa.profissao)
+    ).all()
+    return render_template('relatorio_completo.html', pessoas=pessoas)

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ folha.id if folha else 'Nova Folha de Pagamento' }}</h2>
+
+<form method="POST">
+    {{ form.hidden_tag() }}
+
+    <div class="mb-3">
+        {{ form.pessoa_id.label(class="form-label") }}
+        {{ form.pessoa_id(class="form-select") }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.valor.label(class="form-label") }}
+        {{ form.valor(class="form-control") }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.data.label(class="form-label") }}
+        {{ form.data(class="form-control", type="date") }}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a href="{{ url_for('main.folha_list') }}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}
