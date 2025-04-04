@@ -13,6 +13,9 @@ db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
 
+# ✅ IMPORTAÇÃO GLOBAL DAS MODELS (obrigatório para funcionar com Flask-Migrate)
+from app.models import User, Pessoa, Profissao, Folha, Capacitacao
+
 
 def create_app():
     app = Flask(__name__)
@@ -35,15 +38,9 @@ def create_app():
     from .routes import bp
     app.register_blueprint(bp)
 
-    # Importa modelos DEPOIS de inicializar o db para evitar import circular
-    with app.app_context():
-        from .models import User, Pessoa, Profissao, Folha, Capacitacao
-        db.create_all()  # Cria tabelas se não existirem
-
-    # Callback do Flask-Login deve estar dentro do contexto da aplicação
+    # Callback do Flask-Login
     @login_manager.user_loader
     def load_user(user_id):
-        with app.app_context():
-            return User.query.get(int(user_id))
+        return User.query.get(int(user_id))
 
     return app
