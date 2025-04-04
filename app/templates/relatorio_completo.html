@@ -2,48 +2,58 @@
 {% block content %}
 <h2>Relatório Completo dos Funcionários</h2>
 
-{% for pessoa in pessoas %}
-    <div class="card mb-4">
-        <div class="card-header">
-            <strong>{{ pessoa.nome }}</strong> — {{ pessoa.profissao.nome }}
-        </div>
-        <div class="card-body">
-            <p><strong>Email:</strong> {{ pessoa.email }}</p>
+<div class="mb-4">
+    <input type="text" id="filtro" class="form-control" placeholder="Buscar funcionário pelo nome...">
+</div>
 
-            <h5>Capacitações</h5>
-            {% if pessoa.capacitacoes %}
-                <ul>
-                    {% for c in pessoa.capacitacoes %}
-                        <li>{{ c.descricao }} — {{ c.data.strftime('%d/%m/%Y') }}</li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>Nenhuma capacitação registrada.</p>
-            {% endif %}
+<div id="lista-funcionarios">
+    {% for pessoa in pessoas %}
+        <div class="card mb-4 funcionario-card">
+            <div class="card-header">
+                <strong class="nome">{{ pessoa.nome }}</strong> — {{ pessoa.profissao.nome }}
+            </div>
+            <div class="card-body">
+                <p><strong>Email:</strong> {{ pessoa.email }}</p>
 
-            <h5>Folha de Pagamento</h5>
-            {% if pessoa.folhas %}
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Valor</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for folha in pessoa.folhas %}
-                            <tr>
-                                <td>{{ folha.data.strftime('%d/%m/%Y') }}</td>
-                                <td>R$ {{ folha.valor }}</td>
-                            </tr>
+                <h5>Capacitações</h5>
+                {% if pessoa.capacitacoes %}
+                    <ul>
+                        {% for c in pessoa.capacitacoes %}
+                            <li>{{ c.descricao }} — {{ c.data.strftime('%d/%m/%Y') }}</li>
                         {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p>Nenhuma folha registrada.</p>
-            {% endif %}
-        </div>
-    </div>
-{% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Nenhuma capacitação registrada.</p>
+                {% endif %}
 
+                <h5>Folha de Pagamento</h5>
+                {% if pessoa.folhas %}
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for folha in pessoa.folhas %}
+                                <tr>
+                                    <td>{{ folha.data.strftime('%d/%m/%Y') }}</td>
+                                    <td>R$ {{ folha.valor }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>Nenhuma folha registrada.</p>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="../static/scripts/relatorio.js"></script>
 {% endblock %}
