@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required, current_user
-from app import db
+from app import db, oauth
 from app.models import User, Pessoa, Profissao, Folha, Capacitacao
 from app.forms import LoginForm, PessoaForm, ProfissaoForm, FolhaForm, CapacitacaoForm, RegisterForm
 from sqlalchemy.orm import joinedload
@@ -14,12 +14,74 @@ bp = Blueprint('main', __name__)
 def index():
     return redirect(url_for('main.login'))
 
+@bp.route('/login/google')
+def google_login():
+    redirect_uri = url_for('main.google_callback', _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+
+@bp.route('/login/google/callback')
+def google_callback():
+    try:
+        token = oauth.google.authorize_access_token()
+        user_info = token.get('userinfo')
+        if not user_info:
+            flash('Falha ao obter informações do usuário.', 'error')
+            return redirect(url_for('main.login'))
+
+        email = user_info.get('email')
+        if not email:
+            flash('Email não fornecido pelo Google.', 'error')
+            return redirect(url_for('main.login'))
+
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            user = User(email=email, password='google-auth')
+            db.session.add(user)
+            db.session.commit()
+
+        login_user(user)
+        session['last_activity'] = datetime.utcnow().isoformat()
+        next_page = session.get('next') or url_for('main.pessoa_list')
+        session.pop('next', None)
+        return redirect(next_page)
+
+    except Exception as e:
+        flash('Erro ao autenticar com Google.', 'error')
+        return redirect(url_for('main.login'))
+
+# Rota de Login com Rastreamento de Link
+@bp.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.pessoa_list'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user and user.password != 'google-auth' and check_password_hash(user.password, form.password.data):
+            login_user(user)
+            next_page = session.get('next') or url_for('main.pessoa_list')
+            session.pop('next', None)
+            session['last_activity'] = datetime.utcnow().isoformat()
+            return redirect(next_page)
+        flash('Email ou senha inválidos', 'error')
+    if 'next' not in session and request.args.get('next'):
+        session['next'] = request.args.get('next')
+    return render_template('login.html', form=form)
+
+# Rota de Logout
+@bp.route('/logout')
+@login_required
+def logout():
+    session.clear()  # Limpa toda a sessão
+    logout_user()
+    return redirect(url_for('main.login'))
+
 # Rota de Cadastro de Usuário
 @bp.route('/registro', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('main.pessoa_list'))
-
     form = RegisterForm()
     if form.validate_on_submit():
         existing_user = User.query.filter_by(email=form.email.data).first()
@@ -33,36 +95,6 @@ def register():
             flash('Usuário cadastrado com sucesso! Faça login.', 'success')
             return redirect(url_for('main.login'))
     return render_template('registro.html', form=form)
-
-# Rota de Login com Rastreamento de Link
-@bp.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('main.pessoa_list'))
-
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user and check_password_hash(user.password, form.password.data):
-            login_user(user)
-            # Rastreamento de link: redireciona para a página anterior ou padrão
-            next_page = session.get('next') or url_for('main.pessoa_list')
-            session.pop('next', None)
-            session['last_activity'] = datetime.utcnow().isoformat()  # Armazena como string
-            return redirect(next_page)
-        flash('Email ou senha inválidos', 'error')
-    # Armazena a página anterior para redirecionamento após login
-    if 'next' not in session and request.args.get('next'):
-        session['next'] = request.args.get('next')
-    return render_template('login.html', form=form)
-
-# Rota de Logout
-@bp.route('/logout')
-@login_required
-def logout():
-    session.clear()  # Limpa toda a sessão
-    logout_user()
-    return redirect(url_for('main.login'))
 
 # --- CRUD Pessoa ---
 @bp.route('/pessoas', methods=['GET'])
