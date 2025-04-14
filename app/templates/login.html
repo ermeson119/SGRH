@@ -9,6 +9,13 @@
                 Sua sessão expirou. Faça login para continuar.
             </div>
         {% endif %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
         <form method="POST">
             {{ form.hidden_tag() }}
             <div class="mb-3">
@@ -31,6 +38,10 @@
             </div>
             <button type="submit" class="btn btn-primary w-100 mb-3">Entrar</button>
         </form>
+        <a href="{{ url_for('main.google_login') }}" class="btn btn-outline-secondary w-100 mb-3">
+            <img src="https://img.icons8.com/color/16/000000/google-logo.png" alt="Google Logo">
+            Entrar com Google
+        </a>
         <p class="text-center">
             Não tem uma conta?
             <a href="{{ url_for('main.register') }}">Cadastre-se aqui</a>

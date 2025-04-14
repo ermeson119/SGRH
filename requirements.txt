@@ -6,4 +6,6 @@ email-validator
 psycopg2-binary
 python-dotenv
 flask-migrate
+Authlib==1.3.2
+requests==2.31.0
 
