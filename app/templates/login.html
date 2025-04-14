@@ -4,22 +4,30 @@
 <div class="row justify-content-center">
     <div class="col-md-6">
         <h2 class="mb-4 text-center">Login</h2>
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-warning">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        {% if session.get('next') and not current_user.is_authenticated %}
+            <div class="alert alert-info">
+                Sua sessão expirou. Faça login para continuar.
+            </div>
+        {% endif %}
         <form method="POST">
             {{ form.hidden_tag() }}
             <div class="mb-3">
                 {{ form.email.label(class="form-label") }}
                 {{ form.email(class="form-control") }}
+                {% if form.email.errors %}
+                    {% for error in form.email.errors %}
+                        <small class="text-danger">{{ error }}</small>
+                    {% endfor %}
+                {% endif %}
             </div>
             <div class="mb-3">
                 {{ form.password.label(class="form-label") }}
                 {{ form.password(class="form-control") }}
+                {% if form.password.errors %}
+                    {% for error in form.password.errors %}
+                        <small class="text-danger">{{ error }}</small>
+                    {% endfor %}
+                {% endif %}
             </div>
             <button type="submit" class="btn btn-primary w-100 mb-3">Entrar</button>
         </form>

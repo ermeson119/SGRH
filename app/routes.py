@@ -5,10 +5,14 @@ from app.models import User, Pessoa, Profissao, Folha, Capacitacao
 from app.forms import LoginForm, PessoaForm, ProfissaoForm, FolhaForm, CapacitacaoForm, RegisterForm
 from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
+from datetime import datetime  # Adicionada a importação
 
 # Cria um Blueprint para as rotas
 bp = Blueprint('main', __name__)
 
+@bp.route('/')
+def index():
+    return redirect(url_for('main.login'))
 
 # Rota de Cadastro de Usuário
 @bp.route('/registro', methods=['GET', 'POST'])
@@ -42,8 +46,9 @@ def login():
         if user and check_password_hash(user.password, form.password.data):
             login_user(user)
             # Rastreamento de link: redireciona para a página anterior ou padrão
-            next_page = session.get('next', url_for('main.pessoa_list'))
+            next_page = session.get('next') or url_for('main.pessoa_list')
             session.pop('next', None)
+            session['last_activity'] = datetime.utcnow().isoformat()  # Armazena como string
             return redirect(next_page)
         flash('Email ou senha inválidos', 'error')
     # Armazena a página anterior para redirecionamento após login
@@ -55,6 +60,7 @@ def login():
 @bp.route('/logout')
 @login_required
 def logout():
+    session.clear()  # Limpa toda a sessão
     logout_user()
     return redirect(url_for('main.login'))
 
