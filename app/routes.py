@@ -3,7 +3,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from app import db, oauth
 from app.models import User, Pessoa, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Doenca
 from app.forms import (
-    LoginForm, RegisterForm, PessoaForm, ProfissaoForm, SetorForm, FolhaForm, 
+    LoginForm, RegisterForm, PessoaForm, ProfissaoForm, SetorForm, FolhaForm,
     CapacitacaoForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, DoencaForm
 )
 from sqlalchemy.orm import joinedload
@@ -13,9 +13,11 @@ from datetime import datetime
 # Cria um Blueprint para as rotas
 bp = Blueprint('main', __name__)
 
+
 @bp.route('/')
 def index():
     return redirect(url_for('main.login'))
+
 
 @bp.route('/login/google')
 def google_login():
@@ -45,7 +47,7 @@ def google_callback():
 
         login_user(user)
         session['last_activity'] = datetime.utcnow().isoformat()
-        next_page = session.get('next') or url_for('main.pessoa_list')
+        next_page = request.args.get('next') or session.get('next') or url_for('main.pessoa_list')
         session.pop('next', None)
         return redirect(next_page)
 
@@ -63,16 +65,16 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.password != 'google-auth' and check_password_hash(user.password, form.password.data):
             login_user(user)
-            next_page = session.get('next') or url_for('main.pessoa_list')
-            session.pop('next', None)
             session['last_activity'] = datetime.utcnow().isoformat()
+            next_page = request.args.get('next') or session.get('next') or url_for('main.pessoa_list')
+            session.pop('next', None)
             return redirect(next_page)
         flash('Email ou senha inválidos', 'error')
     if 'next' not in session and request.args.get('next'):
         session['next'] = request.args.get('next')
     return render_template('login.html', form=form)
 
-# Rota de Logout
+
 @bp.route('/logout')
 @login_required
 def logout():
@@ -80,7 +82,7 @@ def logout():
     logout_user()
     return redirect(url_for('main.login'))
 
-# Rota de Cadastro de Usuário
+
 @bp.route('/registro', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -99,12 +101,14 @@ def register():
             return redirect(url_for('main.login'))
     return render_template('registro.html', form=form)
 
+
 # --- CRUD Pessoa ---
 @bp.route('/pessoas', methods=['GET'])
 @login_required
 def pessoa_list():
     pessoas = Pessoa.query.all()
-    return render_template('pessoa_list.html', pessoas=pessoas)
+    return render_template('pessoas/pessoa_list.html', pessoas=pessoas)
+
 
 @bp.route('/pessoas/create', methods=['GET', 'POST'])
 @login_required
@@ -123,7 +127,8 @@ def pessoa_create():
         db.session.commit()
         flash('Pessoa criada com sucesso!', 'success')
         return redirect(url_for('main.pessoa_list'))
-    return render_template('pessoa_form.html', form=form)
+    return render_template('pessoas/pessoa_form.html', form=form)
+
 
 @bp.route('/pessoas/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -140,7 +145,8 @@ def pessoa_edit(id):
         db.session.commit()
         flash('Pessoa atualizada com sucesso!', 'success')
         return redirect(url_for('main.pessoa_list'))
-    return render_template('pessoa_form.html', form=form, pessoa=pessoa)
+    return render_template('pessoas/pessoa_form.html', form=form, pessoa=pessoa)
+
 
 @bp.route('/pessoas/delete/<int:id>', methods=['GET'])
 @login_required
@@ -151,12 +157,14 @@ def pessoa_delete(id):
     flash('Pessoa excluída com sucesso!', 'success')
     return redirect(url_for('main.pessoa_list'))
 
+
 # --- CRUD Profissão ---
 @bp.route('/profissoes', methods=['GET'])
 @login_required
 def profissao_list():
     profissoes = Profissao.query.all()
-    return render_template('profissao_list.html', profissoes=profissoes)
+    return render_template('profissional/profissao_list.html', profissoes=profissoes)
+
 
 @bp.route('/profissoes/create', methods=['GET', 'POST'])
 @login_required
@@ -168,7 +176,8 @@ def profissao_create():
         db.session.commit()
         flash('Profissão criada com sucesso!', 'success')
         return redirect(url_for('main.profissao_list'))
-    return render_template('profissao_form.html', form=form)
+    return render_template('profissional/profissao_form.html', form=form)
+
 
 @bp.route('/profissoes/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -180,7 +189,8 @@ def profissao_edit(id):
         db.session.commit()
         flash('Profissão atualizada com sucesso!', 'success')
         return redirect(url_for('main.profissao_list'))
-    return render_template('profissao_form.html', form=form, profissao=profissao)
+    return render_template('profissional/profissao_form.html', form=form, profissao=profissao)
+
 
 @bp.route('/profissoes/delete/<int:id>', methods=['GET'])
 @login_required
@@ -191,12 +201,14 @@ def profissao_delete(id):
     flash('Profissão excluída com sucesso!', 'success')
     return redirect(url_for('main.profissao_list'))
 
+
 # --- CRUD Setor ---
 @bp.route('/setores', methods=['GET'])
 @login_required
 def setor_list():
     setores = Setor.query.all()
-    return render_template('setor_list.html', setores=setores)
+    return render_template('profissional/setor_list.html', setores=setores)
+
 
 @bp.route('/setores/create', methods=['GET', 'POST'])
 @login_required
@@ -208,7 +220,8 @@ def setor_create():
         db.session.commit()
         flash('Setor criado com sucesso!', 'success')
         return redirect(url_for('main.setor_list'))
-    return render_template('setor_form.html', form=form)
+    return render_template('profissional/setor_form.html', form=form)
+
 
 @bp.route('/setores/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -221,7 +234,8 @@ def setor_edit(id):
         db.session.commit()
         flash('Setor atualizado com sucesso!', 'success')
         return redirect(url_for('main.setor_list'))
-    return render_template('setor_form.html', form=form, setor=setor)
+    return render_template('profissional/setor_form.html', form=form, setor=setor)
+
 
 @bp.route('/setores/delete/<int:id>', methods=['GET'])
 @login_required
@@ -232,12 +246,14 @@ def setor_delete(id):
     flash('Setor excluído com sucesso!', 'success')
     return redirect(url_for('main.setor_list'))
 
+
 # --- CRUD Folha de Pagamento ---
 @bp.route('/folhas', methods=['GET'])
 @login_required
 def folha_list():
     folhas = Folha.query.all()
-    return render_template('folha_list.html', folhas=folhas)
+    return render_template('folha/folha_list.html', folhas=folhas)
+
 
 @bp.route('/folhas/create', methods=['GET', 'POST'])
 @login_required
@@ -250,7 +266,8 @@ def folha_create():
         db.session.commit()
         flash('Folha criada com sucesso!', 'success')
         return redirect(url_for('main.folha_list'))
-    return render_template('folha_form.html', form=form)
+    return render_template('folha/folha_form.html', form=form)
+
 
 @bp.route('/folhas/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -265,7 +282,8 @@ def folha_edit(id):
         db.session.commit()
         flash('Folha atualizada com sucesso!', 'success')
         return redirect(url_for('main.folha_list'))
-    return render_template('folha_form.html', form=form, folha=folha)
+    return render_template('folha/folha_form.html', form=form, folha=folha)
+
 
 @bp.route('/folhas/delete/<int:id>', methods=['GET'])
 @login_required
@@ -276,12 +294,14 @@ def folha_delete(id):
     flash('Folha excluída com sucesso!', 'success')
     return redirect(url_for('main.folha_list'))
 
+
 # --- CRUD Capacitação ---
 @bp.route('/capacitacoes', methods=['GET'])
 @login_required
 def capacitacao_list():
     capacitacoes = Capacitacao.query.all()
-    return render_template('capacitacao_list.html', capacitacoes=capacitacoes)
+    return render_template('capacitacao/capacitacao_list.html', capacitacoes=capacitacoes)
+
 
 @bp.route('/capacitacoes/create', methods=['GET', 'POST'])
 @login_required
@@ -294,7 +314,8 @@ def capacitacao_create():
         db.session.commit()
         flash('Capacitação criada com sucesso!', 'success')
         return redirect(url_for('main.capacitacao_list'))
-    return render_template('capacitacao_form.html', form=form)
+    return render_template('capacitacao/capacitacao_form.html', form=form)
+
 
 @bp.route('/capacitacoes/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -309,7 +330,8 @@ def capacitacao_edit(id):
         db.session.commit()
         flash('Capacitação atualizada com sucesso!', 'success')
         return redirect(url_for('main.capacitacao_list'))
-    return render_template('capacitacao_form.html', form=form, capacitacao=capacitacao)
+    return render_template('capacitacao/capacitacao_form.html', form=form, capacitacao=capacitacao)
+
 
 @bp.route('/capacitacoes/delete/<int:id>', methods=['GET'])
 @login_required
@@ -320,12 +342,14 @@ def capacitacao_delete(id):
     flash('Capacitação excluída com sucesso!', 'success')
     return redirect(url_for('main.capacitacao_list'))
 
+
 # --- CRUD Termo ---
 @bp.route('/termos', methods=['GET'])
 @login_required
 def termo_list():
     termos = Termo.query.all()
-    return render_template('termo_list.html', termos=termos)
+    return render_template('termos/termo_list.html', termos=termos)
+
 
 @bp.route('/termos/create', methods=['GET', 'POST'])
 @login_required
@@ -344,7 +368,8 @@ def termo_create():
         db.session.commit()
         flash('Termo criado com sucesso!', 'success')
         return redirect(url_for('main.termo_list'))
-    return render_template('termo_form.html', form=form)
+    return render_template('termos/termo_form.html', form=form)
+
 
 @bp.route('/termos/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -361,7 +386,8 @@ def termo_edit(id):
         db.session.commit()
         flash('Termo atualizado com sucesso!', 'success')
         return redirect(url_for('main.termo_list'))
-    return render_template('termo_form.html', form=form, termo=termo)
+    return render_template('termos/termo_form.html', form=form, termo=termo)
+
 
 @bp.route('/termos/delete/<int:id>', methods=['GET'])
 @login_required
@@ -372,12 +398,14 @@ def termo_delete(id):
     flash('Termo excluído com sucesso!', 'success')
     return redirect(url_for('main.termo_list'))
 
+
 # --- CRUD Vacina ---
 @bp.route('/vacinas', methods=['GET'])
 @login_required
 def vacina_list():
     vacinas = Vacina.query.all()
-    return render_template('vacina_list.html', vacinas=vacinas)
+    return render_template('saude/vacina_list.html', vacinas=vacinas)
+
 
 @bp.route('/vacinas/create', methods=['GET', 'POST'])
 @login_required
@@ -395,7 +423,8 @@ def vacina_create():
         db.session.commit()
         flash('Vacina criada com sucesso!', 'success')
         return redirect(url_for('main.vacina_list'))
-    return render_template('vacina_form.html', form=form)
+    return render_template('saude/vacina_form.html', form=form)
+
 
 @bp.route('/vacinas/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -411,7 +440,8 @@ def vacina_edit(id):
         db.session.commit()
         flash('Vacina atualizada com sucesso!', 'success')
         return redirect(url_for('main.vacina_list'))
-    return render_template('vacina_form.html', form=form, vacina=vacina)
+    return render_template('saude/vacina_form.html', form=form, vacina=vacina)
+
 
 @bp.route('/vacinas/delete/<int:id>', methods=['GET'])
 @login_required
@@ -422,12 +452,14 @@ def vacina_delete(id):
     flash('Vacina excluída com sucesso!', 'success')
     return redirect(url_for('main.vacina_list'))
 
+
 # --- CRUD Exame ---
 @bp.route('/exames', methods=['GET'])
 @login_required
 def exame_list():
     exames = Exame.query.all()
-    return render_template('exame_list.html', exames=exames)
+    return render_template('saude/exame_list.html', exames=exames)
+
 
 @bp.route('/exames/create', methods=['GET', 'POST'])
 @login_required
@@ -445,7 +477,8 @@ def exame_create():
         db.session.commit()
         flash('Exame criado com sucesso!', 'success')
         return redirect(url_for('main.exame_list'))
-    return render_template('exame_form.html', form=form)
+    return render_template('saude/exame_form.html', form=form)
+
 
 @bp.route('/exames/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -461,7 +494,8 @@ def exame_edit(id):
         db.session.commit()
         flash('Exame atualizado com sucesso!', 'success')
         return redirect(url_for('main.exame_list'))
-    return render_template('exame_form.html', form=form, exame=exame)
+    return render_template('saude/exame_form.html', form=form, exame=exame)
+
 
 @bp.route('/exames/delete/<int:id>', methods=['GET'])
 @login_required
@@ -472,12 +506,14 @@ def exame_delete(id):
     flash('Exame excluído com sucesso!', 'success')
     return redirect(url_for('main.exame_list'))
 
+
 # --- CRUD Atestado ---
 @bp.route('/atestados', methods=['GET'])
 @login_required
 def atestado_list():
     atestados = Atestado.query.all()
-    return render_template('atestado_list.html', atestados=atestados)
+    return render_template('saude/atestado_list.html', atestados=atestados)
+
 
 @bp.route('/atestados/create', methods=['GET', 'POST'])
 @login_required
@@ -496,7 +532,8 @@ def atestado_create():
         db.session.commit()
         flash('Atestado criado com sucesso!', 'success')
         return redirect(url_for('main.atestado_list'))
-    return render_template('atestado_form.html', form=form)
+    return render_template('saude/atestado_form.html', form=form)
+
 
 @bp.route('/atestados/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -513,7 +550,8 @@ def atestado_edit(id):
         db.session.commit()
         flash('Atestado atualizado com sucesso!', 'success')
         return redirect(url_for('main.atestado_list'))
-    return render_template('atestado_form.html', form=form, atestado=atestado)
+    return render_template('saude/atestado_form.html', form=form, atestado=atestado)
+
 
 @bp.route('/atestados/delete/<int:id>', methods=['GET'])
 @login_required
@@ -524,12 +562,14 @@ def atestado_delete(id):
     flash('Atestado excluído com sucesso!', 'success')
     return redirect(url_for('main.atestado_list'))
 
+
 # --- CRUD Doença ---
 @bp.route('/doencas', methods=['GET'])
 @login_required
 def doenca_list():
     doencas = Doenca.query.all()
-    return render_template('doenca_list.html', doencas=doencas)
+    return render_template('saude/doenca_list.html', doencas=doencas)
+
 
 @bp.route('/doencas/create', methods=['GET', 'POST'])
 @login_required
@@ -547,7 +587,8 @@ def doenca_create():
         db.session.commit()
         flash('Doença criada com sucesso!', 'success')
         return redirect(url_for('main.doenca_list'))
-    return render_template('doenca_form.html', form=form)
+    return render_template('saude/doenca_form.html', form=form)
+
 
 @bp.route('/doencas/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -563,7 +604,8 @@ def doenca_edit(id):
         db.session.commit()
         flash('Doença atualizada com sucesso!', 'success')
         return redirect(url_for('main.doenca_list'))
-    return render_template('doenca_form.html', form=form, doenca=doenca)
+    return render_template('saude/doenca_form.html', form=form, doenca=doenca)
+
 
 @bp.route('/doencas/delete/<int:id>', methods=['GET'])
 @login_required
@@ -574,10 +616,15 @@ def doenca_delete(id):
     flash('Doença excluída com sucesso!', 'success')
     return redirect(url_for('main.doenca_list'))
 
+
 # --- Relatório Completo ---
-@bp.route('/relatorio/completo')
+@bp.route('/relatorio/completo', methods=['GET', 'POST'])
 @login_required
 def relatorio_completo():
+    if request.method == 'POST':
+        busca = request.form.get('busca', '')
+        return redirect(url_for('main.relatorio_completo', busca=busca))
+
     page = request.args.get('page', 1, type=int)
     busca = request.args.get('busca', '', type=str)
     per_page = 2
@@ -599,7 +646,7 @@ def relatorio_completo():
 
     pagination = query.order_by(Pessoa.nome).paginate(page=page, per_page=per_page)
 
-    return render_template('relatorio_completo.html',
+    return render_template('relatorio/relatorio_completo.html',
                            pessoas=pagination.items,
                            pagination=pagination,
                            busca=busca)
