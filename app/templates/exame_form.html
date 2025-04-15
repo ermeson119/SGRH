@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ exame.id if exame else 'Novo Exame' }}</h2>
+
+<form method="POST">
+    {{ form.hidden_tag() }}
+
+    <div class="mb-3">
+        {{ form.pessoa_id.label(class="form-label") }}
+        {{ form.pessoa_id(class="form-select") }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.tipo.label(class="form-label") }}
+        {{ form.tipo(class="form-control") }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.resultado.label(class="form-label") }}
+        {{ form.resultado(class="form-control") }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.data.label(class="form-label") }}
+        {{ form.data(class="form-control", type="date") }}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a href="{{ url_for('main.exame_list') }}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

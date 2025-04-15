@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block title %}Lista de Pessoas{% endblock %}
-
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="display-6 m-0">
@@ -28,6 +27,8 @@
             <div class="card-body">
                 <h5 class="card-title">{{ pessoa.nome }}</h5>
                 <p class="card-text text-muted">{{ pessoa.email }}</p>
+                <p class="card-text text-muted"><strong>Profissão:</strong> {{ pessoa.profissao.nome }}</p>
+                <p class="card-text text-muted"><strong>Setor:</strong> {{ pessoa.setor.nome if pessoa.setor else 'Nenhum' }}</p>
             </div>
             <div class="card-footer bg-white border-0 d-flex justify-content-between">
                 <a href="{{ url_for('main.pessoa_edit', id=pessoa.id) }}" class="btn btn-outline-primary btn-sm">

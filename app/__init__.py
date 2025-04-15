@@ -14,10 +14,10 @@ load_dotenv()
 db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
-oauth = OAuth()  # Mova a inicialização para o escopo global
+oauth = OAuth()
 
 # ✅ IMPORTAÇÃO GLOBAL DAS MODELS (obrigatório para funcionar com Flask-Migrate)
-from app.models import User, Pessoa, Profissao, Folha, Capacitacao
+from app.models import User, Pessoa, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Doenca
 
 def create_app():
     app = Flask(__name__)
@@ -42,7 +42,7 @@ def create_app():
     login_manager.login_message_category = 'info'
 
     # Inicializa OAuth
-    oauth.init_app(app)  # Inicialize o oauth com o app
+    oauth.init_app(app)
     oauth.register(
         name='google',
         client_id=app.config['GOOGLE_CLIENT_ID'],
@@ -54,6 +54,13 @@ def create_app():
     # Importa e registra o Blueprint
     from .routes import bp
     app.register_blueprint(bp)
+
+    # Filtro para formatar moeda
+    @app.template_filter('format_currency')
+    def format_currency(value):
+        if value is None:
+            return "R$ 0,00"
+        return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
     # Callback do Flask-Login
     @login_manager.user_loader

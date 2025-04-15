@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ doenca.id if doenca else 'Nova Doença' }}</h2>
+
+<form method="POST">
+    {{ form.hidden_tag() }}
+
+    <div class="mb-3">
+        {{ form.pessoa_id.label(class="form-label") }}
+        {{ form.pessoa_id(class="form-select") }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.nome.label(class="form-label") }}
+        {{ form.nome(class="form-control") }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.cid.label(class="form-label") }}
+        {{ form.cid(class="form-control") }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.data_diagnostico.label(class="form-label") }}
+        {{ form.data_diagnostico(class="form-control", type="date") }}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a href="{{ url_for('main.doenca_list') }}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

@@ -1,94 +1,342 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Relatório Completo dos Funcionários</h2>
+<div class="container my-5">
+    <h2 class="mb-4 text-center">Relatório Completo dos Funcionários</h2>
 
-<form method="get" class="mb-4" id="busca-form">
-    <div class="input-group">
-        <input type="text" id="filtro" name="busca" class="form-control"
-               placeholder="Buscar funcionário pelo nome..." value="{{ busca }}">
-        <button class="btn btn-primary" type="submit">Buscar</button>
-    </div>
-</form>
-
-
-
-<div id="lista-funcionarios">
-    {% for pessoa in pessoas %}
-        <div class="card mb-4 funcionario-card">
-            <div class="card-header">
-                <strong class="nome">{{ pessoa.nome }}</strong> — {{ pessoa.profissao.nome }}
-            </div>
-            <div class="card-body">
-                <p><strong>Email:</strong> {{ pessoa.email }}</p>
-
-                <h5>Capacitações</h5>
-                {% if pessoa.capacitacoes %}
-                    <ul>
-                        {% for c in pessoa.capacitacoes %}
-                            <li>{{ c.descricao }} — {{ c.data.strftime('%d/%m/%Y') }}</li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>Nenhuma capacitação registrada.</p>
-                {% endif %}
-
-                <h5>Folha de Pagamento</h5>
-                {% if pessoa.folhas %}
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Valor</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for folha in pessoa.folhas %}
-                                <tr>
-                                    <td>{{ folha.data.strftime('%d/%m/%Y') }}</td>
-                                    <td>R$ {{ folha.valor }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p>Nenhuma folha registrada.</p>
-                {% endif %}
-            </div>
+    <!-- Formulário de Busca -->
+    <form method="get" class="mb-5" id="busca-form">
+        <div class="input-group">
+            <input type="text" id="filtro" name="busca" class="form-control"
+                   placeholder="Buscar funcionário pelo nome..." value="{{ busca }}">
+            <button class="btn btn-primary" type="submit">Buscar</button>
         </div>
-    {% endfor %}
+    </form>
+
+    <!-- Lista de Funcionários -->
+    <div id="lista-funcionarios">
+        {% for pessoa in pessoas %}
+            <div class="card mb-4 shadow-sm funcionario-card">
+                <div class="card-header bg-primary text-white">
+                    <strong class="nome">{{ pessoa.nome }}</strong> — {{ pessoa.profissao.nome }}
+                    {% if pessoa.setor %} — {{ pessoa.setor.nome }}{% endif %}
+                </div>
+                <div class="card-body">
+                    <p><strong>Email:</strong> {{ pessoa.email }}</p>
+                    <p><strong>Setor:</strong> {{ pessoa.setor.nome if pessoa.setor else 'Nenhum' }}</p>
+
+                    <!-- Capacitações -->
+                    <h5 class="mt-4">
+                        <button class="btn btn-link text-decoration-none p-0" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#capacitacoes-{{ pessoa.id }}"
+                                aria-expanded="true" aria-controls="capacitacoes-{{ pessoa.id }}">
+                            Capacitações
+                            <svg class="bi ms-1" width="16" height="16" fill="currentColor">
+                                <use xlink:href="#chevron-down"/>
+                            </svg>
+                        </button>
+                    </h5>
+                    <div id="capacitacoes-{{ pessoa.id }}" class="collapse show">
+                        {% if pessoa.capacitacoes %}
+                            <ul class="list-group list-group-flush">
+                                {% for c in pessoa.capacitacoes %}
+                                    <li class="list-group-item">{{ c.descricao }} — {{ c.data.strftime('%d/%m/%Y') }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-muted">Nenhuma capacitação registrada.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Folha de Pagamento -->
+                    <h5 class="mt-4">
+                        <button class="btn btn-link text-decoration-none p-0" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#folhas-{{ pessoa.id }}"
+                                aria-expanded="true" aria-controls="folhas-{{ pessoa.id }}">
+                            Folha de Pagamento
+                            <svg class="bi ms-1" width="16" height="16" fill="currentColor">
+                                <use xlink:href="#chevron-down"/>
+                            </svg>
+                        </button>
+                    </h5>
+                    <div id="folhas-{{ pessoa.id }}" class="collapse show">
+                        {% if pessoa.folhas %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Valor</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for folha in pessoa.folhas %}
+                                            <tr>
+                                                <td>{{ folha.data.strftime('%d/%m/%Y') }}</td>
+                                                <td>R$ {{ folha.valor|format_currency }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">Nenhuma folha registrada.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Termos -->
+                    <h5 class="mt-4">
+                        <button class="btn btn-link text-decoration-none p-0" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#termos-{{ pessoa.id }}"
+                                aria-expanded="false" aria-controls="termos-{{ pessoa.id }}">
+                            Termos
+                            <svg class="bi ms-1" width="16" height="16" fill="currentColor">
+                                <use xlink:href="#chevron-down"/>
+                            </svg>
+                        </button>
+                    </h5>
+                    <div id="termos-{{ pessoa.id }}" class="collapse">
+                        {% if pessoa.termos %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Tipo</th>
+                                            <th>Descrição</th>
+                                            <th>Data Início</th>
+                                            <th>Data Fim</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for termo in pessoa.termos %}
+                                            <tr>
+                                                <td>{{ termo.tipo }}</td>
+                                                <td>{{ termo.descricao }}</td>
+                                                <td>{{ termo.data_inicio.strftime('%d/%m/%Y') }}</td>
+                                                <td>{{ termo.data_fim.strftime('%d/%m/%Y') if termo.data_fim else 'N/A' }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">Nenhum termo registrado.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Vacinas -->
+                    <h5 class="mt-4">
+                        <button class="btn btn-link text-decoration-none p-0" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#vacinas-{{ pessoa.id }}"
+                                aria-expanded="false" aria-controls="vacinas-{{ pessoa.id }}">
+                            Vacinas
+                            <svg class="bi ms-1" width="16" height="16" fill="currentColor">
+                                <use xlink:href="#chevron-down"/>
+                            </svg>
+                        </button>
+                    </h5>
+                    <div id="vacinas-{{ pessoa.id }}" class="collapse">
+                        {% if pessoa.vacinas %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Nome</th>
+                                            <th>Dose</th>
+                                            <th>Data</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for vacina in pessoa.vacinas %}
+                                            <tr>
+                                                <td>{{ vacina.nome }}</td>
+                                                <td>{{ vacina.dose if vacina.dose else 'N/A' }}</td>
+                                                <td>{{ vacina.data.strftime('%d/%m/%Y') }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">Nenhuma vacina registrada.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Exames -->
+                    <h5 class="mt-4">
+                        <button class="btn btn-link text-decoration-none p-0" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#exames-{{ pessoa.id }}"
+                                aria-expanded="false" aria-controls="exames-{{ pessoa.id }}">
+                            Exames
+                            <svg class="bi ms-1" width="16" height="16" fill="currentColor">
+                                <use xlink:href="#chevron-down"/>
+                            </svg>
+                        </button>
+                    </h5>
+                    <div id="exames-{{ pessoa.id }}" class="collapse">
+                        {% if pessoa.exames %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Tipo</th>
+                                            <th>Resultado</th>
+                                            <th>Data</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for exame in pessoa.exames %}
+                                            <tr>
+                                                <td>{{ exame.tipo }}</td>
+                                                <td>{{ exame.resultado if exame.resultado else 'N/A' }}</td>
+                                                <td>{{ exame.data.strftime('%d/%m/%Y') }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">Nenhum exame registrado.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Atestados -->
+                    <h5 class="mt-4">
+                        <button class="btn btn-link text-decoration-none p-0" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#atestados-{{ pessoa.id }}"
+                                aria-expanded="false" aria-controls="atestados-{{ pessoa.id }}">
+                            Atestados
+                            <svg class="bi ms-1" width="16" height="16" fill="currentColor">
+                                <use xlink:href="#chevron-down"/>
+                            </svg>
+                        </button>
+                    </h5>
+                    <div id="atestados-{{ pessoa.id }}" class="collapse">
+                        {% if pessoa.atestados %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Motivo</th>
+                                            <th>Data Início</th>
+                                            <th>Data Fim</th>
+                                            <th>Documento</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for atestado in pessoa.atestados %}
+                                            <tr>
+                                                <td>{{ atestado.motivo }}</td>
+                                                <td>{{ atestado.data_inicio.strftime('%d/%m/%Y') }}</td>
+                                                <td>{{ atestado.data_fim.strftime('%d/%m/%Y') }}</td>
+                                                <td>{{ atestado.documento if atestado.documento else 'N/A' }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">Nenhum atestado registrado.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Doenças -->
+                    <h5 class="mt-4">
+                        <button class="btn btn-link text-decoration-none p-0" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#doencas-{{ pessoa.id }}"
+                                aria-expanded="false" aria-controls="doencas-{{ pessoa.id }}">
+                            Doenças
+                            <svg class="bi ms-1" width="16" height="16" fill="currentColor">
+                                <use xlink:href="#chevron-down"/>
+                            </svg>
+                        </button>
+                    </h5>
+                    <div id="doencas-{{ pessoa.id }}" class="collapse">
+                        {% if pessoa.doencas %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Nome</th>
+                                            <th>CID</th>
+                                            <th>Data Diagnóstico</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for doenca in pessoa.doencas %}
+                                            <tr>
+                                                <td>{{ doenca.nome }}</td>
+                                                <td>{{ doenca.cid if doenca.cid else 'N/A' }}</td>
+                                                <td>{{ doenca.data_diagnostico.strftime('%d/%m/%Y') }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">Nenhuma doença registrada.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Paginação Bootstrap -->
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Navegação de páginas" class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.relatorio_completo', page=pagination.prev_num, busca=busca) }}">Anterior</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+            {% endif %}
+
+            {% for p in range(1, pagination.pages + 1) %}
+                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('main.relatorio_completo', page=p, busca=busca) }}">{{ p }}</a>
+                </li>
+            {% endfor %}
+
+            {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.relatorio_completo', page=pagination.next_num, busca=busca) }}">Próximo</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Próximo</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
 </div>
 
-<!-- Paginação Bootstrap -->
-{% if pagination.pages > 1 %}
-<nav aria-label="Navegação de páginas">
-  <ul class="pagination justify-content-center">
-    {% if pagination.has_prev %}
-      <li class="page-item">
-        <a class="page-link" href="{{ url_for('main.relatorio_completo', page=pagination.prev_num) }}">Anterior</a>
-      </li>
-    {% else %}
-      <li class="page-item disabled"><span class="page-link">Anterior</span></li>
-    {% endif %}
-
-    {% for p in range(1, pagination.pages + 1) %}
-      <li class="page-item {% if p == pagination.page %}active{% endif %}">
-        <a class="page-link" href="{{ url_for('main.relatorio_completo', page=p) }}">{{ p }}</a>
-      </li>
-    {% endfor %}
-
-    {% if pagination.has_next %}
-      <li class="page-item">
-        <a class="page-link" href="{{ url_for('main.relatorio_completo', page=pagination.next_num) }}">Próximo</a>
-      </li>
-    {% else %}
-      <li class="page-item disabled"><span class="page-link">Próximo</span></li>
-    {% endif %}
-  </ul>
-</nav>
-{% endif %}
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
+<!-- Incluindo os ícones do Bootstrap -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+    <symbol id="chevron-down" viewBox="0 0 16 16">
+        <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+    </symbol>
+    <symbol id="chevron-up" viewBox="0 0 16 16">
+        <path fill-rule="evenodd" d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 10.293l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
+    </symbol>
+</svg>
+
 <script src="../static/scripts/relatorio.js"></script>
+<script>
+// Alternar ícones de expandir/recolher
+document.querySelectorAll('.collapse').forEach(collapse => {
+    collapse.addEventListener('show.bs.collapse', function () {
+        const button = document.querySelector(`button[data-bs-target="#${this.id}"] svg use`);
+        button.setAttribute('xlink:href', '#chevron-up');
+    });
+    collapse.addEventListener('hide.bs.collapse', function () {
+        const button = document.querySelector(`button[data-bs-target="#${this.id}"] svg use`);
+        button.setAttribute('xlink:href', '#chevron-down');
+    });
+});
+</script>
 {% endblock %}

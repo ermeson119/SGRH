@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Doenças</h2>
+
+<a href="{{ url_for('main.doenca_create') }}" class="btn btn-success mb-3">+ Nova Doença</a>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome da Pessoa</th>
+            <th>Nome da Doença</th>
+            <th>CID</th>
+            <th>Data Diagnóstico</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for doenca in doencas %}
+        <tr>
+            <td>{{ doenca.id }}</td>
+            <td>{{ doenca.pessoa.nome }}</td>
+            <td>{{ doenca.nome }}</td>
+            <td>{{ doenca.cid if doenca.cid else 'N/A' }}</td>
+            <td>{{ doenca.data_diagnostico.strftime('%d/%m/%Y') }}</td>
+            <td>
+                <a href="{{ url_for('main.doenca_edit', id=doenca.id) }}" class="btn btn-primary btn-sm">Editar</a>
+                <a href="{{ url_for('main.doenca_delete', id=doenca.id) }}" class="btn btn-danger btn-sm"
+                   onclick="return confirm('Tem certeza que deseja excluir esta doença?')">Excluir</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Lista de Setores{% endblock %}
+{% block content %}
+<h2 class="mb-4">Setores</h2>
+<a href="{{ url_for('main.setor_create') }}" class="btn btn-primary mb-3">Adicionar Setor</a>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Descrição</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for setor in setores %}
+            <tr>
+                <td>{{ setor.id }}</td>
+                <td>{{ setor.nome }}</td>
+                <td>{{ setor.descricao if setor.descricao else 'N/A' }}</td>
+                <td>
+                    <a href="{{ url_for('main.setor_edit', id=setor.id) }}" class="btn btn-warning btn-sm">Editar</a>
+                    <a href="{{ url_for('main.setor_delete', id=setor.id) }}" class="btn btn-danger btn-sm"
+                       onclick="return confirm('Tem certeza?')">Excluir</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

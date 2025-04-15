@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ termo.id if termo else 'Novo Termo' }}</h2>
+
+<form method="POST">
+    {{ form.hidden_tag() }}
+
+    <div class="mb-3">
+        {{ form.pessoa_id.label(class="form-label") }}
+        {{ form.pessoa_id(class="form-select") }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.tipo.label(class="form-label") }}
+        {{ form.tipo(class="form-control") }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.descricao.label(class="form-label") }}
+        {{ form.descricao(class="form-control") }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.data_inicio.label(class="form-label") }}
+        {{ form.data_inicio(class="form-control", type="date") }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.data_fim.label(class="form-label") }}
+        {{ form.data_fim(class="form-control", type="date") }}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a href="{{ url_for('main.termo_list') }}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

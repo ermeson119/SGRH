@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Vacinas</h2>
+
+<a href="{{ url_for('main.vacina_create') }}" class="btn btn-success mb-3">+ Nova Vacina</a>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome da Pessoa</th>
+            <th>Nome da Vacina</th>
+            <th>Dose</th>
+            <th>Data</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for vacina in vacinas %}
+        <tr>
+            <td>{{ vacina.id }}</td>
+            <td>{{ vacina.pessoa.nome }}</td>
+            <td>{{ vacina.nome }}</td>
+            <td>{{ vacina.dose if vacina.dose else 'N/A' }}</td>
+            <td>{{ vacina.data.strftime('%d/%m/%Y') }}</td>
+            <td>
+                <a href="{{ url_for('main.vacina_edit', id=vacina.id) }}" class="btn btn-primary btn-sm">Editar</a>
+                <a href="{{ url_for('main.vacina_delete', id=vacina.id) }}" class="btn btn-danger btn-sm"
+                   onclick="return confirm('Tem certeza que deseja excluir esta vacina?')">Excluir</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
