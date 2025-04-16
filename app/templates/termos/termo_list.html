@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Termos</h2>
+
+<a href="{{ url_for('main.termo_create') }}" class="btn btn-success mb-3">+ Novo Termo</a>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome da Pessoa</th>
+            <th>Tipo</th>
+            <th>Data Início</th>
+            <th>Data Fim</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for termo in termos %}
+        <tr>
+            <td>{{ termo.id }}</td>
+            <td>{{ termo.pessoa.nome }}</td>
+            <td>{{ termo.tipo }}</td>
+            <td>{{ termo.data_inicio.strftime('%d/%m/%Y') }}</td>
+            <td>{{ termo.data_fim.strftime('%d/%m/%Y') if termo.data_fim else 'N/A' }}</td>
+            <td>
+                <a href="{{ url_for('main.termo_edit', id=termo.id) }}" class="btn btn-primary btn-sm">Editar</a>
+                <a href="{{ url_for('main.termo_delete', id=termo.id) }}" class="btn btn-danger btn-sm"
+                   onclick="return confirm('Tem certeza que deseja excluir este termo?')">Excluir</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Atestados</h2>
+
+<a href="{{ url_for('main.atestado_create') }}" class="btn btn-success mb-3">+ Novo Atestado</a>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome da Pessoa</th>
+            <th>Motivo</th>
+            <th>Data Início</th>
+            <th>Data Fim</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for atestado in atestados %}
+        <tr>
+            <td>{{ atestado.id }}</td>
+            <td>{{ atestado.pessoa.nome }}</td>
+            <td>{{ atestado.motivo }}</td>
+            <td>{{ atestado.data_inicio.strftime('%d/%m/%Y') }}</td>
+            <td>{{ atestado.data_fim.strftime('%d/%m/%Y') }}</td>
+            <td>
+                <a href="{{ url_for('main.atestado_edit', id=atestado.id) }}" class="btn btn-primary btn-sm">Editar</a>
+                <a href="{{ url_for('main.atestado_delete', id=atestado.id) }}" class="btn btn-danger btn-sm"
+                   onclick="return confirm('Tem certeza que deseja excluir este atestado?')">Excluir</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
