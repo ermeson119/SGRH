@@ -14,9 +14,10 @@
         <ul class="navbar-nav">
             {% if current_user.is_authenticated %}
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('main.pessoa_list') }}">Pessoas</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.profissao_list') }}">Profissões</a></li>
+                <li class dau="nav-item"><a class="nav-link" href="{{ url_for('main.profissao_list') }}">Profissões</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('main.setor_list') }}">Setores</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('main.folha_list') }}">Folhas</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.curso_list') }}">Cursos</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('main.capacitacao_list') }}">Capacitações</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('main.termo_list') }}">Termos</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('main.vacina_list') }}">Vacinas</a></li>

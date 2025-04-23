@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Lista de Cursos{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>Lista de Cursos</h1>
+    <a href="{{ url_for('main.curso_create') }}" class="btn btn-primary mb-3">Adicionar Curso</a>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Duração</th>
+                <th>Tipo</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for curso in cursos %}
+                <tr>
+                    <td>{{ curso.nome }}</td>
+                    <td>{{ curso.duracao }}</td>
+                    <td>{{ curso.tipo }}</td>
+                    <td>
+                        <a href="{{ url_for('main.curso_edit', id=curso.id) }}" class="btn btn-sm btn-warning">Editar</a>
+                        <a href="{{ url_for('main.curso_delete', id=curso.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir este curso?');">Excluir</a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="4">Nenhum curso cadastrado.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

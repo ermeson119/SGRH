@@ -32,12 +32,21 @@ class Folha(db.Model):
     data = db.Column(db.Date, nullable=False)
     pessoa = db.relationship('Pessoa', backref='folhas')
 
+
+class Curso(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    duracao = db.Column(db.String(50), nullable=False) 
+    tipo = db.Column(db.String(50), nullable=False)
+
 class Capacitacao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False)
+    curso_id = db.Column(db.Integer, db.ForeignKey('curso.id'), nullable=True)  
     descricao = db.Column(db.String(200), nullable=False)
     data = db.Column(db.Date, nullable=False)
     pessoa = db.relationship('Pessoa', backref='capacitacoes')
+    curso = db.relationship('Curso', backref='capacitacoes')
 
 class Termo(db.Model):
     id = db.Column(db.Integer, primary_key=True)

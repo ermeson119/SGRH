@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar Curso' if curso else 'Adicionar Curso' }}{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>{{ 'Editar Curso' if curso else 'Adicionar Curso' }}</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            <label for="nome" class="form-label">Nome</label>
+            {{ form.nome(class="form-control", id="nome") }}
+            {% if form.nome.errors %}
+                {% for error in form.nome.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="duracao" class="form-label">Duração</label>
+            {{ form.duracao(class="form-control", id="duracao") }}
+            {% if form.duracao.errors %}
+                {% for error in form.duracao.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="tipo" class="form-label">Tipo</label>
+            {{ form.tipo(class="form-control", id="tipo") }}
+            {% if form.tipo.errors %}
+                {% for error in form.tipo.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        <a href="{{ url_for('main.curso_list') }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}
+
+
