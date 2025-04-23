@@ -9,6 +9,7 @@ from app.forms import (
 from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
+from sqlalchemy.exc import IntegrityError
 
 # Cria um Blueprint para as rotas
 bp = Blueprint('main', __name__)
@@ -90,10 +91,23 @@ def register():
             hashed_password = generate_password_hash(form.password.data)
             new_user = User(email=form.email.data, password=hashed_password)
             db.session.add(new_user)
-            db.session.commit()
-            flash('Usuário cadastrado com sucesso! Faça login.', 'success')
-            return redirect(url_for('main.login'))
+            if commit_with_flash('Usuário', 'cadastrado'):
+                return redirect(url_for('main.login'))
     return render_template('registro.html', form=form)
+
+def commit_with_flash(model_name, action='criar'):
+    try:
+        db.session.commit()
+        flash(f'{model_name} {action} com sucesso!', 'success')
+        return True
+    except IntegrityError as e:
+        db.session.rollback()
+        flash(f'Erro ao {action} {model_name}: Registro relacionado existente.', 'error')
+        return False
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao {action} {model_name}: {str(e)}', 'error')
+        return False
 
 # --- CRUD Pessoa ---
 @bp.route('/pessoas', methods=['GET'])

@@ -1,7 +1,8 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, SubmitField, DateField, FloatField
-from wtforms.validators import DataRequired, Length, Regexp, ValidationError, Email
-from app.models import Pessoa
+from wtforms.validators import DataRequired, Length, Regexp, ValidationError, Email, EqualTo, Optional
+from app.models import Pessoa, Profissao, Curso
+from datetime import date
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Length(max=100), Email()])
@@ -10,8 +11,17 @@ class LoginForm(FlaskForm):
 
 class RegisterForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Length(max=100), Email()])
-    password = StringField('Senha', validators=[DataRequired(), Length(min=6)])
+    password = StringField('Senha', validators=[DataRequired(), Length(min=6, message='A senha deve ter pelo menos 6 caracteres.')])
+    confirm_password = StringField('Confirmar Senha', validators=[
+        DataRequired(),
+        EqualTo('password', message='As senhas devem corresponder.')
+    ])
     submit = SubmitField('Registrar')
+
+    def validate_email(self, field):
+        from app.models import User
+        if User.query.filter_by(email=field.data).first():
+            raise ValidationError('Este email já está registrado.')
 
 class PessoaForm(FlaskForm):
     nome = StringField('Nome', validators=[DataRequired(), Length(max=100)])
