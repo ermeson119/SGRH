@@ -49,7 +49,7 @@ def google_callback():
         return redirect(next_page)
 
     except Exception as e:
-        flash('Erro ao autenticar com Google.', 'error')
+        flash('Erro ao autenticar com Google: ' + str(e), 'error')
         return redirect(url_for('main.login'))
 
 @bp.route('/login', methods=['GET', 'POST'])
@@ -106,19 +106,34 @@ def pessoa_list():
 @login_required
 def pessoa_create():
     form = PessoaForm()
-    form.profissao_id.choices = [(p.id, p.nome) for p in Profissao.query.all()]
-    form.setor_id.choices = [(0, 'Nenhum')] + [(s.id, s.nome) for s in Setor.query.all()]
+    profissoes = Profissao.query.all()
+    setores = Setor.query.all()
+    
+    if not profissoes:
+        flash('Nenhuma profissão cadastrada. Cadastre uma profissão antes de criar uma pessoa.', 'warning')
+        return redirect(url_for('main.profissao_create'))
+    
+    form.profissao_id.choices = [(p.id, p.nome) for p in profissoes]
+    form.setor_id.choices = [(0, 'Nenhum')] + [(s.id, s.nome) for s in setores]
+    
     if form.validate_on_submit():
         pessoa = Pessoa(
             nome=form.nome.data,
             email=form.email.data,
+            cpf=form.cpf.data,
+            matricula=form.matricula.data,
+            vinculo=form.vinculo.data,
             profissao_id=form.profissao_id.data,
             setor_id=form.setor_id.data if form.setor_id.data != 0 else None
         )
         db.session.add(pessoa)
-        db.session.commit()
-        flash('Pessoa criada com sucesso!', 'success')
-        return redirect(url_for('main.pessoa_list'))
+        try:
+            db.session.commit()
+            flash('Pessoa criada com sucesso!', 'success')
+            return redirect(url_for('main.pessoa_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao criar pessoa: ' + str(e), 'error')
     return render_template('pessoas/pessoa_form.html', form=form)
 
 @bp.route('/pessoas/edit/<int:id>', methods=['GET', 'POST'])
@@ -126,25 +141,46 @@ def pessoa_create():
 def pessoa_edit(id):
     pessoa = Pessoa.query.get_or_404(id)
     form = PessoaForm(obj=pessoa)
-    form.profissao_id.choices = [(p.id, p.nome) for p in Profissao.query.all()]
-    form.setor_id.choices = [(0, 'Nenhum')] + [(s.id, s.nome) for s in Setor.query.all()]
+    form.pessoa = pessoa  # Adiciona a pessoa ao formulário para validação
+    
+    profissoes = Profissao.query.all()
+    setores = Setor.query.all()
+    
+    if not profissoes:
+        flash('Nenhuma profissão cadastrada. Cadastre uma profissão antes de editar uma pessoa.', 'warning')
+        return redirect(url_for('main.profissao_create'))
+    
+    form.profissao_id.choices = [(p.id, p.nome) for p in profissoes]
+    form.setor_id.choices = [(0, 'Nenhum')] + [(s.id, s.nome) for s in setores]
+    
     if form.validate_on_submit():
         pessoa.nome = form.nome.data
         pessoa.email = form.email.data
+        pessoa.cpf = form.cpf.data
+        pessoa.matricula = form.matricula.data
+        pessoa.vinculo = form.vinculo.data
         pessoa.profissao_id = form.profissao_id.data
         pessoa.setor_id = form.setor_id.data if form.setor_id.data != 0 else None
-        db.session.commit()
-        flash('Pessoa atualizada com sucesso!', 'success')
-        return redirect(url_for('main.pessoa_list'))
+        try:
+            db.session.commit()
+            flash('Pessoa atualizada com sucesso!', 'success')
+            return redirect(url_for('main.pessoa_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao atualizar pessoa: ' + str(e), 'error')
     return render_template('pessoas/pessoa_form.html', form=form, pessoa=pessoa)
 
 @bp.route('/pessoas/delete/<int:id>', methods=['GET'])
 @login_required
 def pessoa_delete(id):
     pessoa = Pessoa.query.get_or_404(id)
-    db.session.delete(pessoa)
-    db.session.commit()
-    flash('Pessoa excluída com sucesso!', 'success')
+    try:
+        db.session.delete(pessoa)
+        db.session.commit()
+        flash('Pessoa excluída com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Erro ao excluir pessoa: ' + str(e), 'error')
     return redirect(url_for('main.pessoa_list'))
 
 # --- CRUD Profissão ---
@@ -161,9 +197,13 @@ def profissao_create():
     if form.validate_on_submit():
         profissao = Profissao(nome=form.nome.data)
         db.session.add(profissao)
-        db.session.commit()
-        flash('Profissão criada com sucesso!', 'success')
-        return redirect(url_for('main.profissao_list'))
+        try:
+            db.session.commit()
+            flash('Profissão criada com sucesso!', 'success')
+            return redirect(url_for('main.profissao_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao criar profissão: ' + str(e), 'error')
     return render_template('profissional/profissao_form.html', form=form)
 
 @bp.route('/profissoes/edit/<int:id>', methods=['GET', 'POST'])
@@ -173,18 +213,26 @@ def profissao_edit(id):
     form = ProfissaoForm(obj=profissao)
     if form.validate_on_submit():
         profissao.nome = form.nome.data
-        db.session.commit()
-        flash('Profissão atualizada com sucesso!', 'success')
-        return redirect(url_for('main.profissao_list'))
+        try:
+            db.session.commit()
+            flash('Profissão atualizada com sucesso!', 'success')
+            return redirect(url_for('main.profissao_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao atualizar profissão: ' + str(e), 'error')
     return render_template('profissional/profissao_form.html', form=form, profissao=profissao)
 
 @bp.route('/profissoes/delete/<int:id>', methods=['GET'])
 @login_required
 def profissao_delete(id):
     profissao = Profissao.query.get_or_404(id)
-    db.session.delete(profissao)
-    db.session.commit()
-    flash('Profissão excluída com sucesso!', 'success')
+    try:
+        db.session.delete(profissao)
+        db.session.commit()
+        flash('Profissão excluída com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Erro ao excluir profissão: ' + str(e), 'error')
     return redirect(url_for('main.profissao_list'))
 
 # --- CRUD Setor ---
@@ -201,9 +249,13 @@ def setor_create():
     if form.validate_on_submit():
         setor = Setor(nome=form.nome.data, descricao=form.descricao.data)
         db.session.add(setor)
-        db.session.commit()
-        flash('Setor criado com sucesso!', 'success')
-        return redirect(url_for('main.setor_list'))
+        try:
+            db.session.commit()
+            flash('Setor criado com sucesso!', 'success')
+            return redirect(url_for('main.setor_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao criar setor: ' + str(e), 'error')
     return render_template('profissional/setor_form.html', form=form)
 
 @bp.route('/setores/edit/<int:id>', methods=['GET', 'POST'])
@@ -214,18 +266,26 @@ def setor_edit(id):
     if form.validate_on_submit():
         setor.nome = form.nome.data
         setor.descricao = form.descricao.data
-        db.session.commit()
-        flash('Setor atualizado com sucesso!', 'success')
-        return redirect(url_for('main.setor_list'))
+        try:
+            db.session.commit()
+            flash('Setor atualizado com sucesso!', 'success')
+            return redirect(url_for('main.setor_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao atualizar setor: ' + str(e), 'error')
     return render_template('profissional/setor_form.html', form=form, setor=setor)
 
 @bp.route('/setores/delete/<int:id>', methods=['GET'])
 @login_required
 def setor_delete(id):
     setor = Setor.query.get_or_404(id)
-    db.session.delete(setor)
-    db.session.commit()
-    flash('Setor excluído com sucesso!', 'success')
+    try:
+        db.session.delete(setor)
+        db.session.commit()
+        flash('Setor excluído com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Erro ao excluir setor: ' + str(e), 'error')
     return redirect(url_for('main.setor_list'))
 
 # --- CRUD Folha de Pagamento ---
@@ -243,9 +303,13 @@ def folha_create():
     if form.validate_on_submit():
         folha = Folha(pessoa_id=form.pessoa_id.data, valor=form.valor.data, data=form.data.data)
         db.session.add(folha)
-        db.session.commit()
-        flash('Folha criada com sucesso!', 'success')
-        return redirect(url_for('main.folha_list'))
+        try:
+            db.session.commit()
+            flash('Folha criada com sucesso!', 'success')
+            return redirect(url_for('main.folha_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao criar folha: ' + str(e), 'error')
     return render_template('folha/folha_form.html', form=form)
 
 @bp.route('/folhas/edit/<int:id>', methods=['GET', 'POST'])
@@ -258,18 +322,26 @@ def folha_edit(id):
         folha.pessoa_id = form.pessoa_id.data
         folha.valor = form.valor.data
         folha.data = form.data.data
-        db.session.commit()
-        flash('Folha atualizada com sucesso!', 'success')
-        return redirect(url_for('main.folha_list'))
+        try:
+            db.session.commit()
+            flash('Folha atualizada com sucesso!', 'success')
+            return redirect(url_for('main.folha_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao atualizar folha: ' + str(e), 'error')
     return render_template('folha/folha_form.html', form=form, folha=folha)
 
 @bp.route('/folhas/delete/<int:id>', methods=['GET'])
 @login_required
 def folha_delete(id):
     folha = Folha.query.get_or_404(id)
-    db.session.delete(folha)
-    db.session.commit()
-    flash('Folha excluída com sucesso!', 'success')
+    try:
+        db.session.delete(folha)
+        db.session.commit()
+        flash('Folha excluída com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Erro ao excluir folha: ' + str(e), 'error')
     return redirect(url_for('main.folha_list'))
 
 # --- CRUD Curso ---
@@ -290,9 +362,13 @@ def curso_create():
             tipo=form.tipo.data
         )
         db.session.add(curso)
-        db.session.commit()
-        flash('Curso criado com sucesso!', 'success')
-        return redirect(url_for('main.curso_list'))
+        try:
+            db.session.commit()
+            flash('Curso criado com sucesso!', 'success')
+            return redirect(url_for('main.curso_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao criar curso: ' + str(e), 'error')
     return render_template('curso/curso_form.html', form=form)
 
 @bp.route('/cursos/edit/<int:id>', methods=['GET', 'POST'])
@@ -304,18 +380,26 @@ def curso_edit(id):
         curso.nome = form.nome.data
         curso.duracao = form.duracao.data
         curso.tipo = form.tipo.data
-        db.session.commit()
-        flash('Curso atualizado com sucesso!', 'success')
-        return redirect(url_for('main.curso_list'))
+        try:
+            db.session.commit()
+            flash('Curso atualizado com sucesso!', 'success')
+            return redirect(url_for('main.curso_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao atualizar curso: ' + str(e), 'error')
     return render_template('curso/curso_form.html', form=form, curso=curso)
 
 @bp.route('/cursos/delete/<int:id>', methods=['GET'])
 @login_required
 def curso_delete(id):
     curso = Curso.query.get_or_404(id)
-    db.session.delete(curso)
-    db.session.commit()
-    flash('Curso excluído com sucesso!', 'success')
+    try:
+        db.session.delete(curso)
+        db.session.commit()
+        flash('Curso excluído com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Erro ao excluir curso: ' + str(e), 'error')
     return redirect(url_for('main.curso_list'))
 
 # --- CRUD Capacitação ---
@@ -339,9 +423,13 @@ def capacitacao_create():
             data=form.data.data
         )
         db.session.add(capacitacao)
-        db.session.commit()
-        flash('Capacitação criada com sucesso!', 'success')
-        return redirect(url_for('main.capacitacao_list'))
+        try:
+            db.session.commit()
+            flash('Capacitação criada com sucesso!', 'success')
+            return redirect(url_for('main.capacitacao_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao criar capacitação: ' + str(e), 'error')
     return render_template('capacitacao/capacitacao_form.html', form=form)
 
 @bp.route('/capacitacoes/edit/<int:id>', methods=['GET', 'POST'])
@@ -356,18 +444,26 @@ def capacitacao_edit(id):
         capacitacao.curso_id = form.curso_id.data
         capacitacao.descricao = form.descricao.data
         capacitacao.data = form.data.data
-        db.session.commit()
-        flash('Capacitação atualizada com sucesso!', 'success')
-        return redirect(url_for('main.capacitacao_list'))
+        try:
+            db.session.commit()
+            flash('Capacitação atualizada com sucesso!', 'success')
+            return redirect(url_for('main.capacitacao_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao atualizar capacitação: ' + str(e), 'error')
     return render_template('capacitacao/capacitacao_form.html', form=form, capacitacao=capacitacao)
 
 @bp.route('/capacitacoes/delete/<int:id>', methods=['GET'])
 @login_required
 def capacitacao_delete(id):
     capacitacao = Capacitacao.query.get_or_404(id)
-    db.session.delete(capacitacao)
-    db.session.commit()
-    flash('Capacitação excluída com sucesso!', 'success')
+    try:
+        db.session.delete(capacitacao)
+        db.session.commit()
+        flash('Capacitação excluída com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Erro ao excluir capacitação: ' + str(e), 'error')
     return redirect(url_for('main.capacitacao_list'))
 
 # --- CRUD Termo ---
@@ -391,9 +487,13 @@ def termo_create():
             data_fim=form.data_fim.data
         )
         db.session.add(termo)
-        db.session.commit()
-        flash('Termo criado com sucesso!', 'success')
-        return redirect(url_for('main.termo_list'))
+        try:
+            db.session.commit()
+            flash('Termo criado com sucesso!', 'success')
+            return redirect(url_for('main.termo_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao criar termo: ' + str(e), 'error')
     return render_template('termos/termo_form.html', form=form)
 
 @bp.route('/termos/edit/<int:id>', methods=['GET', 'POST'])
@@ -408,18 +508,26 @@ def termo_edit(id):
         termo.descricao = form.descricao.data
         termo.data_inicio = form.data_inicio.data
         termo.data_fim = form.data_fim.data
-        db.session.commit()
-        flash('Termo atualizado com sucesso!', 'success')
-        return redirect(url_for('main.termo_list'))
+        try:
+            db.session.commit()
+            flash('Termo atualizado com sucesso!', 'success')
+            return redirect(url_for('main.termo_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao atualizar termo: ' + str(e), 'error')
     return render_template('termos/termo_form.html', form=form, termo=termo)
 
 @bp.route('/termos/delete/<int:id>', methods=['GET'])
 @login_required
 def termo_delete(id):
     termo = Termo.query.get_or_404(id)
-    db.session.delete(termo)
-    db.session.commit()
-    flash('Termo excluído com sucesso!', 'success')
+    try:
+        db.session.delete(termo)
+        db.session.commit()
+        flash('Termo excluído com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Erro ao excluir termo: ' + str(e), 'error')
     return redirect(url_for('main.termo_list'))
 
 # --- CRUD Vacina ---
@@ -442,9 +550,13 @@ def vacina_create():
             data=form.data.data
         )
         db.session.add(vacina)
-        db.session.commit()
-        flash('Vacina criada com sucesso!', 'success')
-        return redirect(url_for('main.vacina_list'))
+        try:
+            db.session.commit()
+            flash('Vacina criada com sucesso!', 'success')
+            return redirect(url_for('main.vacina_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao criar vacina: ' + str(e), 'error')
     return render_template('saude/vacina_form.html', form=form)
 
 @bp.route('/vacinas/edit/<int:id>', methods=['GET', 'POST'])
@@ -458,18 +570,26 @@ def vacina_edit(id):
         vacina.nome = form.nome.data
         vacina.dose = form.dose.data
         vacina.data = form.data.data
-        db.session.commit()
-        flash('Vacina atualizada com sucesso!', 'success')
-        return redirect(url_for('main.vacina_list'))
+        try:
+            db.session.commit()
+            flash('Vacina atualizada com sucesso!', 'success')
+            return redirect(url_for('main.vacina_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao atualizar vacina: ' + str(e), 'error')
     return render_template('saude/vacina_form.html', form=form, vacina=vacina)
 
 @bp.route('/vacinas/delete/<int:id>', methods=['GET'])
 @login_required
 def vacina_delete(id):
     vacina = Vacina.query.get_or_404(id)
-    db.session.delete(vacina)
-    db.session.commit()
-    flash('Vacina excluída com sucesso!', 'success')
+    try:
+        db.session.delete(vacina)
+        db.session.commit()
+        flash('Vacina excluída com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Erro ao excluir vacina: ' + str(e), 'error')
     return redirect(url_for('main.vacina_list'))
 
 # --- CRUD Exame ---
@@ -492,9 +612,13 @@ def exame_create():
             data=form.data.data
         )
         db.session.add(exame)
-        db.session.commit()
-        flash('Exame criado com sucesso!', 'success')
-        return redirect(url_for('main.exame_list'))
+        try:
+            db.session.commit()
+            flash('Exame criado com sucesso!', 'success')
+            return redirect(url_for('main.exame_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao criar exame: ' + str(e), 'error')
     return render_template('saude/exame_form.html', form=form)
 
 @bp.route('/exames/edit/<int:id>', methods=['GET', 'POST'])
@@ -508,18 +632,26 @@ def exame_edit(id):
         exame.tipo = form.tipo.data
         exame.resultado = form.resultado.data
         exame.data = form.data.data
-        db.session.commit()
-        flash('Exame atualizado com sucesso!', 'success')
-        return redirect(url_for('main.exame_list'))
+        try:
+            db.session.commit()
+            flash('Exame atualizado com sucesso!', 'success')
+            return redirect(url_for('main.exame_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao atualizar exame: ' + str(e), 'error')
     return render_template('saude/exame_form.html', form=form, exame=exame)
 
 @bp.route('/exames/delete/<int:id>', methods=['GET'])
 @login_required
 def exame_delete(id):
     exame = Exame.query.get_or_404(id)
-    db.session.delete(exame)
-    db.session.commit()
-    flash('Exame excluído com sucesso!', 'success')
+    try:
+        db.session.delete(exame)
+        db.session.commit()
+        flash('Exame excluído com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Erro ao excluir exame: ' + str(e), 'error')
     return redirect(url_for('main.exame_list'))
 
 # --- CRUD Atestado ---
@@ -543,9 +675,13 @@ def atestado_create():
             documento=form.documento.data
         )
         db.session.add(atestado)
-        db.session.commit()
-        flash('Atestado criado com sucesso!', 'success')
-        return redirect(url_for('main.atestado_list'))
+        try:
+            db.session.commit()
+            flash('Atestado criado com sucesso!', 'success')
+            return redirect(url_for('main.atestado_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao criar atestado: ' + str(e), 'error')
     return render_template('saude/atestado_form.html', form=form)
 
 @bp.route('/atestados/edit/<int:id>', methods=['GET', 'POST'])
@@ -560,18 +696,26 @@ def atestado_edit(id):
         atestado.data_inicio = form.data_inicio.data
         atestado.data_fim = form.data_fim.data
         atestado.documento = form.documento.data
-        db.session.commit()
-        flash('Atestado atualizado com sucesso!', 'success')
-        return redirect(url_for('main.atestado_list'))
+        try:
+            db.session.commit()
+            flash('Atestado atualizado com sucesso!', 'success')
+            return redirect(url_for('main.atestado_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao atualizar atestado: ' + str(e), 'error')
     return render_template('saude/atestado_form.html', form=form, atestado=atestado)
 
 @bp.route('/atestados/delete/<int:id>', methods=['GET'])
 @login_required
 def atestado_delete(id):
     atestado = Atestado.query.get_or_404(id)
-    db.session.delete(atestado)
-    db.session.commit()
-    flash('Atestado excluído com sucesso!', 'success')
+    try:
+        db.session.delete(atestado)
+        db.session.commit()
+        flash('Atestado excluído com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Erro ao excluir atestado: ' + str(e), 'error')
     return redirect(url_for('main.atestado_list'))
 
 # --- CRUD Doença ---
@@ -594,9 +738,13 @@ def doenca_create():
             data_diagnostico=form.data_diagnostico.data
         )
         db.session.add(doenca)
-        db.session.commit()
-        flash('Doença criada com sucesso!', 'success')
-        return redirect(url_for('main.doenca_list'))
+        try:
+            db.session.commit()
+            flash('Doença criada com sucesso!', 'success')
+            return redirect(url_for('main.doenca_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao criar doença: ' + str(e), 'error')
     return render_template('saude/doenca_form.html', form=form)
 
 @bp.route('/doencas/edit/<int:id>', methods=['GET', 'POST'])
@@ -610,18 +758,26 @@ def doenca_edit(id):
         doenca.nome = form.nome.data
         doenca.cid = form.cid.data
         doenca.data_diagnostico = form.data_diagnostico.data
-        db.session.commit()
-        flash('Doença atualizada com sucesso!', 'success')
-        return redirect(url_for('main.doenca_list'))
+        try:
+            db.session.commit()
+            flash('Doença atualizada com sucesso!', 'success')
+            return redirect(url_for('main.doenca_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao atualizar doença: ' + str(e), 'error')
     return render_template('saude/doenca_form.html', form=form, doenca=doenca)
 
 @bp.route('/doencas/delete/<int:id>', methods=['GET'])
 @login_required
 def doenca_delete(id):
     doenca = Doenca.query.get_or_404(id)
-    db.session.delete(doenca)
-    db.session.commit()
-    flash('Doença excluída com sucesso!', 'success')
+    try:
+        db.session.delete(doenca)
+        db.session.commit()
+        flash('Doença excluída com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Erro ao excluir doença: ' + str(e), 'error')
     return redirect(url_for('main.doenca_list'))
 
 # --- Relatório Completo ---
@@ -651,9 +807,15 @@ def relatorio_completo():
     if busca:
         query = query.filter(Pessoa.nome.ilike(f'%{busca}%'))
 
-    pagination = query.order_by(Pessoa.nome).paginate(page=page, per_page=per_page)
+    pagination = query.order_by(Pessoa.nome).paginate(page=page, per_page=per_page, error_out=False)
 
     return render_template('relatorio/relatorio_completo.html',
                            pessoas=pagination.items,
                            pagination=pagination,
                            busca=busca)
+
+@bp.route('/keep-session-alive', methods=['GET'])
+@login_required
+def keep_session_alive():
+    session['last_activity'] = datetime.utcnow().isoformat()
+    return {'status': 'success'}, 200

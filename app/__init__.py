@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import os
 from authlib.integrations.flask_client import OAuth
+from flask_cors import CORS
 
 # Carrega variáveis de ambiente do .env
 load_dotenv()
@@ -28,7 +29,8 @@ def create_app():
         f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
     )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=1)
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=1)  
+    app.config['SESSION_TYPE'] = 'filesystem' 
     app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_CLIENT_ID')
     app.config['GOOGLE_CLIENT_SECRET'] = os.getenv('GOOGLE_CLIENT_SECRET')
     app.config['SERVER_NAME'] = 'localhost:8000'
@@ -40,6 +42,7 @@ def create_app():
     login_manager.login_view = 'main.login'
     login_manager.login_message = None
     login_manager.login_message_category = 'info'
+    CORS(app)  # Suporte a CORS
 
     # Inicializa OAuth
     oauth.init_app(app)
@@ -70,7 +73,7 @@ def create_app():
     # Middleware para verificar expiração da sessão
     @app.before_request
     def check_session_timeout():
-        if request.endpoint in ['main.login', 'main.register', 'main.google_login', 'main.google_callback']:
+        if request.endpoint in ['main.login', 'main.register', 'main.google_login', 'main.google_callback', 'main.keep_session_alive']:
             return
 
         if current_user.is_authenticated:
@@ -98,6 +101,6 @@ def create_app():
 
     @app.context_processor
     def inject_now():
-        return {'now': datetime.now}
+        return {'now': datetime.utcnow}
 
     return app

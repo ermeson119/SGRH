@@ -4,13 +4,16 @@ from datetime import date
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(100), unique=True, nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False, index=True)
     password = db.Column(db.String(255), nullable=True)
 
 class Pessoa(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=False, unique=True, index=True)
+    cpf = db.Column(db.String(14), nullable=False, unique=True, index=True)
+    matricula = db.Column(db.String(20), nullable=False, unique=True, index=True)
+    vinculo = db.Column(db.String(50), nullable=False)
     profissao_id = db.Column(db.Integer, db.ForeignKey('profissao.id'), nullable=False)
     setor_id = db.Column(db.Integer, db.ForeignKey('setor.id'), nullable=True)
     profissao = db.relationship('Profissao', backref='pessoas')
@@ -18,31 +21,30 @@ class Pessoa(db.Model):
 
 class Profissao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100), nullable=False)
+    nome = db.Column(db.String(100), nullable=False, unique=True, index=True)
 
 class Setor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100), nullable=False)
+    nome = db.Column(db.String(100), nullable=False, unique=True, index=True)
     descricao = db.Column(db.Text)
 
 class Folha(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False)
+    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False, index=True)
     valor = db.Column(db.Float, nullable=False)
     data = db.Column(db.Date, nullable=False)
     pessoa = db.relationship('Pessoa', backref='folhas')
 
-
 class Curso(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
-    duracao = db.Column(db.String(50), nullable=False) 
+    duracao = db.Column(db.String(50), nullable=False)
     tipo = db.Column(db.String(50), nullable=False)
 
 class Capacitacao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False)
-    curso_id = db.Column(db.Integer, db.ForeignKey('curso.id'), nullable=True)  
+    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False, index=True)
+    curso_id = db.Column(db.Integer, db.ForeignKey('curso.id'), nullable=True, index=True)
     descricao = db.Column(db.String(200), nullable=False)
     data = db.Column(db.Date, nullable=False)
     pessoa = db.relationship('Pessoa', backref='capacitacoes')
@@ -50,7 +52,7 @@ class Capacitacao(db.Model):
 
 class Termo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False)
+    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False, index=True)
     tipo = db.Column(db.String(100), nullable=False)
     descricao = db.Column(db.Text, nullable=False)
     data_inicio = db.Column(db.Date, nullable=False)
@@ -59,7 +61,7 @@ class Termo(db.Model):
 
 class Vacina(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False)
+    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False, index=True)
     nome = db.Column(db.String(100), nullable=False)
     dose = db.Column(db.String(50))
     data = db.Column(db.Date, nullable=False)
@@ -67,7 +69,7 @@ class Vacina(db.Model):
 
 class Exame(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False)
+    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False, index=True)
     tipo = db.Column(db.String(100), nullable=False)
     resultado = db.Column(db.Text)
     data = db.Column(db.Date, nullable=False)
@@ -75,7 +77,7 @@ class Exame(db.Model):
 
 class Atestado(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False)
+    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False, index=True)
     motivo = db.Column(db.String(200), nullable=False)
     data_inicio = db.Column(db.Date, nullable=False)
     data_fim = db.Column(db.Date, nullable=False)
@@ -84,7 +86,7 @@ class Atestado(db.Model):
 
 class Doenca(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False)
+    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False, index=True)
     nome = db.Column(db.String(100), nullable=False)
     cid = db.Column(db.String(20))
     data_diagnostico = db.Column(db.Date, nullable=False)

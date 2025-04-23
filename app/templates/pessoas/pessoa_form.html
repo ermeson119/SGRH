@@ -4,26 +4,61 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <h2 class="mb-4">{{ 'Editar' if pessoa else 'Adicionar' }} Pessoa</h2>
-        <form method="POST">
+        <form method="POST" novalidate>
             {{ form.hidden_tag() }}
             <div class="mb-3">
                 {{ form.nome.label(class="form-label") }}
-                {{ form.nome(class="form-control") }}
+                {{ form.nome(class="form-control" + (" is-invalid" if form.nome.errors else "")) }}
+                {% for error in form.nome.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
             </div>
             <div class="mb-3">
                 {{ form.email.label(class="form-label") }}
-                {{ form.email(class="form-control") }}
+                {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                {% for error in form.email.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="mb-3">
+                {{ form.cpf.label(class="form-label") }}
+                {{ form.cpf(class="form-control" + (" is-invalid" if form.cpf.errors else "")) }}
+                {% for error in form.cpf.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="mb-3">
+                {{ form.matricula.label(class="form-label") }}
+                {{ form.matricula(class="form-control" + (" is-invalid" if form.matricula.errors else "")) }}
+                {% for error in form.matricula.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="mb-3">
+                {{ form.vinculo.label(class="form-label") }}
+                {{ form.vinculo(class="form-control" + (" is-invalid" if form.vinculo.errors else "")) }}
+                {% for error in form.vinculo.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
             </div>
             <div class="mb-3">
                 {{ form.profissao_id.label(class="form-label") }}
-                {{ form.profissao_id(class="form-select") }}
+                {{ form.profissao_id(class="form-select" + (" is-invalid" if form.profissao_id.errors else "")) }}
+                {% for error in form.profissao_id.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
             </div>
             <div class="mb-3">
                 {{ form.setor_id.label(class="form-label") }}
-                {{ form.setor_id(class="form-select") }}
+                {{ form.setor_id(class="form-select" + (" is-invalid" if form.setor_id.errors else "")) }}
+                {% for error in form.setor_id.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
             </div>
-            <button type="submit" class="btn btn-success">Salvar</button>
-            <a href="{{ url_for('main.pessoa_list') }}" class="btn btn-secondary">Cancelar</a>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">Salvar</button>
+                <a href="{{ url_for('main.pessoa_list') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
         </form>
     </div>
 </div>
