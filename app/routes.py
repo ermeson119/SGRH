@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, oauth
 from app.models import User, Pessoa, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Doenca, Curso
@@ -17,6 +17,47 @@ bp = Blueprint('main', __name__)
 @bp.route('/')
 def index():
     return redirect(url_for('main.login'))
+
+@bp.before_request
+def check_session_timeout():
+    # endpoints que não devem passar pela checagem de tempo de sessão
+    if request.endpoint in [
+        'main.login', 'main.register',
+        'main.google_login', 'main.google_callback',
+        'main.keep_session_alive'
+    ]:
+        return
+
+    if current_user.is_authenticated:
+        session.permanent = True
+
+        if not session:
+            flash('Erro na sessão. Faça login novamente.', 'error')
+            logout_user()
+            return redirect(url_for('main.login'))
+
+        if 'last_activity' not in session:
+            session['last_activity'] = datetime.utcnow().isoformat()
+
+        last_activity_str = session.get('last_activity')
+        try:
+            last_activity = datetime.fromisoformat(last_activity_str)
+            current_time = datetime.utcnow()
+            # usa current_app.config em vez de app.config
+            timeout = current_app.config['PERMANENT_SESSION_LIFETIME']
+            if (current_time - last_activity) > timeout:
+                flash('Sua sessão expirou. Faça login novamente.', 'info')
+                logout_user()
+                session.clear()
+                session['next'] = request.url
+                return redirect(url_for('main.login'))
+        except ValueError:
+            flash('Erro na sessão. Faça login novamente.', 'error')
+            logout_user()
+            session.clear()
+            return redirect(url_for('main.login'))
+
+        session['last_activity'] = datetime.utcnow().isoformat()
 
 @bp.route('/login/google')
 def google_login():

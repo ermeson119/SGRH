@@ -3,6 +3,7 @@ from app import db
 from datetime import date
 
 class User(UserMixin, db.Model):
+    __tablename__ = 'users' 
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100), unique=True, nullable=False, index=True)
     password = db.Column(db.String(255), nullable=True)
