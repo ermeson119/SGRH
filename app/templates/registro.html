@@ -24,7 +24,7 @@
             </div>
             <div class="mb-3">
                 {{ form.password.label(class="form-label") }}
-                {{ form.password(class="form-control", placeholder="Digite sua senha") }}
+                {{ form.password(class="form-control", type="password", placeholder="Digite sua senha") }}
                 {% if form.password.errors %}
                     {% for error in form.password.errors %}
                         <small class="text-danger">{{ error }}</small>
@@ -33,7 +33,7 @@
             </div>
             <div class="mb-3">
                 {{ form.confirm_password.label(class="form-label") }}
-                {{ form.confirm_password(class="form-control", placeholder="Confirme sua senha") }}
+                {{ form.confirm_password(class="form-control", type="password", placeholder="Confirme sua senha") }}
                 {% if form.confirm_password.errors %}
                     {% for error in form.confirm_password.errors %}
                         <small class="text-danger">{{ error }}</small>

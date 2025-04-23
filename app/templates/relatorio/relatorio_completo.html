@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% block title %}Relatório Completo{% endblock %}
 {% block content %}
 <div class="container my-5">
     <h2 class="mb-4 text-center">Relatório Completo dos Funcionários</h2>
@@ -37,11 +38,26 @@
                     </h5>
                     <div id="capacitacoes-{{ pessoa.id }}" class="collapse show">
                         {% if pessoa.capacitacoes %}
-                            <ul class="list-group list-group-flush">
-                                {% for c in pessoa.capacitacoes %}
-                                    <li class="list-group-item">{{ c.descricao }} — {{ c.data.strftime('%d/%m/%Y') }}</li>
-                                {% endfor %}
-                            </ul>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Curso</th>
+                                            <th>Descrição</th>
+                                            <th>Data</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for c in pessoa.capacitacoes %}
+                                            <tr>
+                                                <td>{{ c.curso.nome if c.curso else 'N/A' }}</td>
+                                                <td>{{ c.descricao }}</td>
+                                                <td>{{ c.data.strftime('%d/%m/%Y') }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
                         {% else %}
                             <p class="text-muted">Nenhuma capacitação registrada.</p>
                         {% endif %}

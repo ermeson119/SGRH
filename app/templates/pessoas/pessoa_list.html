@@ -26,8 +26,11 @@
         <div class="card h-100 shadow-sm border-0">
             <div class="card-body">
                 <h5 class="card-title">{{ pessoa.nome }}</h5>
-                <p class="card-text text-muted">{{ pessoa.email }}</p>
-                <p class="card-text text-muted"><strong>Profissão:</strong> {{ pessoa.profissao.nome }}</p>
+                <p class="card-text text-muted">{{ pessoa.email or 'Sem email' }}</p>
+                <p class="card-text text-muted"><strong>CPF:</strong> {{ pessoa.cpf or 'Não informado' }}</p>
+                <p class="card-text text-muted"><strong>Matrícula:</strong> {{ pessoa.matricula or 'Não informado' }}</p>
+                <p class="card-text text-muted"><strong>Vínculo:</strong> {{ pessoa.vinculo or 'Não informado' }}</p>
+                <p class="card-text text-muted"><strong>Profissão:</strong> {{ pessoa.profissao.nome if pessoa.profissao else 'Sem profissão' }}</p>
                 <p class="card-text text-muted"><strong>Setor:</strong> {{ pessoa.setor.nome if pessoa.setor else 'Nenhum' }}</p>
             </div>
             <div class="card-footer bg-white border-0 d-flex justify-content-between">
@@ -36,11 +39,15 @@
                 </a>
                 <a href="{{ url_for('main.pessoa_delete', id=pessoa.id) }}"
                    class="btn btn-outline-danger btn-sm"
-                   onclick="return confirm('Tem certeza que deseja excluir {{ pessoa.nome }}?')">
+                   onclick="return confirm('Tem certeza que deseja excluir {{ pessoa.nome | e }}?')">
                     🗑️ Excluir
                 </a>
             </div>
         </div>
+    </div>
+    {% else %}
+    <div class="col">
+        <p class="text-muted">Nenhuma pessoa cadastrada.</p>
     </div>
     {% endfor %}
 </div>
