@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Gerenciar Solicitações de Registro{% endblock %}
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Solicitações de Registro Pendente</h2>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    {% if requests %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Método de Autenticação</th>
+                    <th>Data da Solicitação</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                    <tr>
+                        <td>{{ req.email }}</td>
+                        <td>{{ req.auth_method | capitalize }}</td>
+                        <td>{{ req.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <a href="{{ url_for('main.request_manage', id=req.id) }}" class="btn btn-primary btn-sm">Gerenciar</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Nenhuma solicitação pendente.</p>
+    {% endif %}
+</div>
+{% endblock %}

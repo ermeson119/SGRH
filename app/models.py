@@ -1,12 +1,26 @@
 from flask_login import UserMixin
 from app import db
-from datetime import date
+from datetime import datetime
 
 class User(UserMixin, db.Model):
-    __tablename__ = 'users' 
+    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100), unique=True, nullable=False, index=True)
     password = db.Column(db.String(255), nullable=True)
+    status = db.Column(db.String(20), default='pending', nullable=False)  # pending, approved, rejected
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
+
+    def is_approved(self):
+        return self.status == 'approved'
+
+class RegistrationRequest(db.Model):
+    __tablename__ = 'registration_requests'
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(100), nullable=False, index=True)
+    password = db.Column(db.String(255), nullable=True)  # Para registros normais
+    auth_method = db.Column(db.String(20), nullable=False)  # 'form' ou 'google'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    status = db.Column(db.String(20), default='pending', nullable=False)
 
 class Pessoa(db.Model):
     id = db.Column(db.Integer, primary_key=True)

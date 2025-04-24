@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Gerenciar Solicitação{% endblock %}
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Gerenciar Solicitação de Registro</h2>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <div class="card p-4">
+        <p><strong>Email:</strong> {{ request_obj.email }}</p>
+        <p><strong>Método de Autenticação:</strong> {{ request_obj.auth_method | capitalize }}</p>
+        <p><strong>Data da Solicitação:</strong> {{ request_obj.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+                {{ form.action.label(class="form-label") }}
+                {{ form.action(class="form-select") }}
+            </div>
+            <button type="submit" class="btn btn-primary">Confirmar</button>
+            <a href="{{ url_for('main.request_list') }}" class="btn btn-secondary">Voltar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -9,6 +9,10 @@ class LoginForm(FlaskForm):
     password = StringField('Senha', validators=[DataRequired()])
     submit = SubmitField('Entrar')
 
+class ApproveRequestForm(FlaskForm):
+    action = SelectField('Ação', choices=[('approve', 'Aprovar'), ('reject', 'Rejeitar')], validators=[DataRequired()])
+    submit = SubmitField('Confirmar')
+
 class RegisterForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Length(max=100), Email()])
     password = StringField('Senha', validators=[DataRequired(), Length(min=6, message='A senha deve ter pelo menos 6 caracteres.')])

@@ -4,6 +4,7 @@
 <div class="container d-flex justify-content-center align-items-center">
     <div class="col-md-6 bg-light p-4 rounded shadow border">
         <h2 class="mb-4 text-center">Cadastro de Usuário</h2>
+        <p class="text-center text-muted">Seu cadastro será revisado por um administrador.</p>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}

@@ -1,7 +1,7 @@
 from flask import Flask, session, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user, logout_user
-from flask_migrate import Migrate
+from flask_migrate import Migrate, upgrade  # Importe o 'upgrade'
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import os
@@ -9,6 +9,7 @@ from authlib.integrations.flask_client import OAuth
 from flask_cors import CORS
 from flask_session import Session
 import redis
+from werkzeug.security import generate_password_hash
 
 # Carrega variáveis de ambiente do .env
 load_dotenv()
@@ -18,8 +19,25 @@ db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
 oauth = OAuth()
-# ✅ IMPORTAÇÃO GLOBAL DAS MODELS (obrigatório para funcionar com Flask-Migrate)
-from app.models import User, Pessoa, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Doenca, Curso
+
+# Importação global das models (obrigatório para funcionar com Flask-Migrate)
+from app.models import User, Pessoa, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Doenca, Curso, RegistrationRequest
+
+def create_admin():
+    admin = User.query.filter_by(email='admin@admin.com').first()
+    if not admin:
+        hashed_password = generate_password_hash('123456')
+        admin = User(
+            email='admin@admin.com',
+            password=hashed_password,
+            status='approved',
+            is_admin=True
+        )
+        db.session.add(admin)
+        db.session.commit()
+        print('Administrador criado com sucesso!')
+    else:
+        print('Administrador já existe.')
 
 def create_app():
     app = Flask(__name__)
@@ -32,11 +50,10 @@ def create_app():
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=1)
     app.config['SESSION_TYPE'] = 'redis'
 
-    # Obtém a URL do Redis da variável de ambiente
-    redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')  # Fallback para localhost se não estiver no Docker
+    # Configuração do Redis
+    redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
     try:
         app.config['SESSION_REDIS'] = redis.from_url(redis_url)
-        # Testa a conexão com o Redis
         app.config['SESSION_REDIS'].ping()
     except redis.ConnectionError as e:
         app.logger.error(f"Erro ao conectar ao Redis: {str(e)}")
@@ -45,13 +62,14 @@ def create_app():
     app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_CLIENT_ID')
     app.config['GOOGLE_CLIENT_SECRET'] = os.getenv('GOOGLE_CLIENT_SECRET')
 
+    # Inicializações
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
     login_manager.login_view = 'main.login'
     login_manager.login_message = None
     login_manager.login_message_category = 'info'
-    Session(app)  # Inicializa Flask-Session
+    Session(app)
     CORS(app, resources={r"/*": {"origins": "http://localhost:8000"}})
 
     oauth.init_app(app)
@@ -82,7 +100,7 @@ def create_app():
             return
         if current_user.is_authenticated:
             session.permanent = True
-            if not session:  # Verificação para evitar acessar session se for None
+            if not session:
                 flash('Erro na sessão. Faça login novamente.', 'error')
                 logout_user()
                 return redirect(url_for('main.login'))
@@ -108,5 +126,18 @@ def create_app():
     @app.context_processor
     def inject_now():
         return {'now': datetime.utcnow}
+
+    # Aplica as migrações e cria o administrador
+    with app.app_context():
+        # Aplica as migrações para criar as tabelas
+        try:
+            upgrade()  # Executa as migrações (equivalente a 'flask db upgrade')
+            print("Migrações aplicadas com sucesso!")
+        except Exception as e:
+            print(f"Erro ao aplicar migrações: {str(e)}")
+            raise
+
+        # Agora que as tabelas foram criadas, chama create_admin()
+        create_admin()
 
     return app

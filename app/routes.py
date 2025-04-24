@@ -1,15 +1,16 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, oauth
-from app.models import User, Pessoa, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Doenca, Curso
+from app.models import User, Pessoa, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Doenca, Curso, RegistrationRequest
 from app.forms import (
     LoginForm, RegisterForm, PessoaForm, ProfissaoForm, SetorForm, FolhaForm,
-    CapacitacaoForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, DoencaForm, CursoForm
+    CapacitacaoForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, DoencaForm, CursoForm, ApproveRequestForm
 )
 from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
+from functools import wraps
 
 # Cria um Blueprint para as rotas
 bp = Blueprint('main', __name__)
@@ -59,6 +60,54 @@ def check_session_timeout():
 
         session['last_activity'] = datetime.utcnow().isoformat()
 
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            flash('Acesso restrito a administradores.', 'error')
+            return redirect(url_for('main.login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@bp.route('/admin/requests', methods=['GET'])
+@login_required
+@admin_required
+def request_list():
+    requests = RegistrationRequest.query.filter_by(status='pending').all()
+    return render_template('admin/request_list.html', requests=requests)
+
+@bp.route('/admin/requests/<int:id>/manage', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def request_manage(id):
+    request_obj = RegistrationRequest.query.get_or_404(id)
+    form = ApproveRequestForm()
+    if form.validate_on_submit():
+        action = form.action.data
+        if action == 'approve':
+            if request_obj.auth_method == 'form':
+                user = User(
+                    email=request_obj.email,
+                    password=request_obj.password,
+                    status='approved',
+                    is_admin=False
+                )
+            else:  # Google
+                user = User(
+                    email=request_obj.email,
+                    password='google-auth',
+                    status='approved',
+                    is_admin=False
+                )
+            db.session.add(user)
+            request_obj.status = 'approved'
+        else:
+            request_obj.status = 'rejected'
+        db.session.commit()
+        flash(f'Solicitação {action}d com sucesso!', 'success')
+        return redirect(url_for('main.request_list'))
+    return render_template('admin/request_manage.html', form=form, request_obj=request_obj)
+
 @bp.route('/login/google')
 def google_login():
     redirect_uri = url_for('main.google_callback', _external=True)
@@ -79,16 +128,32 @@ def google_callback():
             return redirect(url_for('main.login'))
 
         user = User.query.filter_by(email=email).first()
-        if not user:
-            user = User(email=email, password='google-auth')
-            db.session.add(user)
-            db.session.commit()
+        if user:
+            if user.is_approved():
+                login_user(user)
+                session['last_activity'] = datetime.utcnow().isoformat()
+                next_page = request.args.get('next') or session.get('next') or url_for('main.pessoa_list')
+                session.pop('next', None)
+                return redirect(next_page)
+            else:
+                flash('Sua conta ainda não foi aprovada pelo administrador.', 'warning')
+                return redirect(url_for('main.login'))
 
-        login_user(user)
-        session['last_activity'] = datetime.utcnow().isoformat()
-        next_page = request.args.get('next') or session.get('next') or url_for('main.pessoa_list')
-        session.pop('next', None)
-        return redirect(next_page)
+        # Verifica se já existe uma solicitação pendente
+        existing_request = RegistrationRequest.query.filter_by(email=email).first()
+        if existing_request:
+            flash('Você já possui uma solicitação de registro pendente.', 'warning')
+            return redirect(url_for('main.login'))
+
+        # Cria uma nova solicitação
+        new_request = RegistrationRequest(
+            email=email,
+            auth_method='google'
+        )
+        db.session.add(new_request)
+        db.session.commit()
+        flash('Sua solicitação de registro foi enviada. Aguarde a aprovação do administrador.', 'info')
+        return redirect(url_for('main.login'))
 
     except Exception as e:
         flash('Erro ao autenticar com Google: ' + str(e), 'error')
@@ -102,12 +167,16 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.password != 'google-auth' and check_password_hash(user.password, form.password.data):
-            login_user(user)
-            session['last_activity'] = datetime.utcnow().isoformat()
-            next_page = request.args.get('next') or session.get('next') or url_for('main.pessoa_list')
-            session.pop('next', None)
-            return redirect(next_page)
-        flash('Email ou senha inválidos', 'error')
+            if user.is_approved():
+                login_user(user)
+                session['last_activity'] = datetime.utcnow().isoformat()
+                next_page = request.args.get('next') or session.get('next') or url_for('main.pessoa_list')
+                session.pop('next', None)
+                return redirect(next_page)
+            else:
+                flash('Sua conta ainda não foi aprovada pelo administrador.', 'warning')
+        else:
+            flash('Email ou senha inválidos', 'error')
     if 'next' not in session and request.args.get('next'):
         session['next'] = request.args.get('next')
     return render_template('login.html', form=form)
@@ -125,14 +194,20 @@ def register():
         return redirect(url_for('main.pessoa_list'))
     form = RegisterForm()
     if form.validate_on_submit():
+        existing_request = RegistrationRequest.query.filter_by(email=form.email.data).first()
         existing_user = User.query.filter_by(email=form.email.data).first()
-        if existing_user:
-            flash('Este email já está em uso.', 'warning')
+        if existing_user or existing_request:
+            flash('Este email já está em uso ou possui uma solicitação pendente.', 'warning')
         else:
             hashed_password = generate_password_hash(form.password.data)
-            new_user = User(email=form.email.data, password=hashed_password)
-            db.session.add(new_user)
-            if commit_with_flash('Usuário', 'cadastrado'):
+            new_request = RegistrationRequest(
+                email=form.email.data,
+                password=hashed_password,
+                auth_method='form'
+            )
+            db.session.add(new_request)
+            if commit_with_flash('Solicitação de registro', 'enviada'):
+                flash('Sua solicitação foi enviada. Aguarde a aprovação do administrador.', 'info')
                 return redirect(url_for('main.login'))
     return render_template('registro.html', form=form)
 

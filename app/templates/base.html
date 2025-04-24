@@ -8,30 +8,33 @@
     <link rel="stylesheet" href="../static/scripts/base.css">
 </head>
 <body class="d-flex flex-column min-vh-100">
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="#">SGRH</a>
-        <ul class="navbar-nav">
-            {% if current_user.is_authenticated %}
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.pessoa_list') }}">Pessoas</a></li>
-                <li class dau="nav-item"><a class="nav-link" href="{{ url_for('main.profissao_list') }}">Profissões</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.setor_list') }}">Setores</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.folha_list') }}">Folhas</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.curso_list') }}">Cursos</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.capacitacao_list') }}">Capacitações</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.termo_list') }}">Termos</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.vacina_list') }}">Vacinas</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.exame_list') }}">Exames</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.atestado_list') }}">Atestados</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.doenca_list') }}">Doenças</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.relatorio_completo') }}">Relatório Completo</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.logout') }}">Sair</a></li>
-            {% else %}
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.login') }}">Login</a></li>
-            {% endif %}
-        </ul>
-    </div>
-</nav>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">SGRH</a>
+            <ul class="navbar-nav">
+                {% if current_user.is_authenticated %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.pessoa_list') }}">Pessoas</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.profissao_list') }}">Profissões</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.setor_list') }}">Setores</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.folha_list') }}">Folhas</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.curso_list') }}">Cursos</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.capacitacao_list') }}">Capacitações</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.termo_list') }}">Termos</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.vacina_list') }}">Vacinas</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.exame_list') }}">Exames</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.atestado_list') }}">Atestados</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.doenca_list') }}">Doenças</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.relatorio_completo') }}">Relatório Completo</a></li>
+                    {% if current_user.is_admin %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.request_list') }}">Solicitações</a></li>
+                    {% endif %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.logout') }}">Sair</a></li>
+                {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.login') }}">Login</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
 
 <div class="main-content">
     {% block content %}{% endblock %}
