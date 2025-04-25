@@ -1,33 +1,45 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Folhas de Pagamento</h2>
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            Folhas de Pagamento
+        </h2>
+        <a href="{{ url_for('main.folha_create') }}" class="btn btn-success">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
+            </svg>
+            Adicionar Setor
+        </a>
+    </div>
 
-<a href="{{ url_for('main.folha_create') }}" class="btn btn-success mb-3">+ Nova Folha</a>
-
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Nome da Pessoa</th>
-            <th>Valor (R$)</th>
-            <th>Data</th>
-            <th>Ações</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for folha in folhas %}
-        <tr>
-            <td>{{ folha.id }}</td>
-            <td>{{ folha.pessoa.nome }}</td>
-            <td>R$ {{ folha.valor }}</td>
-            <td>{{ folha.data.strftime('%d/%m/%Y') }}</td>
-            <td>
-                <a href="{{ url_for('main.folha_edit', id=folha.id) }}" class="btn btn-primary btn-sm">Editar</a>
-                <a href="{{ url_for('main.folha_delete', id=folha.id) }}" class="btn btn-danger btn-sm"
-                   onclick="return confirm('Tem certeza que deseja excluir esta folha?')">Excluir</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <table class="table table-bordered table-striped shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Nome da Pessoa</th>
+                <th>Valor (R$)</th>
+                <th>Data</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for folha in folhas %}
+            <tr>
+                <td>{{ folha.pessoa.nome }}</td>
+                <td>R$ {{ folha.valor }}</td>
+                <td>{{ folha.data.strftime('%d/%m/%Y') }}</td>
+                <td>
+                    <a href="{{ url_for('main.folha_edit', id=folha.id) }}" class="btn btn-outline-warning btn-sm me-2">Editar</a>
+                    <a href="{{ url_for('main.folha_delete', id=folha.id) }}" class="btn btn-outline-danger btn-sm"
+                       onclick="return confirm('Tem certeza que deseja excluir esta folha?')">Excluir</a>
+                </td>
+            </tr>
+            {% else %}
+                <tr>
+                    <td colspan="5">Nenhuma folha cadastrada.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
