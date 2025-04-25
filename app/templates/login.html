@@ -16,6 +16,11 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
+        {% if request_status and request_message %}
+            <div class="alert alert-warning">
+                {{ request_message }}
+            </div>
+        {% endif %}
         <form method="POST">
             {{ form.hidden_tag() }}
             <div class="mb-3">

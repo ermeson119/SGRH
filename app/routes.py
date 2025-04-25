@@ -88,14 +88,14 @@ def request_manage(id):
             if request_obj.auth_method == 'form':
                 user = User(
                     email=request_obj.email,
-                    password=request_obj.password,
                     status='approved',
                     is_admin=False
                 )
+                user.password = request_obj.password 
             else:  # Google
                 user = User(
                     email=request_obj.email,
-                    password='google-auth',
+                    password='google-auth',  
                     status='approved',
                     is_admin=False
                 )
@@ -107,6 +107,13 @@ def request_manage(id):
         flash(f'Solicitação {action}d com sucesso!', 'success')
         return redirect(url_for('main.request_list'))
     return render_template('admin/request_manage.html', form=form, request_obj=request_obj)
+
+@bp.route('/admin/requests/rejected', methods=['GET'])
+@login_required
+@admin_required
+def request_rejected_list():
+    requests = RegistrationRequest.query.filter_by(status='rejected').all()
+    return render_template('admin/request_rejected.html', requests=requests)
 
 @bp.route('/login/google')
 def google_login():
@@ -163,23 +170,46 @@ def google_callback():
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('main.pessoa_list'))
+    
     form = LoginForm()
+    request_status = None
+    request_message = None
+    
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user and user.password != 'google-auth' and check_password_hash(user.password, form.password.data):
-            if user.is_approved():
-                login_user(user)
-                session['last_activity'] = datetime.utcnow().isoformat()
-                next_page = request.args.get('next') or session.get('next') or url_for('main.pessoa_list')
-                session.pop('next', None)
-                return redirect(next_page)
+        email = form.email.data.lower()
+        # Verificar se há uma solicitação de registro para o email
+        registration_request = RegistrationRequest.query.filter_by(email=email).first()
+        
+        if registration_request:
+            if registration_request.status == 'pending':
+                request_status = 'pending'
+                request_message = 'Seu cadastro está em análise pelo administrador.'
+            elif registration_request.status == 'rejected':
+                request_status = 'rejected'
+                request_message = 'Cadastro rejeitado pela administração.'
+        
+        if not request_status:  # Prosseguir com a autenticação se não houver solicitação pendente/rejeitada
+            user = User.query.filter_by(email=email).first()
+            if user:
+                if not user.is_approved():
+                    flash('Sua conta ainda não foi aprovada pelo administrador.', 'warning')
+                elif user.password == 'google-auth':
+                    flash('Este usuário deve fazer login via Google.', 'error')
+                elif user.check_password(form.password.data):
+                    login_user(user)
+                    session['last_activity'] = datetime.utcnow().isoformat()
+                    next_page = request.args.get('next') or session.get('next') or url_for('main.pessoa_list')
+                    session.pop('next', None)
+                    return redirect(next_page)
+                else:
+                    flash('Email ou senha inválidos.', 'danger')
             else:
-                flash('Sua conta ainda não foi aprovada pelo administrador.', 'warning')
-        else:
-            flash('Email ou senha inválidos', 'error')
+                flash('Email ou senha inválidos.', 'danger')
+    
     if 'next' not in session and request.args.get('next'):
         session['next'] = request.args.get('next')
-    return render_template('login.html', form=form)
+    
+    return render_template('login.html', form=form, request_status=request_status, request_message=request_message)
 
 @bp.route('/logout')
 @login_required

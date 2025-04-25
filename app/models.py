@@ -1,6 +1,7 @@
 from flask_login import UserMixin
 from app import db
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -9,6 +10,12 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(255), nullable=True)
     status = db.Column(db.String(20), default='pending', nullable=False)  # pending, approved, rejected
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
+
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
 
     def is_approved(self):
         return self.status == 'approved'

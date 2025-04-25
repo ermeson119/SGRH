@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Gerenciar Solicitações de Registro{% endblock %}
+{% block title %}Solicitações de Registro Rejeitadas{% endblock %}
 {% block content %}
 <div class="container">
-    <h2 class="mb-4">Solicitações de Registro Pendente</h2>
+    <h2 class="mb-4">Solicitações de Registro Rejeitadas</h2>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -34,8 +34,8 @@
             </tbody>
         </table>
     {% else %}
-        <p>Nenhuma solicitação pendente.</p>
+        <p>Nenhuma solicitação rejeitada.</p>
     {% endif %}
-    <a href="{{ url_for('main.request_rejected_list') }}" class="btn btn-primary mt-3">Ver Solicitações Rejeitadas</a>
+    <a href="{{ url_for('main.request_list') }}" class="btn btn-secondary">Voltar para Solicitações Pendentes</a>
 </div>
 {% endblock %}
