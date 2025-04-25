@@ -1,41 +1,39 @@
 {% extends "base.html" %}
 {% block title %}Solicitações de Registro Rejeitadas{% endblock %}
 {% block content %}
-<div class="container">
-    <h2 class="mb-4">Solicitações de Registro Rejeitadas</h2>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    {% if requests %}
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Email</th>
-                    <th>Método de Autenticação</th>
-                    <th>Data da Solicitação</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for req in requests %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 200px);">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Solicitações de Registro Rejeitadas</h2>
+        </div>
+
+        {% if requests %}
+            <table class="table table-bordered table-striped shadow-sm">
+                <thead class="table-dark">
                     <tr>
-                        <td>{{ req.email }}</td>
-                        <td>{{ req.auth_method | capitalize }}</td>
-                        <td>{{ req.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                        <td>
-                            <a href="{{ url_for('main.request_manage', id=req.id) }}" class="btn btn-primary btn-sm">Gerenciar</a>
-                        </td>
+                        <th>Email</th>
+                        <th>Método de Autenticação</th>
+                        <th>Data da Solicitação</th>
+                        <th>Ações</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>Nenhuma solicitação rejeitada.</p>
-    {% endif %}
-    <a href="{{ url_for('main.request_list') }}" class="btn btn-secondary">Voltar para Solicitações Pendentes</a>
+                </thead>
+                <tbody>
+                    {% for req in requests %}
+                        <tr>
+                            <td>{{ req.email }}</td>
+                            <td>{{ req.auth_method | capitalize }}</td>
+                            <td>{{ req.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                <a href="{{ url_for('main.request_manage', id=req.id) }}" class="btn btn-primary btn-sm me-2">Gerenciar</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Nenhuma solicitação rejeitada.</p>
+        {% endif %}
+        <a href="{{ url_for('main.request_list') }}" class="btn btn-primary">Voltar para Solicitações Pendentes</a>
+    </div>
 </div>
 {% endblock %}

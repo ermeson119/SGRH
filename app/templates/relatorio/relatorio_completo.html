@@ -9,7 +9,7 @@
         <div class="input-group">
             <input type="text" id="filtro" name="busca" class="form-control"
                    placeholder="Buscar funcionário pelo nome..." value="{{ busca }}">
-            <button class="btn btn-primary" type="submit">Buscar</button>
+            <button class="btn btn-dark" type="submit">Buscar</button>
         </div>
     </form>
 
@@ -17,7 +17,7 @@
     <div id="lista-funcionarios">
         {% for pessoa in pessoas %}
             <div class="card mb-4 shadow-sm funcionario-card">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-dark text-white">
                     <strong class="nome">{{ pessoa.nome }}</strong> — {{ pessoa.profissao.nome }}
                     {% if pessoa.setor %} — {{ pessoa.setor.nome }}{% endif %}
                 </div>
