@@ -1,63 +1,56 @@
 {% extends "base.html" %}
 {% block title %}{{ 'Editar Capacitação' if capacitacao else 'Adicionar Capacitação' }}{% endblock %}
 {% block content %}
-<div class="container">
-    <h1>{{ 'Editar Capacitação' if capacitacao else 'Adicionar Capacitação' }}</h1>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    <form method="POST">
-        {{ form.hidden_tag() }}
+<div class="d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 200px);">
+    <div class="container">
+        <h2>{{ 'Editar Capacitação' if capacitacao else 'Adicionar Capacitação' }}</h2>
 
-        <div class="mb-3">
-            {{ form.pessoa_id.label(class="form-label") }}
-            {{ form.pessoa_id(class="form-select") }}
-            {% if form.pessoa_id.errors %}
-                {% for error in form.pessoa_id.errors %}
-                    <div class="text-danger">{{ error }}</div>
-                {% endfor %}
-            {% endif %}
-        </div>
+        <form method="POST">
+            {{ form.hidden_tag() }}
 
-        <div class="mb-3">
-            {{ form.curso_id.label(class="form-label") }}
-            {{ form.curso_id(class="form-select") }}
-            {% if form.curso_id.errors %}
-                {% for error in form.curso_id.errors %}
-                    <div class="text-danger">{{ error }}</div>
-                {% endfor %}
-            {% endif %}
-        </div>
+            <div class="mb-3">
+                {{ form.pessoa_id.label(class="form-label") }}
+                {{ form.pessoa_id(class="form-select") }}
+                {% if form.pessoa_id.errors %}
+                    {% for error in form.pessoa_id.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
 
-        <div class="mb-3">
-            {{ form.descricao.label(class="form-label") }}
-            {{ form.descricao(class="form-control") }}
-            {% if form.descricao.errors %}
-                {% for error in form.descricao.errors %}
-                    <div class="text-danger">{{ error }}</div>
-                {% endfor %}
-            {% endif %}
-        </div>
+            <div class="mb-3">
+                {{ form.curso_id.label(class="form-label") }}
+                {{ form.curso_id(class="form-select") }}
+                {% if form.curso_id.errors %}
+                    {% for error in form.curso_id.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
 
-        <div class="mb-3">
-            {{ form.data.label(class="form-label") }}
-            {{ form.data(class="form-control", type="date") }}
-            {% if form.data.errors %}
-                {% for error in form.data.errors %}
-                    <div class="text-danger">{{ error }}</div>
-                {% endfor %}
-            {% endif %}
-        </div>
+            <div class="mb-3">
+                {{ form.descricao.label(class="form-label") }}
+                {{ form.descricao(class="form-control") }}
+                {% if form.descricao.errors %}
+                    {% for error in form.descricao.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
 
-        <button type="submit" class="btn btn-primary">Salvar</button>
-        <a href="{{ url_for('main.capacitacao_list') }}" class="btn btn-secondary">Cancelar</a>
-    </form>
+            <div class="mb-3">
+                {{ form.data.label(class="form-label") }}
+                {{ form.data(class="form-control", type="date") }}
+                {% if form.data.errors %}
+                    {% for error in form.data.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a href="{{ url_for('main.capacitacao_list') }}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
 </div>
 {% endblock %}
