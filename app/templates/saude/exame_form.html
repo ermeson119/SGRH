@@ -1,31 +1,55 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>{{ exame.id if exame else 'Novo Exame' }}</h2>
+<div class="d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 200px);">
+    <div class="container">
+        <h2>Exame</h2>
 
-<form method="POST">
-    {{ form.hidden_tag() }}
+        <form method="POST">
+            {{ form.hidden_tag() }}
 
-    <div class="mb-3">
-        {{ form.pessoa_id.label(class="form-label") }}
-        {{ form.pessoa_id(class="form-select") }}
+            <div class="mb-3">
+                {{ form.pessoa_id.label(class="form-label") }}
+                {{ form.pessoa_id(class="form-select") }}
+                {% if form.pessoa_id.errors %}
+                    {% for error in form.pessoa_id.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.tipo.label(class="form-label") }}
+                {{ form.tipo(class="form-control") }}
+                {% if form.tipo.errors %}
+                    {% for error in form.tipo.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.resultado.label(class="form-label") }}
+                {{ form.resultado(class="form-control") }}
+                {% if form.resultado.errors %}
+                    {% for error in form.resultado.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.data.label(class="form-label") }}
+                {{ form.data(class="form-control", type="date") }}
+                {% if form.data.errors %}
+                    {% for error in form.data.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a href="{{ url_for('main.exame_list') }}" class="btn btn-secondary">Cancelar</a>
+        </form>
     </div>
-
-    <div class="mb-3">
-        {{ form.tipo.label(class="form-label") }}
-        {{ form.tipo(class="form-control") }}
-    </div>
-
-    <div class="mb-3">
-        {{ form.resultado.label(class="form-label") }}
-        {{ form.resultado(class="form-control") }}
-    </div>
-
-    <div class="mb-3">
-        {{ form.data.label(class="form-label") }}
-        {{ form.data(class="form-control", type="date") }}
-    </div>
-
-    <button type="submit" class="btn btn-primary">Salvar</button>
-    <a href="{{ url_for('main.exame_list') }}" class="btn btn-secondary">Cancelar</a>
-</form>
+</div>
 {% endblock %}

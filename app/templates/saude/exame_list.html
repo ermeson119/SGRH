@@ -1,33 +1,45 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Exames</h2>
+<div class="d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 200px);">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Exames</h2>
+            <a href="{{ url_for('main.exame_create') }}" class="btn btn-success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-circle-fill" viewBox="0 0 16 16">
+                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
+                </svg>
+                Novo Exame
+            </a>
+        </div>
 
-<a href="{{ url_for('main.exame_create') }}" class="btn btn-success mb-3">+ Novo Exame</a>
-
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Nome da Pessoa</th>
-            <th>Tipo</th>
-            <th>Data</th>
-            <th>Ações</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for exame in exames %}
-        <tr>
-            <td>{{ exame.id }}</td>
-            <td>{{ exame.pessoa.nome }}</td>
-            <td>{{ exame.tipo }}</td>
-            <td>{{ exame.data.strftime('%d/%m/%Y') }}</td>
-            <td>
-                <a href="{{ url_for('main.exame_edit', id=exame.id) }}" class="btn btn-primary btn-sm">Editar</a>
-                <a href="{{ url_for('main.exame_delete', id=exame.id) }}" class="btn btn-danger btn-sm"
-                   onclick="return confirm('Tem certeza que deseja excluir este exame?')">Excluir</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+        <table class="table table-bordered table-striped shadow-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>Nome da Pessoa</th>
+                    <th>Tipo</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for exame in exames %}
+                <tr>
+                    <td>{{ exame.pessoa.nome }}</td>
+                    <td>{{ exame.tipo }}</td>
+                    <td>{{ exame.data.strftime('%d/%m/%Y') }}</td>
+                    <td>
+                        <a href="{{ url_for('main.exame_edit', id=exame.id) }}" class="btn btn-outline-warning btn-sm me-2">Editar</a>
+                        <a href="{{ url_for('main.exame_delete', id=exame.id) }}" class="btn btn-outline-danger btn-sm"
+                           onclick="return confirm('Tem certeza que deseja excluir este exame?')">Excluir</a>
+                    </td>
+                </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4">Nenhum exame cadastrado.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

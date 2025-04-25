@@ -1,36 +1,65 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>{{ atestado.id if atestado else 'Novo Atestado' }}</h2>
+<div class="d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 200px);">
+    <div class="container">
+        <h2>Atestado</h2>
 
-<form method="POST">
-    {{ form.hidden_tag() }}
+        <form method="POST">
+            {{ form.hidden_tag() }}
 
-    <div class="mb-3">
-        {{ form.pessoa_id.label(class="form-label") }}
-        {{ form.pessoa_id(class="form-select") }}
+            <div class="mb-3">
+                {{ form.pessoa_id.label(class="form-label") }}
+                {{ form.pessoa_id(class="form-select") }}
+                {% if form.pessoa_id.errors %}
+                    {% for error in form.pessoa_id.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.motivo.label(class="form-label") }}
+                {{ form.motivo(class="form-control") }}
+                {% if form.motivo.errors %}
+                    {% for error in form.motivo.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.data_inicio.label(class="form-label") }}
+                {{ form.data_inicio(class="form-control", type="date") }}
+                {% if form.data_inicio.errors %}
+                    {% for error in form.data_inicio.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.data_fim.label(class="form-label") }}
+                {{ form.data_fim(class="form-control", type="date") }}
+                {% if form.data_fim.errors %}
+                    {% for error in form.data_fim.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.documento.label(class="form-label") }}
+                {{ form.documento(class="form-control") }}
+                {% if form.documento.errors %}
+                    {% for error in form.documento.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a href="{{ url_for('main.atestado_list') }}" class="btn btn-secondary">Cancelar</a>
+        </form>
     </div>
-
-    <div class="mb-3">
-        {{ form.motivo.label(class="form-label") }}
-        {{ form.motivo(class="form-control") }}
-    </div>
-
-    <div class="mb-3">
-        {{ form.data_inicio.label(class="form-label") }}
-        {{ form.data_inicio(class="form-control", type="date") }}
-    </div>
-
-    <div class="mb-3">
-        {{ form.data_fim.label(class="form-label") }}
-        {{ form.data_fim(class="form-control", type="date") }}
-    </div>
-
-    <div class="mb-3">
-        {{ form.documento.label(class="form-label") }}
-        {{ form.documento(class="form-control") }}
-    </div>
-
-    <button type="submit" class="btn btn-primary">Salvar</button>
-    <a href="{{ url_for('main.atestado_list') }}" class="btn btn-secondary">Cancelar</a>
-</form>
+</div>
 {% endblock %}
