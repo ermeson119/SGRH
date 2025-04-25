@@ -47,7 +47,7 @@ def create_app():
         f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
     )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=1)
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
     app.config['SESSION_TYPE'] = 'redis'
 
     # Configuração do Redis

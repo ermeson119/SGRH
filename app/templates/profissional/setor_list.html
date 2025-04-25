@@ -1,30 +1,50 @@
 {% extends "base.html" %}
 {% block title %}Lista de Setores{% endblock %}
 {% block content %}
-<h2 class="mb-4">Setores</h2>
-<a href="{{ url_for('main.setor_create') }}" class="btn btn-primary mb-3">Adicionar Setor</a>
-<table class="table table-bordered table-striped">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Nome</th>
-            <th>Descrição</th>
-            <th>Ações</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for setor in setores %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="display-6 m-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" fill="currentColor" class="bi bi-building-fill" viewBox="0 0 16 16">
+                <path d="M3 0a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h3v-3.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V16h3a1 1 0 0 0 1-1V1a1 1 0 0 0-1-1zm1 2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zM4 5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zM7.5 5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm2.5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zM4.5 8a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm2.5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/>
+            </svg>
+            Setores
+        </h2>
+        <a href="{{ url_for('main.setor_create') }}" class="btn btn-success">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
+            </svg>
+            Adicionar Setor
+        </a>
+    </div>
+
+    <table class="table table-bordered table-striped shadow-sm">
+        <thead class="table-dark">
             <tr>
-                <td>{{ setor.id }}</td>
-                <td>{{ setor.nome }}</td>
-                <td>{{ setor.descricao if setor.descricao else 'N/A' }}</td>
-                <td>
-                    <a href="{{ url_for('main.setor_edit', id=setor.id) }}" class="btn btn-warning btn-sm">Editar</a>
-                    <a href="{{ url_for('main.setor_delete', id=setor.id) }}" class="btn btn-danger btn-sm"
-                       onclick="return confirm('Tem certeza?')">Excluir</a>
-                </td>
+                <th>Nome</th>
+                <th>Descrição</th>
+                <th>Ações</th>
             </tr>
-        {% endfor %}
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            {% for setor in setores %}
+                <tr>
+                    <td>{{ setor.nome }}</td>
+                    <td>{{ setor.descricao if setor.descricao else 'N/A' }}</td>
+                    <td>
+                        <a href="{{ url_for('main.setor_edit', id=setor.id) }}" class="btn btn-outline-warning btn-sm me-2">
+                            ✏️ Editar
+                        </a>
+                        <a href="{{ url_for('main.setor_delete', id=setor.id) }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Tem certeza?')">
+                            🗑️ Excluir
+                        </a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="3" class="text-center text-muted">Nenhum setor cadastrado.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

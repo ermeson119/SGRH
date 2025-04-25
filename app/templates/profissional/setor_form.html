@@ -1,22 +1,32 @@
 {% extends "base.html" %}
 {% block title %}{{ 'Editar' if setor else 'Adicionar' }} Setor{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <h2 class="mb-4">{{ 'Editar' if setor else 'Adicionar' }} Setor</h2>
-        <form method="POST">
-            {{ form.hidden_tag() }}
-            <div class="mb-3">
-                {{ form.nome.label(class="form-label") }}
-                {{ form.nome(class="form-control") }}
-            </div>
-            <div class="mb-3">
-                {{ form.descricao.label(class="form-label") }}
-                {{ form.descricao(class="form-control") }}
-            </div>
-            <button type="submit" class="btn btn-success">Salvar</button>
-            <a href="{{ url_for('main.setor_list') }}" class="btn btn-secondary">Cancelar</a>
-        </form>
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: calc(100vh - 200px);">
+        <div class="col-md-6">
+            <h2 class="mb-3">{{ 'Editar' if setor else 'Adicionar' }} Setor</h2>
+            <form method="POST" novalidate>
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.nome.label(class="form-label") }}
+                    {{ form.nome(class="form-control" + (" is-invalid" if form.nome.errors else "")) }}
+                    {% for error in form.nome.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="mb-3">
+                    {{ form.descricao.label(class="form-label") }}
+                    {{ form.descricao(class="form-control" + (" is-invalid" if form.descricao.errors else "")) }}
+                    {% for error in form.descricao.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="d-flex gap-3 mt-4">
+                    <button type="submit" class="btn btn-success">Salvar</button>
+                    <a href="{{ url_for('main.setor_list') }}" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

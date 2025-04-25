@@ -1,54 +1,56 @@
 {% extends "base.html" %}
 {% block title %}Lista de Pessoas{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="display-6 m-0">
-        <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" fill="currentColor" class="bi bi-person-fill"
-             viewBox="0 0 16 16">
-            <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
-        </svg>
-        Lista de Pessoas
-    </h2>
-    <a href="{{ url_for('main.pessoa_create') }}" class="btn btn-success">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-             class="bi bi-person-plus-fill" viewBox="0 0 16 16">
-            <path d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
-            <path fill-rule="evenodd"
-                  d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5"/>
-        </svg>
-        Adicionar Pessoa
-    </a>
-</div>
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="display-6 m-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" fill="currentColor" class="bi bi-person-fill"
+                 viewBox="0 0 16 16">
+                <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+            </svg>
+            Lista de Pessoas
+        </h2>
+        <a href="{{ url_for('main.pessoa_create') }}" class="btn btn-success">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                 class="bi bi-person-plus-fill" viewBox="0 0 16 16">
+                <path d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+                <path fill-rule="evenodd"
+                      d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5"/>
+            </svg>
+            Adicionar Pessoa
+        </a>
+    </div>
 
-<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-    {% for pessoa in pessoas %}
-    <div class="col">
-        <div class="card h-100 shadow-sm border-0">
-            <div class="card-body">
-                <h5 class="card-title">{{ pessoa.nome }}</h5>
-                <p class="card-text text-muted">{{ pessoa.email or 'Sem email' }}</p>
-                <p class="card-text text-muted"><strong>CPF:</strong> {{ pessoa.cpf or 'Não informado' }}</p>
-                <p class="card-text text-muted"><strong>Matrícula:</strong> {{ pessoa.matricula or 'Não informado' }}</p>
-                <p class="card-text text-muted"><strong>Vínculo:</strong> {{ pessoa.vinculo or 'Não informado' }}</p>
-                <p class="card-text text-muted"><strong>Profissão:</strong> {{ pessoa.profissao.nome if pessoa.profissao else 'Sem profissão' }}</p>
-                <p class="card-text text-muted"><strong>Setor:</strong> {{ pessoa.setor.nome if pessoa.setor else 'Nenhum' }}</p>
-            </div>
-            <div class="card-footer bg-white border-0 d-flex justify-content-between">
-                <a href="{{ url_for('main.pessoa_edit', id=pessoa.id) }}" class="btn btn-outline-primary btn-sm">
-                    ✏️ Editar
-                </a>
-                <a href="{{ url_for('main.pessoa_delete', id=pessoa.id) }}"
-                   class="btn btn-outline-danger btn-sm"
-                   onclick="return confirm('Tem certeza que deseja excluir {{ pessoa.nome | e }}?')">
-                    🗑️ Excluir
-                </a>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+        {% for pessoa in pessoas %}
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title">{{ pessoa.nome }}</h5>
+                    <p class="card-text text-muted">{{ pessoa.email or 'Sem email' }}</p>
+                    <p class="card-text text-muted"><strong>CPF:</strong> {{ pessoa.cpf or 'Não informado' }}</p>
+                    <p class="card-text text-muted"><strong>Matrícula:</strong> {{ pessoa.matricula or 'Não informado' }}</p>
+                    <p class="card-text text-muted"><strong>Vínculo:</strong> {{ pessoa.vinculo or 'Não informado' }}</p>
+                    <p class="card-text text-muted"><strong>Profissão:</strong> {{ pessoa.profissao.nome if pessoa.profissao else 'Sem profissão' }}</p>
+                    <p class="card-text text-muted"><strong>Setor:</strong> {{ pessoa.setor.nome if pessoa.setor else 'Nenhum' }}</p>
+                </div>
+                <div class="card-footer bg-white border-0 d-flex justify-content-between">
+                    <a href="{{ url_for('main.pessoa_edit', id=pessoa.id) }}" class="btn btn-outline-primary btn-sm">
+                        ✏️ Editar
+                    </a>
+                    <a href="{{ url_for('main.pessoa_delete', id=pessoa.id) }}"
+                       class="btn btn-outline-danger btn-sm"
+                       onclick="return confirm('Tem certeza que deseja excluir {{ pessoa.nome | e }}?')">
+                        🗑️ Excluir
+                    </a>
+                </div>
             </div>
         </div>
+        {% else %}
+        <div class="col">
+            <p class="text-muted">Nenhuma pessoa cadastrada.</p>
+        </div>
+        {% endfor %}
     </div>
-    {% else %}
-    <div class="col">
-        <p class="text-muted">Nenhuma pessoa cadastrada.</p>
-    </div>
-    {% endfor %}
 </div>
 {% endblock %}
