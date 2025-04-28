@@ -1,7 +1,7 @@
 from flask import Flask, session, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user, logout_user
-from flask_migrate import Migrate, upgrade  # Importe o 'upgrade'
+from flask_migrate import Migrate, upgrade
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import os
@@ -9,7 +9,6 @@ from authlib.integrations.flask_client import OAuth
 from flask_cors import CORS
 from flask_session import Session
 import redis
-from werkzeug.security import generate_password_hash
 
 # Carrega variáveis de ambiente do .env
 load_dotenv()
@@ -22,22 +21,6 @@ oauth = OAuth()
 
 # Importação global das models (obrigatório para funcionar com Flask-Migrate)
 from app.models import User, Pessoa, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Doenca, Curso, RegistrationRequest
-
-def create_admin():
-    admin = User.query.filter_by(email='admin@admin.com').first()
-    if not admin:
-        hashed_password = generate_password_hash('123456')
-        admin = User(
-            email='admin@admin.com',
-            password=hashed_password,
-            status='approved',
-            is_admin=True
-        )
-        db.session.add(admin)
-        db.session.commit()
-        print('Administrador criado com sucesso!')
-    else:
-        print('Administrador já existe.')
 
 def create_app():
     app = Flask(__name__)
@@ -127,17 +110,13 @@ def create_app():
     def inject_now():
         return {'now': datetime.utcnow}
 
-    # Aplica as migrações e cria o administrador
+    # Aplica as migrações
     with app.app_context():
-        # Aplica as migrações para criar as tabelas
         try:
             upgrade()  # Executa as migrações (equivalente a 'flask db upgrade')
             print("Migrações aplicadas com sucesso!")
         except Exception as e:
             print(f"Erro ao aplicar migrações: {str(e)}")
             raise
-
-        # Agora que as tabelas foram criadas, chama create_admin()
-        create_admin()
 
     return app
