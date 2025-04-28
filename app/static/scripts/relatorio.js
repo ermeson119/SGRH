@@ -35,3 +35,14 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+
+document.querySelectorAll('.collapse').forEach(collapse => {
+    collapse.addEventListener('show.bs.collapse', function () {
+        const button = document.querySelector(`button[data-bs-target="#${this.id}"] svg use`);
+        button.setAttribute('xlink:href', '#chevron-up');
+    });
+    collapse.addEventListener('hide.bs.collapse', function () {
+        const button = document.querySelector(`button[data-bs-target="#${this.id}"] svg use`);
+        button.setAttribute('xlink:href', '#chevron-down');
+    });
+});
