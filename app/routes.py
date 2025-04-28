@@ -259,8 +259,27 @@ def commit_with_flash(model_name, action='criar'):
 @bp.route('/pessoas', methods=['GET'])
 @login_required
 def pessoa_list():
-    pessoas = Pessoa.query.all()
-    return render_template('pessoas/pessoa_list.html', pessoas=pessoas)
+    page = request.args.get('page', 1, type=int)
+    busca = request.args.get('busca', '', type=str)
+    per_page = 6  # 6 pessoas por página (2 linhas de 3 colunas)
+
+    query = Pessoa.query.options(
+        joinedload(Pessoa.profissao),
+        joinedload(Pessoa.setor)
+    )
+
+    if busca:
+        query = query.filter(Pessoa.nome.ilike(f'%{busca}%'))
+
+    pagination = query.order_by(Pessoa.nome).paginate(page=page, per_page=per_page, error_out=False)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template('pessoas/pessoa_list.html', pessoas=pagination.items, pagination=pagination, busca=busca)
+
+    return render_template('pessoas/pessoa_list.html',
+                           pessoas=pagination.items,
+                           pagination=pagination,
+                           busca=busca)
 
 @bp.route('/pessoas/create', methods=['GET', 'POST'])
 @login_required

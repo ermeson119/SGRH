@@ -3,9 +3,7 @@
 {% block content %}
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>
-            Lista de Pessoas
-        </h2>
+        <h2>Lista de Pessoas</h2>
         <a href="{{ url_for('main.pessoa_create') }}" class="btn btn-primary">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                  class="bi bi-person-plus-fill" viewBox="0 0 16 16">
@@ -17,7 +15,17 @@
         </a>
     </div>
 
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+    <!-- Formulário de Busca -->
+    <form method="get" class="mb-5" id="busca-form" data-pessoas-url="{{ url_for('main.pessoa_list') }}">
+        <div class="input-group">
+            <input type="text" id="filtro" name="busca" class="form-control"
+                   placeholder="Buscar pessoa pelo nome..." value="{{ busca }}">
+            <button class="btn btn-dark" type="submit">Buscar</button>
+        </div>
+    </form>
+
+    <!-- Lista de Pessoas -->
+    <div id="resultados-container" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
         {% for pessoa in pessoas %}
         <div class="col">
             <div class="card h-100 shadow-sm border-0">
@@ -48,5 +56,39 @@
         </div>
         {% endfor %}
     </div>
+
+    <!-- Paginação Bootstrap -->
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Navegação de páginas" class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.pessoa_list', page=pagination.prev_num, busca=busca) }}">Anterior</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+            {% endif %}
+
+            {% for p in range(1, pagination.pages + 1) %}
+                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('main.pessoa_list', page=p, busca=busca) }}">{{ p }}</a>
+                </li>
+            {% endfor %}
+
+            {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.pessoa_list', page=pagination.next_num, busca=busca) }}">Próximo</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Próximo</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='scripts/pessoa/pessoa_list.js') }}"></script>
 {% endblock %}
