@@ -105,11 +105,3 @@ class Atestado(db.Model):
     data_fim = db.Column(db.Date, nullable=False)
     documento = db.Column(db.String(200))
     pessoa = db.relationship('Pessoa', backref='atestados')
-
-class Doenca(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False, index=True)
-    nome = db.Column(db.String(100), nullable=False)
-    cid = db.Column(db.String(20))
-    data_diagnostico = db.Column(db.Date, nullable=False)
-    pessoa = db.relationship('Pessoa', backref='doencas')

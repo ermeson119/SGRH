@@ -105,13 +105,6 @@ class AtestadoForm(FlaskForm):
     documento = StringField('Documento', validators=[Length(max=200)])
     submit = SubmitField('Salvar')
 
-class DoencaForm(FlaskForm):
-    pessoa_id = SelectField('Pessoa', coerce=int, validators=[DataRequired()])
-    nome = StringField('Nome', validators=[DataRequired(), Length(max=100)])
-    cid = StringField('CID', validators=[Length(max=20)])
-    data_diagnostico = DateField('Data Diagnóstico', validators=[DataRequired()], format='%Y-%m-%d')
-    submit = SubmitField('Salvar')
-
 class CursoForm(FlaskForm):
     nome = StringField('Nome', validators=[DataRequired(), Length(max=100)])
     duracao = StringField('Duração', validators=[DataRequired(), Length(max=50)])

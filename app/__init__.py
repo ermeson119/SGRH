@@ -20,7 +20,7 @@ login_manager = LoginManager()
 oauth = OAuth()
 
 # Importação global das models (obrigatório para funcionar com Flask-Migrate)
-from app.models import User, Pessoa, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Doenca, Curso, RegistrationRequest
+from app.models import User, Pessoa, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Curso, RegistrationRequest
 
 def create_app():
     app = Flask(__name__)

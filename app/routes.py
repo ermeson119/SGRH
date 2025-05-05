@@ -1,10 +1,10 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, oauth
-from app.models import User, Pessoa, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Doenca, Curso, RegistrationRequest
+from app.models import User, Pessoa, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Curso, RegistrationRequest
 from app.forms import (
     LoginForm, RegisterForm, PessoaForm, ProfissaoForm, SetorForm, FolhaForm,
-    CapacitacaoForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, DoencaForm, CursoForm, ApproveRequestForm
+    CapacitacaoForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, CursoForm, ApproveRequestForm
 )
 from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -897,68 +897,6 @@ def atestado_delete(id):
         flash('Erro ao excluir atestado: ' + str(e), 'error')
     return redirect(url_for('main.atestado_list'))
 
-# --- CRUD Doença ---
-@bp.route('/doencas', methods=['GET'])
-@login_required
-def doenca_list():
-    doencas = Doenca.query.all()
-    return render_template('saude/doenca_list.html', doencas=doencas)
-
-@bp.route('/doencas/create', methods=['GET', 'POST'])
-@login_required
-def doenca_create():
-    form = DoencaForm()
-    form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
-    if form.validate_on_submit():
-        doenca = Doenca(
-            pessoa_id=form.pessoa_id.data,
-            nome=form.nome.data,
-            cid=form.cid.data,
-            data_diagnostico=form.data_diagnostico.data
-        )
-        db.session.add(doenca)
-        try:
-            db.session.commit()
-            flash('Doença criada com sucesso!', 'success')
-            return redirect(url_for('main.doenca_list'))
-        except Exception as e:
-            db.session.rollback()
-            flash('Erro ao criar doença: ' + str(e), 'error')
-    return render_template('saude/doenca_form.html', form=form)
-
-@bp.route('/doencas/edit/<int:id>', methods=['GET', 'POST'])
-@login_required
-def doenca_edit(id):
-    doenca = Doenca.query.get_or_404(id)
-    form = DoencaForm(obj=doenca)
-    form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
-    if form.validate_on_submit():
-        doenca.pessoa_id = form.pessoa_id.data
-        doenca.nome = form.nome.data
-        doenca.cid = form.cid.data
-        doenca.data_diagnostico = form.data_diagnostico.data
-        try:
-            db.session.commit()
-            flash('Doença atualizada com sucesso!', 'success')
-            return redirect(url_for('main.doenca_list'))
-        except Exception as e:
-            db.session.rollback()
-            flash('Erro ao atualizar doença: ' + str(e), 'error')
-    return render_template('saude/doenca_form.html', form=form, doenca=doenca)
-
-@bp.route('/doencas/delete/<int:id>', methods=['GET'])
-@login_required
-def doenca_delete(id):
-    doenca = Doenca.query.get_or_404(id)
-    try:
-        db.session.delete(doenca)
-        db.session.commit()
-        flash('Doença excluída com sucesso!', 'success')
-    except Exception as e:
-        db.session.rollback()
-        flash('Erro ao excluir doença: ' + str(e), 'error')
-    return redirect(url_for('main.doenca_list'))
-
 # --- Relatório Completo ---
 @bp.route('/relatorio/completo', methods=['GET', 'POST'])
 @login_required
@@ -979,8 +917,7 @@ def relatorio_completo():
         joinedload(Pessoa.termos),
         joinedload(Pessoa.vacinas),
         joinedload(Pessoa.exames),
-        joinedload(Pessoa.atestados),
-        joinedload(Pessoa.doencas)
+        joinedload(Pessoa.atestados)
     )
 
     if busca:

@@ -254,44 +254,6 @@
                             <p class="text-muted">Nenhum atestado registrado.</p>
                         {% endif %}
                     </div>
-
-                    <!-- Doenças -->
-                    <h5 class="mt-4">
-                        <button class="btn btn-link text-decoration-none p-0" type="button"
-                                data-bs-toggle="collapse" data-bs-target="#doencas-{{ pessoa.id }}"
-                                aria-expanded="false" aria-controls="doencas-{{ pessoa.id }}">
-                            Doenças
-                            <svg class="bi ms-1" width="16" height="16" fill="currentColor">
-                                <use xlink:href="#chevron-down"/>
-                            </svg>
-                        </button>
-                    </h5>
-                    <div id="doencas-{{ pessoa.id }}" class="collapse">
-                        {% if pessoa.doencas %}
-                            <div class="table-responsive">
-                                <table class="table table-sm table-bordered">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Nome</th>
-                                            <th>CID</th>
-                                            <th>Data Diagnóstico</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for doenca in pessoa.doencas %}
-                                            <tr>
-                                                <td>{{ doenca.nome }}</td>
-                                                <td>{{ doenca.cid if doenca.cid else 'N/A' }}</td>
-                                                <td>{{ doenca.data_diagnostico.strftime('%d/%m/%Y') }}</td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        {% else %}
-                            <p class="text-muted">Nenhuma doença registrada.</p>
-                        {% endif %}
-                    </div>
                 </div>
             </div>
         {% endfor %}
