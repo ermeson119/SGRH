@@ -23,7 +23,6 @@
                 </div>
                 <div class="card-body">
                     <p><strong>Email:</strong> {{ pessoa.email }}</p>
-                    <p><strong>Setor:</strong> {{ pessoa.setor.nome if pessoa.setor else 'Nenhum' }}</p>
 
                     <!-- Capacitações -->
                     <h5 class="mt-4">
@@ -60,6 +59,45 @@
                             </div>
                         {% else %}
                             <p class="text-muted">Nenhuma capacitação registrada.</p>
+                        {% endif %}
+                    </div>
+
+                                        
+                    <!-- Lotações -->
+                    <h5 class="mt-4">
+                        <button class="btn btn-link text-decoration-none p-0" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#lotacoes-{{ pessoa.id }}"
+                                aria-expanded="false" aria-controls="lotacoes-{{ pessoa.id }}">
+                            Lotações
+                            <svg class="bi ms-1" width="16" height="16" fill="currentColor">
+                                <use xlink:href="#chevron-down"/>
+                            </svg>
+                        </button>
+                    </h5>
+                    <div id="lotacoes-{{ pessoa.id }}" class="collapse">
+                        {% if pessoa.lotacoes %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Setor</th>
+                                            <th>Data Início</th>
+                                            <th>Data Fim</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for lotacao in pessoa.lotacoes %}
+                                            <tr>
+                                                <td>{{ lotacao.setor.nome }}</td>
+                                                <td>{{ lotacao.data_inicio.strftime('%d/%m/%Y') }}</td>
+                                                <td>{{ lotacao.data_fim.strftime('%d/%m/%Y') if lotacao.data_fim else 'Atual' }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">Nenhuma lotação registrada.</p>
                         {% endif %}
                     </div>
 

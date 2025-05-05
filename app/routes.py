@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, oauth
-from app.models import User, Pessoa, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Curso, RegistrationRequest
+from app.models import User, Pessoa,Lotacao, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Curso, RegistrationRequest
 from app.forms import (
-    LoginForm, RegisterForm, PessoaForm, ProfissaoForm, SetorForm, FolhaForm,
+    LoginForm, RegisterForm, PessoaForm, LotacaoForm, ProfissaoForm, SetorForm, FolhaForm,
     CapacitacaoForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, CursoForm, ApproveRequestForm
 )
 from sqlalchemy.orm import joinedload
@@ -265,7 +265,6 @@ def pessoa_list():
 
     query = Pessoa.query.options(
         joinedload(Pessoa.profissao),
-        joinedload(Pessoa.setor)
     )
 
     if busca:
@@ -286,14 +285,12 @@ def pessoa_list():
 def pessoa_create():
     form = PessoaForm()
     profissoes = Profissao.query.all()
-    setores = Setor.query.all()
     
     if not profissoes:
         flash('Nenhuma profissão cadastrada. Cadastre uma profissão antes de criar uma pessoa.', 'warning')
         return redirect(url_for('main.profissao_create'))
     
     form.profissao_id.choices = [(p.id, p.nome) for p in profissoes]
-    form.setor_id.choices = [(0, 'Nenhum')] + [(s.id, s.nome) for s in setores]
     
     if form.validate_on_submit():
         pessoa = Pessoa(
@@ -302,8 +299,7 @@ def pessoa_create():
             cpf=form.cpf.data,
             matricula=form.matricula.data,
             vinculo=form.vinculo.data,
-            profissao_id=form.profissao_id.data,
-            setor_id=form.setor_id.data if form.setor_id.data != 0 else None
+            profissao_id=form.profissao_id.data
         )
         db.session.add(pessoa)
         try:
@@ -323,14 +319,12 @@ def pessoa_edit(id):
     form.pessoa = pessoa  # Adiciona a pessoa ao formulário para validação
     
     profissoes = Profissao.query.all()
-    setores = Setor.query.all()
     
     if not profissoes:
         flash('Nenhuma profissão cadastrada. Cadastre uma profissão antes de editar uma pessoa.', 'warning')
         return redirect(url_for('main.profissao_create'))
     
     form.profissao_id.choices = [(p.id, p.nome) for p in profissoes]
-    form.setor_id.choices = [(0, 'Nenhum')] + [(s.id, s.nome) for s in setores]
     
     if form.validate_on_submit():
         pessoa.nome = form.nome.data
@@ -339,7 +333,6 @@ def pessoa_edit(id):
         pessoa.matricula = form.matricula.data
         pessoa.vinculo = form.vinculo.data
         pessoa.profissao_id = form.profissao_id.data
-        pessoa.setor_id = form.setor_id.data if form.setor_id.data != 0 else None
         try:
             db.session.commit()
             flash('Pessoa atualizada com sucesso!', 'success')
@@ -413,6 +406,69 @@ def profissao_delete(id):
         db.session.rollback()
         flash('Erro ao excluir profissão: ' + str(e), 'error')
     return redirect(url_for('main.profissao_list'))
+
+@bp.route('/lotacoes', methods=['GET'])
+@login_required
+def lotacao_list():
+    lotacoes = Lotacao.query.all()
+    return render_template('profissional/lotacao_list.html', lotacoes=lotacoes)
+
+@bp.route('/lotacoes/create', methods=['GET', 'POST'])
+@login_required
+def lotacao_create():
+    form = LotacaoForm()
+    form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
+    form.setor_id.choices = [(s.id, s.nome) for s in Setor.query.all()]
+    if form.validate_on_submit():
+        lotacao = Lotacao(
+            pessoa_id=form.pessoa_id.data,
+            setor_id=form.setor_id.data,
+            data_inicio=form.data_inicio.data,
+            data_fim=form.data_fim.data
+        )
+        try:
+            db.session.add(lotacao)
+            db.session.commit()
+            flash('Lotacao criada com sucesso!', 'lotacao')
+            return redirect(url_for('main.lotacao_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao criar lotacao: ' + str(e), 'error')
+    return render_template('profissional/lotacao_form.html', form=form)
+
+@bp.route('/lotacoes/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def lotacao_edit(id):
+    lotacao = Lotacao.query.get_or_404(id)
+    form = LotacaoForm(obj=lotacao)
+    form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
+    form.setor_id.choices = [(s.id, s.nome) for s in Setor.query.all()]
+    if form.validate_on_submit():
+        lotacao.pessoa_id = form.pessoa_id.data
+        lotacao.setor_id = form.setor_id.data
+        lotacao.data_inicio = form.data_inicio.data
+        lotacao.data_fim = form.data_fim.data
+        try:
+            db.session.commit()
+            flash('Lotacao atualizada com sucesso!', 'lotacao')
+            return redirect(url_for('main.lotacao_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao atualizar lotacao: ' + str(e), 'error')
+    return render_template('profissional/lotacao_form.html', form=form, lotacao=lotacao)
+
+@bp.route('/lotacoes/delete/<int:id>', methods=['GET'])
+@login_required
+def lotacao_delete(id):
+    lotacao = Lotacao.query.get_or_404(id)
+    try:
+        db.session.delete(lotacao)
+        db.session.commit()
+        flash('Lotacao excluida com sucesso!', 'lotacao')
+    except Exception as e:
+        db.session.rollback()
+        flash('Erro ao excluir lotacao: ' + str(e), 'error')
+    return redirect(url_for('main.lotacao_list'))
 
 # --- CRUD Setor ---
 @bp.route('/setores', methods=['GET'])
@@ -913,11 +969,11 @@ def relatorio_completo():
         joinedload(Pessoa.capacitacoes),
         joinedload(Pessoa.folhas),
         joinedload(Pessoa.profissao),
-        joinedload(Pessoa.setor),
         joinedload(Pessoa.termos),
         joinedload(Pessoa.vacinas),
         joinedload(Pessoa.exames),
-        joinedload(Pessoa.atestados)
+        joinedload(Pessoa.atestados),
+        joinedload(Pessoa.lotacoes)
     )
 
     if busca:

@@ -38,7 +38,6 @@ class PessoaForm(FlaskForm):
     matricula = StringField('Matrícula', validators=[DataRequired(), Length(max=20)])
     vinculo = StringField('Vínculo', validators=[DataRequired(), Length(max=50)])
     profissao_id = SelectField('Profissão', coerce=int, validators=[DataRequired()])
-    setor_id = SelectField('Setor', coerce=int)
     submit = SubmitField('Salvar')
 
     def validate_email(self, field):
@@ -55,6 +54,13 @@ class PessoaForm(FlaskForm):
 
 class ProfissaoForm(FlaskForm):
     nome = StringField('Nome', validators=[DataRequired(), Length(max=100)])
+    submit = SubmitField('Salvar')
+
+class LotacaoForm(FlaskForm):
+    pessoa_id = SelectField('Pessoa', coerce=int, validators=[DataRequired()])
+    setor_id = SelectField('Setor', coerce=int, validators=[DataRequired()])
+    data_inicio = DateField('Data Início', validators=[DataRequired()], format='%Y-%m-%d')
+    data_fim = DateField('Data Fim', format='%Y-%m-%d')
     submit = SubmitField('Salvar')
 
 class SetorForm(FlaskForm):

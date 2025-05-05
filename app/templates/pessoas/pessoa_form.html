@@ -44,20 +44,15 @@
                 </div>
                 <div class="mb-3">
                     {{ form.profissao_id.label(class="form-label") }}
-                    {{ form.profissao_id(class="form-select" + (" is-invalid" if form.profissao_id.errors else "")) }}
-                    {% for error in form.profissao_id.errors %}
-                    <div class="invalid-feedback">{{ error }}</div>
-                    {% endfor %}
-                </div>
-                <div class="mb-3">
-                    {{ form.setor_id.label(class="form-label") }}
-                    {{ form.setor_id(class="form-select" + (" is-invalid" if form.setor_id.errors else "")) }}
-                    {% for error in form.setor_id.errors %}
-                    <div class="invalid-feedback">{{ error }}</div>
-                    {% endfor %}
+                    {{ form.profissao_id(class="form-select") }}
+                    {% if form.profissao_id.errors %}
+                        {% for error in form.profissao_id.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
                 </div>
                 <div class="d-flex gap-3 mt-4">
-                    <button type="submit" class="btn btn-success">Salvar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
                     <a href="{{ url_for('main.pessoa_list') }}" class="btn btn-secondary">Cancelar</a>
                 </div>
             </form>

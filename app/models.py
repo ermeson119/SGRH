@@ -37,13 +37,20 @@ class Pessoa(db.Model):
     matricula = db.Column(db.String(20), nullable=False, unique=True, index=True)
     vinculo = db.Column(db.String(50), nullable=False)
     profissao_id = db.Column(db.Integer, db.ForeignKey('profissao.id'), nullable=False)
-    setor_id = db.Column(db.Integer, db.ForeignKey('setor.id'), nullable=True)
     profissao = db.relationship('Profissao', backref='pessoas')
-    setor = db.relationship('Setor', backref='pessoas')
 
 class Profissao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False, unique=True, index=True)
+
+class Lotacao(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False, index=True)
+    setor_id = db.Column(db.Integer, db.ForeignKey('setor.id'), nullable=False, index=True)
+    data_inicio = db.Column(db.Date, nullable=False)
+    data_fim = db.Column(db.Date)
+    pessoa = db.relationship('Pessoa', backref='lotacoes')
+    setor = db.relationship('Setor', backref='lotacoes')
 
 class Setor(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -15,6 +15,7 @@
                 {% if current_user.is_authenticated %}
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('main.pessoa_list') }}">Pessoas</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('main.profissao_list') }}">Profissões</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.lotacao_list') }}">Lotação</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('main.setor_list') }}">Setores</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('main.folha_list') }}">Folhas</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('main.curso_list') }}">Cursos</a></li>
