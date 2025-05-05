@@ -1,45 +1,95 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% block title %}Lista de Capacitações{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 200px);">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Capacitações</h2>
-            <a href="{{ url_for('main.capacitacao_create') }}" class="btn btn-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-circle-fill" viewBox="0 0 16 16">
-                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
-                </svg>
-                Nova Capacitação
-            </a>
-        </div>
-
-        <table class="table table-bordered table-striped shadow-sm">
-            <thead class="table-dark">
-                <tr>
-                    <th>Nome da Pessoa</th>
-                    <th>Descrição</th>
-                    <th>Data</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for c in capacitacoes %}
-                <tr>
-                    <td>{{ c.pessoa.nome }}</td>
-                    <td>{{ c.descricao }}</td>
-                    <td>{{ c.data.strftime('%d/%m/%Y') }}</td>
-                    <td>
-                        <a href="{{ url_for('main.capacitacao_edit', id=c.id) }}" class="btn btn-outline-warning btn-sm me-2">Editar</a>
-                        <a href="{{ url_for('main.capacitacao_delete', id=c.id) }}" class="btn btn-outline-danger btn-sm"
-                           onclick="return confirm('Tem certeza que deseja excluir esta capacitação?')">Excluir</a>
-                    </td>
-                </tr>
-                {% else %}
-                    <tr>
-                        <td colspan="4">Nenhuma capacitação cadastrada.</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Lista de Capacitações</h2>
+        <a href="{{ url_for('main.capacitacao_create') }}" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z"/>
+            </svg>
+            Nova Capacitação
+        </a>
     </div>
+
+    <!-- Formulário de Busca -->
+    <form method="get" class="mb-5" id="busca-form" data-capacitacoes-url="{{ url_for('main.capacitacao_list') }}">
+        <div class="input-group">
+            <input type="text" id="filtro" name="busca" class="form-control"
+                   placeholder="Buscar capacitação..." value="{{ busca }}">
+            <button class="btn btn-dark" type="submit">Buscar</button>
+        </div>
+    </form>
+
+    <!-- Lista de Capacitações -->
+    <div id="resultados-container" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+        {% for capacitacao in capacitacoes %}
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title">{{ capacitacao.pessoa.nome }}</h5>
+                    <p class="card-text text-muted">
+                        <strong>Curso:</strong> {{ capacitacao.curso.nome if capacitacao.curso else 'N/A' }}<br>
+                        <strong>Descrição:</strong> {{ capacitacao.descricao }}<br>
+                        <strong>Data Início:</strong> {{ capacitacao.data.strftime('%d/%m/%Y') }}<br>
+                        <strong>Data Fim:</strong> {{ capacitacao.data_fim.strftime('%d/%m/%Y') if capacitacao.data_fim else 'Em andamento' }}
+                    </p>
+                </div>
+                <div class="card-footer bg-white border-0 d-flex justify-content-between">
+                    <a href="{{ url_for('main.capacitacao_edit', id=capacitacao.id) }}" class="btn btn-outline-warning btn-sm">
+                        ✏️ Editar
+                    </a>
+                    <a href="{{ url_for('main.capacitacao_delete', id=capacitacao.id) }}"
+                       class="btn btn-outline-danger btn-sm"
+                       onclick="return confirm('Tem certeza que deseja excluir esta capacitação?')">
+                        🗑️ Excluir
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col">
+            <p class="text-muted">Nenhuma capacitação cadastrada.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Paginação Bootstrap -->
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Navegação de páginas" class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.capacitacao_list', page=pagination.prev_num, busca=busca) }}">Anterior</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+            {% endif %}
+
+            {% for p in pagination.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                {% if p %}
+                    <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('main.capacitacao_list', page=p, busca=busca) }}">{{ p }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.capacitacao_list', page=pagination.next_num, busca=busca) }}">Próximo</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Próximo</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='scripts/capacitacao/capacitacao_list.js') }}"></script>
 {% endblock %}

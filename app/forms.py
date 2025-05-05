@@ -78,7 +78,8 @@ class CapacitacaoForm(FlaskForm):
     pessoa_id = SelectField('Pessoa', coerce=int, validators=[DataRequired()])
     curso_id = SelectField('Curso', coerce=int, validators=[DataRequired()])
     descricao = StringField('Descrição', validators=[DataRequired(), Length(max=200)])
-    data = DateField('Data', validators=[DataRequired()], format='%Y-%m-%d')
+    data = DateField('Data Início', validators=[DataRequired()], format='%Y-%m-%d')
+    data_fim = DateField('Data Fim', format='%Y-%m-%d')
     submit = SubmitField('Salvar')
 
 class TermoForm(FlaskForm):

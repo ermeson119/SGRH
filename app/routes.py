@@ -641,8 +641,30 @@ def curso_delete(id):
 @bp.route('/capacitacoes', methods=['GET'])
 @login_required
 def capacitacao_list():
-    capacitacoes = Capacitacao.query.all()
-    return render_template('capacitacao/capacitacao_list.html', capacitacoes=capacitacoes)
+    page = request.args.get('page', 1, type=int)
+    busca = request.args.get('busca', '', type=str)
+    per_page = 6  # 6 capacitações por página (2 linhas de 3 colunas)
+
+    query = Capacitacao.query.options(
+        joinedload(Capacitacao.pessoa),
+        joinedload(Capacitacao.curso)
+    )
+
+    if busca:
+        query = query.join(Pessoa).filter(Pessoa.nome.ilike(f'%{busca}%'))
+
+    pagination = query.order_by(Capacitacao.data.desc()).paginate(page=page, per_page=per_page, error_out=False)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template('capacitacao/capacitacao_list.html', 
+                             capacitacoes=pagination.items, 
+                             pagination=pagination, 
+                             busca=busca)
+
+    return render_template('capacitacao/capacitacao_list.html',
+                         capacitacoes=pagination.items,
+                         pagination=pagination,
+                         busca=busca)
 
 @bp.route('/capacitacoes/create', methods=['GET', 'POST'])
 @login_required
@@ -655,7 +677,8 @@ def capacitacao_create():
             pessoa_id=form.pessoa_id.data,
             curso_id=form.curso_id.data,
             descricao=form.descricao.data,
-            data=form.data.data
+            data=form.data.data,
+            data_fim=form.data_fim.data
         )
         db.session.add(capacitacao)
         try:
@@ -679,6 +702,7 @@ def capacitacao_edit(id):
         capacitacao.curso_id = form.curso_id.data
         capacitacao.descricao = form.descricao.data
         capacitacao.data = form.data.data
+        capacitacao.data_fim = form.data_fim.data
         try:
             db.session.commit()
             flash('Capacitação atualizada com sucesso!', 'success')

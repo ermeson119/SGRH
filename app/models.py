@@ -76,6 +76,7 @@ class Capacitacao(db.Model):
     curso_id = db.Column(db.Integer, db.ForeignKey('curso.id'), nullable=True, index=True)
     descricao = db.Column(db.String(200), nullable=False)
     data = db.Column(db.Date, nullable=False)
+    data_fim = db.Column(db.Date, nullable=True)
     pessoa = db.relationship('Pessoa', backref='capacitacoes')
     curso = db.relationship('Curso', backref='capacitacoes')
 
