@@ -92,8 +92,27 @@ class TermoForm(FlaskForm):
 
 class VacinaForm(FlaskForm):
     pessoa_id = SelectField('Pessoa', coerce=int, validators=[DataRequired()])
-    nome = StringField('Nome', validators=[DataRequired(), Length(max=100)])
-    dose = StringField('Dose', validators=[Length(max=50)])
+    nome = SelectField('Nome da Vacina', choices=[
+        ('COVID-19', 'COVID-19'),
+        ('Influenza', 'Influenza (Gripe)'),
+        ('Hepatite B', 'Hepatite B'),
+        ('Tétano', 'Tétano'),
+        ('Febre Amarela', 'Febre Amarela'),
+        ('Tríplice Viral', 'Tríplice Viral (Sarampo, Caxumba e Rubéola)'),
+        ('Pneumocócica', 'Pneumocócica'),
+        ('Meningocócica', 'Meningocócica'),
+        ('HPV', 'HPV'),
+        ('Outra', 'Outra')
+    ], validators=[DataRequired()])
+    dose = SelectField('Dose', choices=[
+        ('Dose Única', 'Dose Única'),
+        ('1ª Dose', '1ª Dose'),
+        ('2ª Dose', '2ª Dose'),
+        ('3ª Dose', '3ª Dose'),
+        ('4ª Dose', '4ª Dose'),
+        ('5ª Dose', '5ª Dose'),
+        ('Reforço', 'Reforço')
+    ], validators=[DataRequired()])
     data = DateField('Data', validators=[DataRequired()], format='%Y-%m-%d')
     submit = SubmitField('Salvar')
 

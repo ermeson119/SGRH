@@ -796,46 +796,42 @@ def vacina_list():
     vacinas = Vacina.query.all()
     return render_template('saude/vacina_list.html', vacinas=vacinas)
 
-@bp.route('/vacinas/create', methods=['GET', 'POST'])
+@bp.route('/vacina/create', methods=['GET', 'POST'])
 @login_required
 def vacina_create():
     form = VacinaForm()
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
+    
     if form.validate_on_submit():
+        nome = request.form.get('outra_vacina') if form.nome.data == 'Outra' else form.nome.data
         vacina = Vacina(
             pessoa_id=form.pessoa_id.data,
-            nome=form.nome.data,
+            nome=nome,
             dose=form.dose.data,
             data=form.data.data
         )
         db.session.add(vacina)
-        try:
-            db.session.commit()
-            flash('Vacina criada com sucesso!', 'success')
-            return redirect(url_for('main.vacina_list'))
-        except Exception as e:
-            db.session.rollback()
-            flash('Erro ao criar vacina: ' + str(e), 'error')
+        db.session.commit()
+        flash('Vacina registrada com sucesso!', 'success')
+        return redirect(url_for('main.vacina_list'))
     return render_template('saude/vacina_form.html', form=form)
 
-@bp.route('/vacinas/edit/<int:id>', methods=['GET', 'POST'])
+@bp.route('/vacina/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def vacina_edit(id):
     vacina = Vacina.query.get_or_404(id)
     form = VacinaForm(obj=vacina)
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
+    
     if form.validate_on_submit():
+        nome = request.form.get('outra_vacina') if form.nome.data == 'Outra' else form.nome.data
         vacina.pessoa_id = form.pessoa_id.data
-        vacina.nome = form.nome.data
+        vacina.nome = nome
         vacina.dose = form.dose.data
         vacina.data = form.data.data
-        try:
-            db.session.commit()
-            flash('Vacina atualizada com sucesso!', 'success')
-            return redirect(url_for('main.vacina_list'))
-        except Exception as e:
-            db.session.rollback()
-            flash('Erro ao atualizar vacina: ' + str(e), 'error')
+        db.session.commit()
+        flash('Vacina atualizada com sucesso!', 'success')
+        return redirect(url_for('main.vacina_list'))
     return render_template('saude/vacina_form.html', form=form, vacina=vacina)
 
 @bp.route('/vacinas/delete/<int:id>', methods=['GET'])
