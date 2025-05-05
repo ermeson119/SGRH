@@ -22,17 +22,38 @@ oauth = OAuth()
 # Importação global das models (obrigatório para funcionar com Flask-Migrate)
 from app.models import User, Pessoa, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Curso, RegistrationRequest
 
-def create_app():
-    app = Flask(__name__)
-
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-    app.config['SQLALCHEMY_DATABASE_URI'] = (
-        f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
+def create_app(test_config=None):
+    app = Flask(__name__, instance_relative_config=True)
+    
+    # Configurações padrão
+    app.config.from_mapping(
+        SECRET_KEY='dev',
+        SQLALCHEMY_DATABASE_URI='postgresql://admin:1234@db:5432/sgrh',
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        UPLOAD_FOLDER=os.path.join(app.instance_path, 'uploads'),
+        PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
+        SESSION_TYPE='redis'
     )
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
-    app.config['SESSION_TYPE'] = 'redis'
-
+    
+    if test_config is None:
+        # Carrega a configuração do arquivo config.py se existir
+        app.config.from_pyfile('config.py', silent=True)
+    else:
+        # Carrega a configuração de teste se fornecida
+        app.config.from_mapping(test_config)
+    
+    # Garante que a pasta de instância existe
+    try:
+        os.makedirs(app.instance_path)
+    except OSError:
+        pass
+        
+    # Garante que a pasta de uploads existe
+    try:
+        os.makedirs(app.config['UPLOAD_FOLDER'])
+    except OSError:
+        pass
+    
     # Configuração do Redis
     redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
     try:
@@ -50,7 +71,7 @@ def create_app():
     migrate.init_app(app, db)
     login_manager.init_app(app)
     login_manager.login_view = 'main.login'
-    login_manager.login_message = None
+    login_manager.login_message = 'Por favor, faça login para acessar esta página.'
     login_manager.login_message_category = 'info'
     Session(app)
     CORS(app, resources={r"/*": {"origins": "http://localhost:8000"}})

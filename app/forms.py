@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, SelectField, SubmitField, DateField, FloatField
 from wtforms.validators import DataRequired, Length, Regexp, ValidationError, Email, EqualTo, Optional
 from app.models import Pessoa, Profissao, Curso
@@ -118,9 +119,18 @@ class VacinaForm(FlaskForm):
 
 class ExameForm(FlaskForm):
     pessoa_id = SelectField('Pessoa', coerce=int, validators=[DataRequired()])
-    tipo = StringField('Tipo', validators=[DataRequired(), Length(max=100)])
+    tipo = SelectField('Tipo de Exame', choices=[
+        ('Exame de Glicemia', 'Exame de Glicemia'),
+        ('Exame de Colesterol', 'Exame de Colesterol'),
+        ('Exame de Urina', 'Exame de Urina'),
+        ('Exame de Hemograma', 'Exame de Hemograma'),
+        ('Exame de Vírus Hepatite B', 'Exame de Vírus Hepatite B'),
+        ('Exame de Vírus HIV', 'Exame de Vírus HIV'),
+        ('Outro', 'Outro')
+    ], validators=[DataRequired()])
     resultado = StringField('Resultado')
     data = DateField('Data', validators=[DataRequired()], format='%Y-%m-%d')
+    upload = FileField('Upload', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'], 'Somente imagens e documentos são permitidos.')])
     submit = SubmitField('Salvar')
 
 class AtestadoForm(FlaskForm):

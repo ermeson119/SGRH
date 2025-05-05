@@ -99,11 +99,12 @@ class Vacina(db.Model):
 
 class Exame(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False, index=True)
+    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False)
     tipo = db.Column(db.String(100), nullable=False)
     resultado = db.Column(db.Text)
     data = db.Column(db.Date, nullable=False)
-    pessoa = db.relationship('Pessoa', backref='exames')
+    arquivo = db.Column(db.String(255))  # Campo para armazenar o nome do arquivo
+    pessoa = db.relationship('Pessoa', backref=db.backref('exames', lazy=True))
 
 class Atestado(db.Model):
     id = db.Column(db.Integer, primary_key=True)

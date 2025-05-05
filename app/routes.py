@@ -11,6 +11,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 from functools import wraps
+from werkzeug.utils import secure_filename
+import os
 
 # Cria um Blueprint para as rotas
 bp = Blueprint('main', __name__)
@@ -860,20 +862,34 @@ def exame_create():
     form = ExameForm()
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
     if form.validate_on_submit():
+        tipo = request.form.get('outro_exame') if form.tipo.data == 'Outro' else form.tipo.data
+        arquivo = form.upload.data
+        nome_arquivo = None
+        
+        if arquivo:
+            # Gera um nome único para o arquivo
+            nome_arquivo = secure_filename(arquivo.filename)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            nome_arquivo = f"{timestamp}_{nome_arquivo}"
+            
+            # Salva o arquivo
+            arquivo.save(os.path.join(current_app.config['UPLOAD_FOLDER'], nome_arquivo))
+        
         exame = Exame(
             pessoa_id=form.pessoa_id.data,
-            tipo=form.tipo.data,
+            tipo=tipo,
             resultado=form.resultado.data,
-            data=form.data.data
+            data=form.data.data,
+            arquivo=nome_arquivo
         )
         db.session.add(exame)
         try:
             db.session.commit()
-            flash('Exame criado com sucesso!', 'success')
+            flash('Exame registrado com sucesso!', 'success')
             return redirect(url_for('main.exame_list'))
         except Exception as e:
             db.session.rollback()
-            flash('Erro ao criar exame: ' + str(e), 'error')
+            flash('Erro ao registrar exame: ' + str(e), 'error')
     return render_template('saude/exame_form.html', form=form)
 
 @bp.route('/exames/edit/<int:id>', methods=['GET', 'POST'])
@@ -883,10 +899,31 @@ def exame_edit(id):
     form = ExameForm(obj=exame)
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
     if form.validate_on_submit():
+        tipo = request.form.get('outro_exame') if form.tipo.data == 'Outro' else form.tipo.data
+        arquivo = form.upload.data
+        
+        if arquivo:
+            # Remove o arquivo antigo se existir
+            if exame.arquivo:
+                try:
+                    os.remove(os.path.join(current_app.config['UPLOAD_FOLDER'], exame.arquivo))
+                except:
+                    pass
+            
+            # Gera um nome único para o novo arquivo
+            nome_arquivo = secure_filename(arquivo.filename)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            nome_arquivo = f"{timestamp}_{nome_arquivo}"
+                
+            # Salva o novo arquivo
+            arquivo.save(os.path.join(current_app.config['UPLOAD_FOLDER'], nome_arquivo))
+            exame.arquivo = nome_arquivo
+        
         exame.pessoa_id = form.pessoa_id.data
-        exame.tipo = form.tipo.data
+        exame.tipo = tipo
         exame.resultado = form.resultado.data
         exame.data = form.data.data
+        
         try:
             db.session.commit()
             flash('Exame atualizado com sucesso!', 'success')

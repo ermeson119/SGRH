@@ -1,55 +1,82 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if exame else 'Novo' }} Exame{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 200px);">
     <div class="container">
-        <h2>Exame</h2>
-
-        <form method="POST">
-            {{ form.hidden_tag() }}
-
-            <div class="mb-3">
-                {{ form.pessoa_id.label(class="form-label") }}
-                {{ form.pessoa_id(class="form-select") }}
-                {% if form.pessoa_id.errors %}
-                    {% for error in form.pessoa_id.errors %}
-                        <div class="text-danger">{{ error }}</div>
-                    {% endfor %}
-                {% endif %}
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <h2 class="mb-4">{{ 'Editar' if exame else 'Novo' }} Exame</h2>
+                <form method="POST" novalidate enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ form.pessoa_id.label(class="form-label") }}
+                        {{ form.pessoa_id(class="form-select") }}
+                        {% if form.pessoa_id.errors %}
+                            {% for error in form.pessoa_id.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.tipo.label(class="form-label") }}
+                        {{ form.tipo(class="form-select" + (" is-invalid" if form.tipo.errors else ""), onchange="toggleOutroExame()") }}
+                        {% for error in form.tipo.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-3" id="outroExameDiv" style="display: none;">
+                        <label class="form-label">Nome do Outro Exame</label>
+                        <input type="text" class="form-control" id="outroExame" name="outro_exame">
+                    </div>
+                    <div class="mb-3">
+                        {{ form.resultado.label(class="form-label") }}
+                        {{ form.resultado(class="form-control" + (" is-invalid" if form.resultado.errors else "")) }}
+                        {% for error in form.resultado.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.data.label(class="form-label") }}
+                        {{ form.data(class="form-control" + (" is-invalid" if form.data.errors else ""), type="date") }}
+                        {% for error in form.data.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.upload.label(class="form-label") }}
+                        {{ form.upload(class="form-control" + (" is-invalid" if form.upload.errors else "")) }}
+                        {% for error in form.upload.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <div class="form-text">Formatos permitidos: jpg, jpeg, png, gif, pdf, doc, docx, xls, xlsx, ppt, pptx</div>
+                    </div>
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                        <a href="{{ url_for('main.exame_list') }}" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
             </div>
-
-            <div class="mb-3">
-                {{ form.tipo.label(class="form-label") }}
-                {{ form.tipo(class="form-control") }}
-                {% if form.tipo.errors %}
-                    {% for error in form.tipo.errors %}
-                        <div class="text-danger">{{ error }}</div>
-                    {% endfor %}
-                {% endif %}
-            </div>
-
-            <div class="mb-3">
-                {{ form.resultado.label(class="form-label") }}
-                {{ form.resultado(class="form-control") }}
-                {% if form.resultado.errors %}
-                    {% for error in form.resultado.errors %}
-                        <div class="text-danger">{{ error }}</div>
-                    {% endfor %}
-                {% endif %}
-            </div>
-
-            <div class="mb-3">
-                {{ form.data.label(class="form-label") }}
-                {{ form.data(class="form-control", type="date") }}
-                {% if form.data.errors %}
-                    {% for error in form.data.errors %}
-                        <div class="text-danger">{{ error }}</div>
-                    {% endfor %}
-                {% endif %}
-            </div>
-
-            <button type="submit" class="btn btn-primary">Salvar</button>
-            <a href="{{ url_for('main.exame_list') }}" class="btn btn-secondary">Cancelar</a>
-        </form>
+        </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+function toggleOutroExame() {
+    var select = document.getElementById('tipo');
+    var outroDiv = document.getElementById('outroExameDiv');
+    if (select.value === 'Outro') {
+        outroDiv.style.display = 'block';
+    } else {
+        outroDiv.style.display = 'none';
+    }
+}
+
+// Chamar a função quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    toggleOutroExame();
+});
+</script>
 {% endblock %}
