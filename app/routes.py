@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app, send_from_directory
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, oauth
 from app.models import User, Pessoa,Lotacao, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Curso, RegistrationRequest
@@ -937,6 +937,12 @@ def exame_edit(id):
 @login_required
 def exame_delete(id):
     exame = Exame.query.get_or_404(id)
+    # Remove o arquivo associado, se existir
+    if exame.arquivo:
+        try:
+            os.remove(os.path.join(current_app.config['UPLOAD_FOLDER'], exame.arquivo))
+        except:
+            pass
     try:
         db.session.delete(exame)
         db.session.commit()
@@ -945,6 +951,19 @@ def exame_delete(id):
         db.session.rollback()
         flash('Erro ao excluir exame: ' + str(e), 'error')
     return redirect(url_for('main.exame_list'))
+
+@bp.route('/exames/download/<int:exame_id>', methods=['GET'])
+@login_required
+def download_exame(exame_id):
+    exame = Exame.query.get_or_404(exame_id)
+    if not exame.arquivo:
+        flash('Nenhum arquivo associado a este exame.', 'error')
+        return redirect(url_for('main.exame_list'))
+    try:
+        return send_from_directory(current_app.config['UPLOAD_FOLDER'], exame.arquivo, as_attachment=True)
+    except FileNotFoundError:
+        flash('Arquivo não encontrado no servidor.', 'error')
+        return redirect(url_for('main.exame_list'))
 
 # --- CRUD Atestado ---
 @bp.route('/atestados', methods=['GET'])
