@@ -978,12 +978,26 @@ def atestado_create():
     form = AtestadoForm()
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
     if form.validate_on_submit():
+        arquivo = form.upload.data
+        nome_arquivo = None
+        
+        if arquivo:
+            # Gera um nome único para o arquivo
+            nome_arquivo = secure_filename(arquivo.filename)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            nome_arquivo = f"{timestamp}_{nome_arquivo}"
+            
+            # Salva o arquivo
+            arquivo.save(os.path.join(current_app.config['UPLOAD_FOLDER'], nome_arquivo))
+        
         atestado = Atestado(
             pessoa_id=form.pessoa_id.data,
             motivo=form.motivo.data,
             data_inicio=form.data_inicio.data,
             data_fim=form.data_fim.data,
-            documento=form.documento.data
+            documento=form.documento.data,
+            medico=form.medico.data,
+            arquivo=nome_arquivo
         )
         db.session.add(atestado)
         try:
@@ -1002,11 +1016,32 @@ def atestado_edit(id):
     form = AtestadoForm(obj=atestado)
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
     if form.validate_on_submit():
+        arquivo = form.upload.data
+        
+        if arquivo:
+            # Remove o arquivo antigo se existir
+            if atestado.arquivo:
+                try:
+                    os.remove(os.path.join(current_app.config['UPLOAD_FOLDER'], atestado.arquivo))
+                except:
+                    pass
+            
+            # Gera um nome único para o novo arquivo
+            nome_arquivo = secure_filename(arquivo.filename)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            nome_arquivo = f"{timestamp}_{nome_arquivo}"
+                
+            # Salva o novo arquivo
+            arquivo.save(os.path.join(current_app.config['UPLOAD_FOLDER'], nome_arquivo))
+            atestado.arquivo = nome_arquivo
+        
         atestado.pessoa_id = form.pessoa_id.data
         atestado.motivo = form.motivo.data
         atestado.data_inicio = form.data_inicio.data
         atestado.data_fim = form.data_fim.data
         atestado.documento = form.documento.data
+        atestado.medico = form.medico.data
+        
         try:
             db.session.commit()
             flash('Atestado atualizado com sucesso!', 'success')
@@ -1020,14 +1055,21 @@ def atestado_edit(id):
 @login_required
 def atestado_delete(id):
     atestado = Atestado.query.get_or_404(id)
-    try:
-        db.session.delete(atestado)
-        db.session.commit()
-        flash('Atestado excluído com sucesso!', 'success')
-    except Exception as e:
-        db.session.rollback()
-        flash('Erro ao excluir atestado: ' + str(e), 'error')
+    db.session.delete(atestado)
+    db.session.commit()
+    flash('Atestado excluído com sucesso!', 'success')
     return redirect(url_for('main.atestado_list'))
+
+@bp.route('/atestados/download/<int:atestado_id>', methods=['GET'])
+@login_required
+def download_atestado(atestado_id):
+    atestado = Atestado.query.get_or_404(atestado_id)
+    if not atestado.arquivo:
+        flash('Este atestado não possui arquivo anexado.', 'warning')
+        return redirect(url_for('main.atestado_list'))
+    
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    return send_from_directory(upload_folder, atestado.arquivo, as_attachment=True)
 
 # --- Relatório Completo ---
 @bp.route('/relatorio/completo', methods=['GET', 'POST'])

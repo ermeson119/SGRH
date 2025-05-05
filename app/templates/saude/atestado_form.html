@@ -4,7 +4,7 @@
     <div class="container">
         <h2>Atestado</h2>
 
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
 
             <div class="mb-3">
@@ -22,6 +22,16 @@
                 {{ form.motivo(class="form-control") }}
                 {% if form.motivo.errors %}
                     {% for error in form.motivo.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.medico.label(class="form-label") }}
+                {{ form.medico(class="form-control") }}
+                {% if form.medico.errors %}
+                    {% for error in form.medico.errors %}
                         <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                 {% endif %}
@@ -55,6 +65,17 @@
                         <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                 {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.upload.label(class="form-label") }}
+                {{ form.upload(class="form-control") }}
+                {% if form.upload.errors %}
+                    {% for error in form.upload.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+                <div class="form-text">Formatos permitidos: jpg, jpeg, png, gif, pdf, doc, docx, xls, xlsx, ppt, pptx</div>
             </div>
 
             <button type="submit" class="btn btn-primary">Salvar</button>

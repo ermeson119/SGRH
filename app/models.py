@@ -113,4 +113,6 @@ class Atestado(db.Model):
     data_inicio = db.Column(db.Date, nullable=False)
     data_fim = db.Column(db.Date, nullable=False)
     documento = db.Column(db.String(200))
+    medico = db.Column(db.String(200), nullable=False)
+    arquivo = db.Column(db.String(255))  # Campo para armazenar o nome do arquivo
     pessoa = db.relationship('Pessoa', backref='atestados')
