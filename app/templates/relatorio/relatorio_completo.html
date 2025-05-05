@@ -43,7 +43,8 @@
                                         <tr>
                                             <th>Curso</th>
                                             <th>Descrição</th>
-                                            <th>Data</th>
+                                            <th>Data Início</th>
+                                            <th>Data Fim</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -52,6 +53,7 @@
                                                 <td>{{ c.curso.nome if c.curso else 'N/A' }}</td>
                                                 <td>{{ c.descricao }}</td>
                                                 <td>{{ c.data.strftime('%d/%m/%Y') }}</td>
+                                                <td>{{ c.data_fim.strftime('%d/%m/%Y') if c.data_fim else 'Em andamento' }}</td>
                                             </tr>
                                         {% endfor %}
                                     </tbody>
