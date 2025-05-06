@@ -532,40 +532,58 @@ def folha_list():
     folhas = Folha.query.options(
         joinedload(Folha.pessoa_folhas).joinedload(PessoaFolha.pessoa)
     ).order_by(Folha.data.desc()).all()
-    pessoas = Pessoa.query.order_by(Pessoa.nome).all()  # For the creation form
-    return render_template('folha/folha_list.html', folhas=folhas, pessoas=pessoas)
+    pessoas = Pessoa.query.order_by(Pessoa.nome).all()  # For the modal dropdown
+    return render_template('folha/folha_list.html', folhas=folhas, pessoas=pessoas, current_date=datetime.now().strftime('%Y-%m-%d'))
 
-@bp.route('/folhas/create', methods=['POST'])
+@bp.route('/folhas/pessoa/create', methods=['POST'])
 @login_required
-def folha_create():
-    data = request.form.get('data')
-    pessoa_ids = request.form.getlist('pessoa_ids')  # List of selected person IDs
-    
-    if not data or not pessoa_ids:
-        flash('Data e pelo menos uma pessoa são obrigatórios.', 'error')
+def pessoa_folha_create():
+    pessoa_id = request.form.get('pessoa_id')
+    valor = request.form.get('valor', type=float)
+    data_pagamento_str = request.form.get('data_pagamento')
+    status = request.form.get('status')
+    observacao = request.form.get('observacao')
+
+    # Validate inputs
+    if not all([pessoa_id, valor, data_pagamento_str, status]):
+        flash('Todos os campos são obrigatórios.', 'error')
         return redirect(url_for('main.folha_list'))
     
     try:
-        folha = Folha(data=datetime.strptime(data, '%Y-%m-%d').date())
+        # Parse the payment date
+        data_pagamento = datetime.strptime(data_pagamento_str, '%Y-%m-%d').date()
+        
+        # Create a new Folha with the current date
+        folha = Folha(data=datetime.now().date())
         db.session.add(folha)
         db.session.flush()  # Ensure folha.id is available
         
-        for pessoa_id in pessoa_ids:
-            pessoa = Pessoa.query.get(int(pessoa_id))
-            if pessoa:
-                pessoa_folha = PessoaFolha(
-                    pessoa_id=pessoa.id,
-                    folha_id=folha.id,
-                    valor=0.0,
-                    status='pendente'
-                )
-                db.session.add(pessoa_folha)
+        # Create the PessoaFolha record
+        pessoa = Pessoa.query.get(int(pessoa_id))
+        if not pessoa:
+            flash('Pessoa não encontrada.', 'error')
+            return redirect(url_for('main.folha_list'))
         
+        # Ensure all required fields are present and valid
+        pessoa_folha = PessoaFolha(
+            pessoa_id=int(pessoa_id),  # Ensure it's an integer
+            folha_id=folha.id,         # This is already an integer from the database
+            valor=float(valor),        # Ensure it's a float
+            data_pagamento=data_pagamento,
+            status=status,
+            observacao=observacao
+        )
+        
+        db.session.add(pessoa_folha)
         db.session.commit()
-        flash('Folha criada com sucesso!', 'success')
+        
+        flash('Pagamento criado com sucesso!', 'success')
+    except ValueError as e:
+        db.session.rollback()
+        flash('Data inválida ou valor inválido. Use o formato AAAA-MM-DD para a data.', 'error')
     except Exception as e:
         db.session.rollback()
-        flash(f'Erro ao criar folha: {str(e)}', 'error')
+        flash(f'Erro ao criar pagamento: {str(e)}', 'error')
     
     return redirect(url_for('main.folha_list'))
 
@@ -574,6 +592,10 @@ def folha_create():
 def folha_delete(id):
     folha = Folha.query.get_or_404(id)
     try:
+        # Primeiro exclui todos os registros relacionados em pessoa_folha
+        PessoaFolha.query.filter_by(folha_id=id).delete()
+        
+        # Depois exclui a folha
         db.session.delete(folha)
         db.session.commit()
         flash('Folha excluída com sucesso!', 'success')

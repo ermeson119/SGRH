@@ -61,7 +61,7 @@ class Setor(db.Model):
 
 class PessoaFolha(db.Model):
     __tablename__ = 'pessoa_folha'
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.Integer, primary_key=True, server_default=db.text("nextval('pessoa_folha_id_seq'::regclass)"))
     pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False)
     folha_id = db.Column(db.Integer, db.ForeignKey('folha.id'), nullable=False)
     valor = db.Column(db.Float, nullable=False, default=0.0)

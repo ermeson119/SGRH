@@ -6,34 +6,50 @@
             <h2>Folhas de Pagamento</h2>
         </div>
         <div class="col text-end">
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createFolhaModal">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPessoaFolhaModal">
                 <i class="fas fa-plus"></i> Nova Folha
             </button>
         </div>
     </div>
 
-    <!-- Modal for Creating New Payroll -->
-    <div class="modal fade" id="createFolhaModal" tabindex="-1" aria-labelledby="createFolhaModalLabel" aria-hidden="true">
+    <!-- Modal for Creating New PessoaFolha -->
+    <div class="modal fade" id="createPessoaFolhaModal" tabindex="-1" aria-labelledby="createPessoaFolhaModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="createFolhaModalLabel">Nova Folha de Pagamento</h5>
+                    <h5 class="modal-title" id="createPessoaFolhaModalLabel">Nova Folha de Pagamento</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form method="POST" action="{{ url_for('main.folha_create') }}">
+                <form method="POST" action="{{ url_for('main.pessoa_folha_create') }}">
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="data" class="form-label">Data</label>
-                            <input type="date" class="form-control" id="data" name="data" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="pessoa_ids" class="form-label">Pessoas</label>
-                            <select class="form-select" id="pessoa_ids" name="pessoa_ids" multiple required>
+                            <label for="pessoa_id" class="form-label">Pessoa</label>
+                            <select class="form-select" id="pessoa_id" name="pessoa_id" required onchange="document.getElementById('pessoa_name').value = this.options[this.selectedIndex].text">
+                                <option value="">Selecione uma pessoa</option>
                                 {% for pessoa in pessoas %}
                                     <option value="{{ pessoa.id }}">{{ pessoa.nome }}</option>
                                 {% endfor %}
                             </select>
-                            <small class="form-text text-muted">Segure Ctrl (ou Command no Mac) para selecionar múltiplas pessoas.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="valor" class="form-label">Valor</label>
+                            <input type="number" class="form-control" id="valor" name="valor" step="0.01" value="0.0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="data_pagamento" class="form-label">Data de Pagamento</label>
+                            <input type="date" class="form-control" id="data_pagamento" name="data_pagamento" value="{{ current_date|default('') }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="pendente">Pendente</option>
+                                <option value="pago">Pago</option>
+                                <option value="cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="observacao" class="form-label">Observação</label>
+                            <textarea class="form-control" id="observacao" name="observacao" rows="3"></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
