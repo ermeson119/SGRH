@@ -1,51 +1,53 @@
 {% extends "base.html" %}
 {% block title %}Cadastro de Usuário{% endblock %}
 {% block content %}
-<div class="container d-flex justify-content-center align-items-center">
-    <div class="col-md-6 bg-light p-4 rounded shadow border">
-        <h2 class="mb-4 text-center">Cadastro de Usuário</h2>
-        <p class="text-center text-muted">Seu cadastro será revisado por um administrador.</p>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        <form method="POST">
-            {{ form.hidden_tag() }}
-            <div class="mb-3">
-                {{ form.email.label(class="form-label") }}
-                {{ form.email(class="form-control", placeholder="Digite seu email") }}
-                {% if form.email.errors %}
-                    {% for error in form.email.errors %}
-                        <small class="text-danger">{{ error }}</small>
+<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="w-100" style="max-width: 400px;">
+        <div class="bg-light p-4 rounded shadow border">
+            <h2 class="mb-4 text-center">Cadastro de Usuário</h2>
+            <p class="text-center text-muted">Seu cadastro será revisado por um administrador.</p>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
                     {% endfor %}
                 {% endif %}
-            </div>
-            <div class="mb-3">
-                {{ form.password.label(class="form-label") }}
-                {{ form.password(class="form-control", type="password", placeholder="Digite sua senha") }}
-                {% if form.password.errors %}
-                    {% for error in form.password.errors %}
-                        <small class="text-danger">{{ error }}</small>
-                    {% endfor %}
-                {% endif %}
-            </div>
-            <div class="mb-3">
-                {{ form.confirm_password.label(class="form-label") }}
-                {{ form.confirm_password(class="form-control", type="password", placeholder="Confirme sua senha") }}
-                {% if form.confirm_password.errors %}
-                    {% for error in form.confirm_password.errors %}
-                        <small class="text-danger">{{ error }}</small>
-                    {% endfor %}
-                {% endif %}
-            </div>
-            <button type="submit" class="btn btn-success w-100">Cadastrar</button>
-        </form>
-        <p class="text-center mt-3">
-            Já tem uma conta? <a href="{{ url_for('main.login') }}">Faça login</a>
-        </p>
+            {% endwith %}
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.email.label(class="form-label") }}
+                    {{ form.email(class="form-control", placeholder="Digite seu email") }}
+                    {% if form.email.errors %}
+                        {% for error in form.email.errors %}
+                            <small class="text-danger">{{ error }}</small>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    {{ form.password.label(class="form-label") }}
+                    {{ form.password(class="form-control", type="password", placeholder="Digite sua senha") }}
+                    {% if form.password.errors %}
+                        {% for error in form.password.errors %}
+                            <small class="text-danger">{{ error }}</small>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    {{ form.confirm_password.label(class="form-label") }}
+                    {{ form.confirm_password(class="form-control", type="password", placeholder="Confirme sua senha") }}
+                    {% if form.confirm_password.errors %}
+                        {% for error in form.confirm_password.errors %}
+                            <small class="text-danger">{{ error }}</small>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <button type="submit" class="btn btn-success w-100">Cadastrar</button>
+            </form>
+            <p class="text-center mt-3">
+                Já tem uma conta? <a href="{{ url_for('main.login') }}">Faça login</a>
+            </p>
+        </div>
     </div>
 </div>
 {% endblock %}

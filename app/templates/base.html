@@ -62,7 +62,7 @@
         }
     </style>
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
@@ -93,7 +93,7 @@
         </div>
     </nav>
 
-    <div class="container-fluid">
+    <div class="container-fluid flex-grow-1">
         <div class="row">
             {% if current_user.is_authenticated %}
             <!-- Sidebar -->
@@ -217,5 +217,11 @@
         }
         setInterval(keepSessionAlive, 300000); // 5 minutes
     </script>
+
+    <footer class="footer mt-auto py-3 bg-primary border-top">
+        <div class="container text-center">
+        <span class="text-muted" style="color: white !important; font-weight: bold;">© {{ now().year }} SGRH - Sistema de Gestão de Recursos Humanos</span>
+        </div>
+    </footer>
 </body>
 </html>

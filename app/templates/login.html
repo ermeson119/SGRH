@@ -1,58 +1,48 @@
 {% extends "base.html" %}
 {% block title %}Login{% endblock %}
 {% block content %}
-<div class="container d-flex justify-content-center align-items-center">
-    <div class="col-md-6 bg-light p-4 rounded shadow border">
-        <h2 class="mb-4 text-center">Login</h2>
-        {% if session.get('next') and not current_user.is_authenticated %}
-            <div class="alert alert-info">
-                Sua sessão expirou. Faça login para continuar.
-            </div>
-        {% endif %}
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="w-100" style="max-width: 400px;">
+        <div class="bg-light p-4 rounded shadow border">
+            <h2 class="mb-4 text-center">Login</h2>
+            {% if request_status and request_message %}
+                <div class="alert alert-warning">
+                    {{ request_message }}
+                </div>
             {% endif %}
-        {% endwith %}
-        {% if request_status and request_message %}
-            <div class="alert alert-warning">
-                {{ request_message }}
-            </div>
-        {% endif %}
-        <form method="POST">
-            {{ form.hidden_tag() }}
-            <div class="mb-3">
-                {{ form.email.label(class="form-label") }}
-                {{ form.email(class="form-control", placeholder="Digite seu email") }}
-                {% if form.email.errors %}
-                    {% for error in form.email.errors %}
-                        <small class="text-danger">{{ error }}</small>
-                    {% endfor %}
-                {% endif %}
-            </div>
-            <div class="mb-3">
-                {{ form.password.label(class="form-label") }}
-                {{ form.password(class="form-control", type="password", placeholder="Digite sua senha") }}
-                {% if form.password.errors %}
-                    {% for error in form.password.errors %}
-                        <small class="text-danger">{{ error }}</small>
-                    {% endfor %}
-                {% endif %}
-            </div>
-            <button type="submit" class="btn btn-primary w-100 mb-3">Entrar</button>
-        </form>
-        <a href="{{ url_for('main.google_login') }}" class="btn btn-outline-secondary w-100 mb-3 d-flex align-items-center justify-content-center">
-            <img src="https://img.icons8.com/color/16/000000/google-logo.png" alt="Google Logo" class="me-2">
-            Entrar com Google
-        </a>
-        <p class="text-center">
-            Não tem uma conta? <a href="{{ url_for('main.register') }}">Cadastre-se aqui</a>
-        </p>
-        <p class="text-center text-muted">
-            Sua conta pode estar aguardando aprovação do administrador.
-        </p>
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.email.label(class="form-label") }}
+                    {{ form.email(class="form-control", placeholder="Digite seu email") }}
+                    {% if form.email.errors %}
+                        {% for error in form.email.errors %}
+                            <small class="text-danger">{{ error }}</small>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    {{ form.password.label(class="form-label") }}
+                    {{ form.password(class="form-control", type="password", placeholder="Digite sua senha") }}
+                    {% if form.password.errors %}
+                        {% for error in form.password.errors %}
+                            <small class="text-danger">{{ error }}</small>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <button type="submit" class="btn btn-primary w-100 mb-3">Entrar</button>
+            </form>
+            <a href="{{ url_for('main.google_login') }}" class="btn btn-outline-secondary w-100 mb-3 d-flex align-items-center justify-content-center">
+                <img src="https://img.icons8.com/color/16/000000/google-logo.png" alt="Google Logo" class="me-2">
+                Entrar com Google
+            </a>
+            <p class="text-center">
+                Não tem uma conta? <a href="{{ url_for('main.register') }}">Cadastre-se aqui</a>
+            </p>
+            <p class="text-center text-muted">
+                Sua conta pode estar aguardando aprovação do administrador.
+            </p>
+        </div>
     </div>
 </div>
 {% endblock %}
