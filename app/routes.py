@@ -740,12 +740,25 @@ def termo_create():
     form = TermoForm()
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
     if form.validate_on_submit():
+        arquivo = form.upload.data
+        nome_arquivo = None
+        
+        if arquivo:
+            # Gera um nome único para o arquivo
+            nome_arquivo = secure_filename(arquivo.filename)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            nome_arquivo = f"{timestamp}_{nome_arquivo}"
+            
+            # Salva o arquivo
+            arquivo.save(os.path.join(current_app.config['UPLOAD_FOLDER'], nome_arquivo))
+        
         termo = Termo(
             pessoa_id=form.pessoa_id.data,
             tipo=form.tipo.data,
             descricao=form.descricao.data,
             data_inicio=form.data_inicio.data,
-            data_fim=form.data_fim.data
+            data_fim=form.data_fim.data,
+            arquivo=nome_arquivo
         )
         db.session.add(termo)
         try:
@@ -764,11 +777,31 @@ def termo_edit(id):
     form = TermoForm(obj=termo)
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
     if form.validate_on_submit():
+        arquivo = form.upload.data
+        
+        if arquivo:
+            # Remove o arquivo antigo se existir
+            if termo.arquivo:
+                try:
+                    os.remove(os.path.join(current_app.config['UPLOAD_FOLDER'], termo.arquivo))
+                except:
+                    pass
+            
+            # Gera um nome único para o novo arquivo
+            nome_arquivo = secure_filename(arquivo.filename)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            nome_arquivo = f"{timestamp}_{nome_arquivo}"
+                
+            # Salva o novo arquivo
+            arquivo.save(os.path.join(current_app.config['UPLOAD_FOLDER'], nome_arquivo))
+            termo.arquivo = nome_arquivo
+        
         termo.pessoa_id = form.pessoa_id.data
         termo.tipo = form.tipo.data
         termo.descricao = form.descricao.data
         termo.data_inicio = form.data_inicio.data
         termo.data_fim = form.data_fim.data
+        
         try:
             db.session.commit()
             flash('Termo atualizado com sucesso!', 'success')
@@ -789,6 +822,15 @@ def termo_delete(id):
     except Exception as e:
         db.session.rollback()
         flash('Erro ao excluir termo: ' + str(e), 'error')
+    return redirect(url_for('main.termo_list'))
+
+@bp.route('/termos/download/<int:id>')
+@login_required
+def termo_download(id):
+    termo = Termo.query.get_or_404(id)
+    if termo.arquivo:
+        return send_from_directory(current_app.config['UPLOAD_FOLDER'], termo.arquivo, as_attachment=True)
+    flash('Arquivo não encontrado.', 'error')
     return redirect(url_for('main.termo_list'))
 
 # --- CRUD Vacina ---

@@ -87,6 +87,7 @@ class Termo(db.Model):
     descricao = db.Column(db.Text, nullable=False)
     data_inicio = db.Column(db.Date, nullable=False)
     data_fim = db.Column(db.Date)
+    arquivo = db.Column(db.String(255)) 
     pessoa = db.relationship('Pessoa', backref='termos')
 
 class Vacina(db.Model):
@@ -103,7 +104,7 @@ class Exame(db.Model):
     tipo = db.Column(db.String(100), nullable=False)
     resultado = db.Column(db.Text)
     data = db.Column(db.Date, nullable=False)
-    arquivo = db.Column(db.String(255))  # Campo para armazenar o nome do arquivo
+    arquivo = db.Column(db.String(255)) 
     pessoa = db.relationship('Pessoa', backref=db.backref('exames', lazy=True))
 
 class Atestado(db.Model):
@@ -114,5 +115,5 @@ class Atestado(db.Model):
     data_fim = db.Column(db.Date, nullable=False)
     documento = db.Column(db.String(200))
     medico = db.Column(db.String(200), nullable=False)
-    arquivo = db.Column(db.String(255))  # Campo para armazenar o nome do arquivo
+    arquivo = db.Column(db.String(255))  
     pessoa = db.relationship('Pessoa', backref='atestados')

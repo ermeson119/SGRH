@@ -89,6 +89,7 @@ class TermoForm(FlaskForm):
     descricao = StringField('Descrição', validators=[DataRequired()])
     data_inicio = DateField('Data Início', validators=[DataRequired()], format='%Y-%m-%d')
     data_fim = DateField('Data Fim', format='%Y-%m-%d')
+    upload = FileField('Upload', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'], 'Somente imagens e documentos são permitidos.')])
     submit = SubmitField('Salvar')
 
 class VacinaForm(FlaskForm):
