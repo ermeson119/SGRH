@@ -188,7 +188,6 @@
                                                 <th>Nome</th>
                                                 <th>Dose</th>
                                                 <th>Data</th>
-                                                <th>Próxima Dose</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -197,7 +196,6 @@
                                                     <td>{{ vacina.nome }}</td>
                                                     <td>{{ vacina.dose }}</td>
                                                     <td>{{ vacina.data.strftime('%d/%m/%Y') }}</td>
-                                                    <td>{{ vacina.proxima_dose.strftime('%d/%m/%Y') if vacina.proxima_dose else 'N/A' }}</td>
                                                 </tr>
                                             {% endfor %}
                                         </tbody>
@@ -205,6 +203,90 @@
                                 </div>
                             {% else %}
                                 <p class="text-muted">Nenhuma vacina registrada.</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Exames -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">
+                                <i class="fas fa-stethoscope"></i> Exames
+                            </h5>
+                            {% if pessoa.exames %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Tipo</th>
+                                                <th>Resultado</th>
+                                                <th>Data</th>
+                                                <th>Documento</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for exame in pessoa.exames %}
+                                                <tr>
+                                                    <td>{{ exame.tipo }}</td>
+                                                    <td>{{ exame.resultado }}</td>
+                                                    <td>{{ exame.data.strftime('%d/%m/%Y') }}</td>
+                                                    <td>
+                                                        {% if exame.arquivo %}
+                                                        <a href="{{ url_for('main.download_exame', exame_id=exame.id) }}" class="btn btn-sm btn-dark">
+                                                            <i class="fas fa-download"></i> Download
+                                                        </a>
+                                                        {% else %}
+                                                        Sem arquivo
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted">Nenhum exame registrado.</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Atestados -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">
+                                <i class="fas fa-file-medical"></i> Atestados
+                            </h5>
+                            {% if pessoa.atestados %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Motivo</th>
+                                                <th>Data Início</th>
+                                                <th>Data Fim</th>
+                                                <th>Documento</th>
+                                                <th>Médico</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for atestado in pessoa.atestados %}
+                                                <tr>
+                                                    <td>{{ atestado.motivo }}</td>
+                                                    <td>{{ atestado.data_inicio.strftime('%d/%m/%Y') }}</td>
+                                                    <td>{{ atestado.data_fim.strftime('%d/%m/%Y') if atestado.data_fim else '-' }}</td>
+                                                    <td>
+                                                        {% if atestado.arquivo %}
+                                                        <a href="{{ url_for('main.download_atestado', atestado_id=atestado.id) }}" class="btn btn-sm btn-dark">
+                                                            <i class="fas fa-download"></i> Download
+                                                        </a>
+                                                        {% else %}
+                                                        Sem arquivo
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>{{ atestado.medico }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted">Nenhum atestado registrado.</p>
                             {% endif %}
                         </div>
                     </div>
