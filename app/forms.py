@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, SelectField, SubmitField, DateField, FloatField
+from wtforms import StringField, SelectField, SubmitField, DateField, FloatField, SelectMultipleField, TextAreaField
 from wtforms.validators import DataRequired, Length, Regexp, ValidationError, Email, EqualTo, Optional
 from app.models import Pessoa, Profissao, Curso
 from datetime import date
@@ -70,9 +70,19 @@ class SetorForm(FlaskForm):
     submit = SubmitField('Salvar')
 
 class FolhaForm(FlaskForm):
-    pessoa_id = SelectField('Pessoa', coerce=int, validators=[DataRequired()])
-    valor = FloatField('Valor', validators=[DataRequired()])
     data = DateField('Data', validators=[DataRequired()], format='%Y-%m-%d')
+    pessoa_ids = SelectMultipleField('Pessoas', coerce=int, validators=[DataRequired()])
+    submit = SubmitField('Salvar')
+
+class PessoaFolhaForm(FlaskForm):
+    valor = FloatField('Valor', validators=[DataRequired()])
+    data_pagamento = DateField('Data de Pagamento', format='%Y-%m-%d')
+    status = SelectField('Status', choices=[
+        ('pendente', 'Pendente'),
+        ('pago', 'Pago'),
+        ('cancelado', 'Cancelado')
+    ])
+    observacao = TextAreaField('Observação')
     submit = SubmitField('Salvar')
 
 class CapacitacaoForm(FlaskForm):

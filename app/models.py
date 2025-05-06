@@ -38,6 +38,8 @@ class Pessoa(db.Model):
     vinculo = db.Column(db.String(50), nullable=False)
     profissao_id = db.Column(db.Integer, db.ForeignKey('profissao.id'), nullable=False)
     profissao = db.relationship('Profissao', backref='pessoas')
+    pessoa_folhas = db.relationship('PessoaFolha', back_populates='pessoa', overlaps="folhas")
+    folhas = db.relationship('Folha', secondary='pessoa_folha', backref=db.backref('pessoas', lazy='dynamic', overlaps="pessoa_folhas"), overlaps="pessoa_folhas")
 
 class Profissao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -57,12 +59,23 @@ class Setor(db.Model):
     nome = db.Column(db.String(100), nullable=False, unique=True, index=True)
     descricao = db.Column(db.Text)
 
+class PessoaFolha(db.Model):
+    __tablename__ = 'pessoa_folha'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False)
+    folha_id = db.Column(db.Integer, db.ForeignKey('folha.id'), nullable=False)
+    valor = db.Column(db.Float, nullable=False, default=0.0)
+    data_pagamento = db.Column(db.Date)
+    status = db.Column(db.String(20), default='pendente')
+    observacao = db.Column(db.Text)
+    
+    pessoa = db.relationship('Pessoa', back_populates='pessoa_folhas', overlaps="folhas,pessoas")
+    folha = db.relationship('Folha', back_populates='pessoa_folhas', overlaps="pessoas,folhas")
+    
 class Folha(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False, index=True)
-    valor = db.Column(db.Float, nullable=False)
     data = db.Column(db.Date, nullable=False)
-    pessoa = db.relationship('Pessoa', backref='folhas')
+    pessoa_folhas = db.relationship('PessoaFolha', back_populates='folha', overlaps="pessoas")
 
 class Curso(db.Model):
     id = db.Column(db.Integer, primary_key=True)

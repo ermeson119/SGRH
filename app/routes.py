@@ -1,10 +1,10 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app, send_from_directory
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, oauth
-from app.models import User, Pessoa,Lotacao, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Curso, RegistrationRequest
+from app.models import User, Pessoa,Lotacao, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Curso, RegistrationRequest, PessoaFolha
 from app.forms import (
     LoginForm, RegisterForm, PessoaForm, LotacaoForm, ProfissaoForm, SetorForm, FolhaForm,
-    CapacitacaoForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, CursoForm, ApproveRequestForm
+    CapacitacaoForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, CursoForm, ApproveRequestForm, PessoaFolhaForm
 )
 from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -526,47 +526,48 @@ def setor_delete(id):
     return redirect(url_for('main.setor_list'))
 
 # --- CRUD Folha de Pagamento ---
-@bp.route('/folhas', methods=['GET'])
+@bp.route('/folhas')
 @login_required
 def folha_list():
-    folhas = Folha.query.all()
-    return render_template('folha/folha_list.html', folhas=folhas)
+    folhas = Folha.query.options(
+        joinedload(Folha.pessoa_folhas).joinedload(PessoaFolha.pessoa)
+    ).order_by(Folha.data.desc()).all()
+    pessoas = Pessoa.query.order_by(Pessoa.nome).all()  # For the creation form
+    return render_template('folha/folha_list.html', folhas=folhas, pessoas=pessoas)
 
-@bp.route('/folhas/create', methods=['GET', 'POST'])
+@bp.route('/folhas/create', methods=['POST'])
 @login_required
 def folha_create():
-    form = FolhaForm()
-    form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
-    if form.validate_on_submit():
-        folha = Folha(pessoa_id=form.pessoa_id.data, valor=form.valor.data, data=form.data.data)
+    data = request.form.get('data')
+    pessoa_ids = request.form.getlist('pessoa_ids')  # List of selected person IDs
+    
+    if not data or not pessoa_ids:
+        flash('Data e pelo menos uma pessoa são obrigatórios.', 'error')
+        return redirect(url_for('main.folha_list'))
+    
+    try:
+        folha = Folha(data=datetime.strptime(data, '%Y-%m-%d').date())
         db.session.add(folha)
-        try:
-            db.session.commit()
-            flash('Folha criada com sucesso!', 'success')
-            return redirect(url_for('main.folha_list'))
-        except Exception as e:
-            db.session.rollback()
-            flash('Erro ao criar folha: ' + str(e), 'error')
-    return render_template('folha/folha_form.html', form=form)
-
-@bp.route('/folhas/edit/<int:id>', methods=['GET', 'POST'])
-@login_required
-def folha_edit(id):
-    folha = Folha.query.get_or_404(id)
-    form = FolhaForm(obj=folha)
-    form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
-    if form.validate_on_submit():
-        folha.pessoa_id = form.pessoa_id.data
-        folha.valor = form.valor.data
-        folha.data = form.data.data
-        try:
-            db.session.commit()
-            flash('Folha atualizada com sucesso!', 'success')
-            return redirect(url_for('main.folha_list'))
-        except Exception as e:
-            db.session.rollback()
-            flash('Erro ao atualizar folha: ' + str(e), 'error')
-    return render_template('folha/folha_form.html', form=form, folha=folha)
+        db.session.flush()  # Ensure folha.id is available
+        
+        for pessoa_id in pessoa_ids:
+            pessoa = Pessoa.query.get(int(pessoa_id))
+            if pessoa:
+                pessoa_folha = PessoaFolha(
+                    pessoa_id=pessoa.id,
+                    folha_id=folha.id,
+                    valor=0.0,
+                    status='pendente'
+                )
+                db.session.add(pessoa_folha)
+        
+        db.session.commit()
+        flash('Folha criada com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao criar folha: {str(e)}', 'error')
+    
+    return redirect(url_for('main.folha_list'))
 
 @bp.route('/folhas/delete/<int:id>', methods=['GET'])
 @login_required
@@ -578,8 +579,30 @@ def folha_delete(id):
         flash('Folha excluída com sucesso!', 'success')
     except Exception as e:
         db.session.rollback()
-        flash('Erro ao excluir folha: ' + str(e), 'error')
+        flash(f'Erro ao excluir folha: {str(e)}', 'error')
     return redirect(url_for('main.folha_list'))
+
+@bp.route('/folhas/pessoa/<int:pessoa_folha_id>/edit', methods=['GET', 'POST'])
+@login_required
+def pessoa_folha_edit(pessoa_folha_id):
+    pessoa_folha = PessoaFolha.query.get_or_404(pessoa_folha_id)  # Use single id
+    form = PessoaFolhaForm(obj=pessoa_folha)
+    
+    if form.validate_on_submit():
+        pessoa_folha.valor = form.valor.data
+        pessoa_folha.data_pagamento = form.data_pagamento.data
+        pessoa_folha.status = form.status.data
+        pessoa_folha.observacao = form.observacao.data
+        
+        try:
+            db.session.commit()
+            flash('Pagamento atualizado com sucesso!', 'success')
+            return redirect(url_for('main.folha_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao atualizar pagamento: {str(e)}', 'error')
+    
+    return render_template('folha/pessoa_folha_form.html', form=form, pessoa_folha=pessoa_folha)
 
 # --- CRUD Curso ---
 @bp.route('/cursos', methods=['GET'])
@@ -1127,7 +1150,7 @@ def relatorio_completo():
 
     query = Pessoa.query.options(
         joinedload(Pessoa.capacitacoes),
-        joinedload(Pessoa.folhas),
+        joinedload(Pessoa.pessoa_folhas).joinedload(PessoaFolha.folha),
         joinedload(Pessoa.profissao),
         joinedload(Pessoa.termos),
         joinedload(Pessoa.vacinas),

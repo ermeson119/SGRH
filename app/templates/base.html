@@ -3,69 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGRH - {% block title %}{% endblock %}</title>
+    <title>SGRH - Sistema de Gestão de Recursos Humanos</title>
+    
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../static/scripts/base.css">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        .navbar-brand {
+            font-weight: bold;
+        }
+        
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background-color: #f8f9fa;
+            padding-top: 20px;
+        }
+        
+        .sidebar .nav-link {
+            color: #333;
+            padding: 8px 16px;
+            margin: 4px 0;
+            border-radius: 4px;
+        }
+        
+        .sidebar .nav-link:hover {
+            background-color: #e9ecef;
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 8px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .flash-message {
+            margin-bottom: 10px;
+            min-width: 300px;
+        }
+    </style>
 </head>
-<body class="d-flex flex-column min-vh-100">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">SGRH</a>
-            <ul class="navbar-nav">
-                {% if current_user.is_authenticated %}
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.pessoa_list') }}">Pessoas</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.profissao_list') }}">Profissões</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.lotacao_list') }}">Lotação</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.setor_list') }}">Setores</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.folha_list') }}">Folhas</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.curso_list') }}">Cursos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.capacitacao_list') }}">Capacitações</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.termo_list') }}">Termos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.vacina_list') }}">Vacinas</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.exame_list') }}">Exames</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.atestado_list') }}">Atestados</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.relatorio_completo') }}">Relatório Completo</a></li>
-                    {% if current_user.is_admin %}
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.request_list') }}">Solicitações</a></li>
+            <a class="navbar-brand" href="{{ url_for('main.pessoa_list') }}">
+                <i class="fas fa-users"></i> SGRH
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.is_admin %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('main.request_list') }}">
+                                    <i class="fas fa-user-shield"></i> Admin
+                                </a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.logout') }}">
+                                <i class="fas fa-sign-out-alt"></i> Sair
+                            </a>
+                        </li>
                     {% endif %}
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.logout') }}">Sair</a></li>
-                {% else %}
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.login') }}">Login</a></li>
-                {% endif %}
-            </ul>
+                </ul>
+            </div>
         </div>
     </nav>
 
-<div class="main-content">
-    {% block content %}{% endblock %}
-</div>
+    <div class="container-fluid">
+        <div class="row">
+            {% if current_user.is_authenticated %}
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.pessoa_list' %}active{% endif %}" 
+                           href="{{ url_for('main.pessoa_list') }}">
+                            <i class="fas fa-users"></i> Pessoas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.profissao_list' %}active{% endif %}" 
+                           href="{{ url_for('main.profissao_list') }}">
+                            <i class="fas fa-briefcase"></i> Profissões
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.setor_list' %}active{% endif %}" 
+                           href="{{ url_for('main.setor_list') }}">
+                            <i class="fas fa-building"></i> Setores
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.lotacao_list' %}active{% endif %}" 
+                           href="{{ url_for('main.lotacao_list') }}">
+                            <i class="fas fa-map-marker-alt"></i> Lotações
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.folha_list' %}active{% endif %}" 
+                           href="{{ url_for('main.folha_list') }}">
+                            <i class="fas fa-file-invoice-dollar"></i> Folhas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.curso_list' %}active{% endif %}" 
+                           href="{{ url_for('main.curso_list') }}">
+                            <i class="fas fa-graduation-cap"></i> Cursos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.capacitacao_list' %}active{% endif %}" 
+                           href="{{ url_for('main.capacitacao_list') }}">
+                            <i class="fas fa-certificate"></i> Capacitações
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.termo_list' %}active{% endif %}" 
+                           href="{{ url_for('main.termo_list') }}">
+                            <i class="fas fa-file-contract"></i> Termos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.vacina_list' %}active{% endif %}" 
+                           href="{{ url_for('main.vacina_list') }}">
+                            <i class="fas fa-syringe"></i> Vacinas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.exame_list' %}active{% endif %}" 
+                           href="{{ url_for('main.exame_list') }}">
+                            <i class="fas fa-notes-medical"></i> Exames
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.atestado_list' %}active{% endif %}" 
+                           href="{{ url_for('main.atestado_list') }}">
+                            <i class="fas fa-file-medical"></i> Atestados
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.relatorio_completo' %}active{% endif %}" 
+                           href="{{ url_for('main.relatorio_completo') }}">
+                            <i class="fas fa-chart-bar"></i> Relatórios
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            {% endif %}
 
-<footer class="bg-dark text-white text-center py-3 mt-auto">
-    <div class="container">
-        <small>© {{ now().year }} SGRH - Sistema de Gestão de Recursos Humanos</small>
+            <!-- Main Content -->
+            <div class="col-md-{% if current_user.is_authenticated %}10{% else %}12{% endif %} content">
+                <!-- Flash Messages -->
+                <div class="flash-messages">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show flash-message" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                </div>
+
+                {% block content %}{% endblock %}
+            </div>
+        </div>
     </div>
-</footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Auto-hide flash messages after 5 seconds
+        $(document).ready(function() {
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
+        });
 
-{% if current_user.is_authenticated %}
-<script>
-    // Tempo de expiração da sessão (30 minutos em milissegundos)
-    const sessionTimeout = 30 * 60 * 1000;
-    // Avisa 1 minuto antes da expiração
-    setTimeout(() => {
-        alert('Sua sessão está prestes a expirar. Faça uma ação para continuar.');
-    }, sessionTimeout - 60 * 1000);
-
-    // Opcional: Atualiza o last_activity ao interagir com a página
-    document.addEventListener('click', () => {
-        fetch('{{ url_for("main.pessoa_list") }}', { method: 'GET' })
-            .then(() => console.log('Sessão atualizada'))
-            .catch(err => console.error('Erro ao atualizar sessão:', err));
-    });
-</script>
-{% endif %}
-
-{% block scripts %}{% endblock %}
+        // Keep session alive
+        function keepSessionAlive() {
+            $.get("{{ url_for('main.keep_session_alive') }}");
+        }
+        setInterval(keepSessionAlive, 300000); // 5 minutes
+    </script>
 </body>
 </html>
