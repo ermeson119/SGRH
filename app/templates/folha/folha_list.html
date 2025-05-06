@@ -77,46 +77,28 @@
                     {% for folha in folhas %}
                         <tr>
                             <td>{{ folha.data.strftime('%d/%m/%Y') }}</td>
-                            <td>
-                                <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#folha{{ folha.id }}">
-                                    {{ folha.pessoa_folhas|length }} pessoa(s)
-                                </button>
-                                <div class="collapse" id="folha{{ folha.id }}">
-                                    <div class="card card-body">
-                                        <table class="table table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th>Nome</th>
-                                                    <th>Valor</th>
-                                                    <th>Data Pagamento</th>
-                                                    <th>Status</th>
-                                                    <th>Ações</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for pf in folha.pessoa_folhas %}
-                                                    <tr>
-                                                        <td>{{ pf.pessoa.nome }}</td>
-                                                        <td>R$ {{ "%.2f"|format(pf.valor) }}</td>
-                                                        <td>{{ pf.data_pagamento.strftime('%d/%m/%Y') if pf.data_pagamento else '-' }}</td>
-                                                        <td>
-                                                            {% if pf.status == 'pago' %}
-                                                                <span class="badge bg-success">Pago</span>
-                                                            {% elif pf.status == 'pendente' %}
-                                                                <span class="badge bg-warning">Pendente</span>
-                                                            {% else %}
-                                                                <span class="badge bg-danger">Cancelado</span>
-                                                            {% endif %}
-                                                        </td>
-                                                        <td>
-                                                            <a href="{{ url_for('main.pessoa_folha_edit', pessoa_folha_id=pf.id) }}" class="btn btn-sm btn-primary">Editar</a>
-                                                        </td>
-                                                    </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                            <td class="p-0 bg-light">
+                                <ul class="list-group list-group-flush">
+                                    {% for pf in folha.pessoa_folhas %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <span class="fw-bold">{{ pf.pessoa.nome }}</span>
+                                                <span class="text-muted ms-2">({{ pf.data_pagamento.strftime('%d/%m/%Y') if pf.data_pagamento else '-' }})</span>
+                                                <span class="ms-2">R$ {{ "%.2f"|format(pf.valor) }}</span>
+                                            </div>
+                                            <div>
+                                                {% if pf.status == 'pago' %}
+                                                    <span class="badge bg-success me-2">Pago</span>
+                                                {% elif pf.status == 'pendente' %}
+                                                    <span class="badge bg-warning text-dark me-2">Pendente</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger me-2">Cancelado</span>
+                                                {% endif %}
+                                                <a href="{{ url_for('main.pessoa_folha_edit', pessoa_folha_id=pf.id) }}" class="btn btn-sm btn-primary">Editar</a>
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
                             </td>
                             <td>
                                 R$ {{ "%.2f"|format(folha.pessoa_folhas|sum(attribute='valor')) }}
