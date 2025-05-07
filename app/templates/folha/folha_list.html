@@ -13,20 +13,24 @@
     </div>
 
     <!-- Formulário de Busca -->
-    <form method="get" class="mb-4">
+    <form method="get" class="mb-5" id="busca-form" data-folhas-url="{{ url_for('main.folha_list') }}">
         <div class="row g-3">
-            <div class="col-md-6">
-                <div class="input-group">
-                    <input type="text" id="busca" name="busca" class="form-control"
-                           placeholder="Buscar por nome da pessoa..." value="{{ busca }}">
-                </div>
-            </div>
             <div class="col-md-4">
-                <div class="input-group">
-                    <input type="date" id="data" name="data" class="form-control" 
-                           value="{{ data }}"
-                           placeholder="Buscar por data">
-                </div>
+                <input type="text" id="filtro" name="busca" class="form-control"
+                       placeholder="Buscar por nome..." value="{{ busca }}">
+            </div>
+            <div class="col-md-3">
+                <input type="date" id="data" name="data" class="form-control" 
+                       value="{{ data }}"
+                       placeholder="Buscar por data">
+            </div>
+            <div class="col-md-3">
+                <select id="status" name="status" class="form-control">
+                    <option value="">Todos os status</option>
+                    <option value="pendente" {% if status == 'pendente' %}selected{% endif %}>Pendente</option>
+                    <option value="pago" {% if status == 'pago' %}selected{% endif %}>Pago</option>
+                    <option value="cancelado" {% if status == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                </select>
             </div>
             <div class="col-md-2">
                 <button class="btn btn-dark w-100" type="submit">Buscar</button>
@@ -83,69 +87,55 @@
         </div>
     </div>
 
-    {% if folhas %}
+    <!-- Lista de Folhas -->
+    <div id="resultados-container">
         <div class="table-responsive">
-            <table class="table table-striped table-hover">
+            <table class="table table-hover">
                 <thead>
                     <tr>
                         <th>Data</th>
-                        <th>Pessoas</th>
-                        <th>Valor Total</th>
+                        <th>Nome</th>
+                        <th>Valor</th>
+                        <th>Data Pagamento</th>
                         <th>Status</th>
                         <th>Excluir</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for folha in folhas %}
+                        {% for pessoa_folha in folha.pessoa_folhas %}
                         <tr>
                             <td>{{ folha.data.strftime('%d/%m/%Y') }}</td>
-                            <td class="p-0 bg-light">
-                                <ul class="list-group list-group-flush">
-                                    {% for pf in folha.pessoa_folhas %}
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <span class="fw-bold">{{ pf.pessoa.nome }}</span>
-                                                <span class="text-muted ms-2">({{ pf.data_pagamento.strftime('%d/%m/%Y') if pf.data_pagamento else '-' }})</span>
-                                                <span class="ms-2">R$ {{ "%.2f"|format(pf.valor) }}</span>
-                                            </div>
-                                            <div>
-                                                <a href="{{ url_for('main.pessoa_folha_edit', pessoa_folha_id=pf.id) }}" class="btn btn-sm btn-primary">Editar</a>
-                                            </div>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            </td>
+                            <td>{{ pessoa_folha.pessoa.nome }}</td>
+                            <td>R$ {{ "%.2f"|format(pessoa_folha.valor) }}</td>
+                            <td>{{ pessoa_folha.data_pagamento.strftime('%d/%m/%Y') if pessoa_folha.data_pagamento else '-' }}</td>
                             <td>
-                                R$ {{ "%.2f"|format(folha.pessoa_folhas|sum(attribute='valor')) }}
-                            </td>
-                            <td>
-                                {% set total = folha.pessoa_folhas|length %}
-                                {% set pagos = folha.pessoa_folhas|selectattr('status', 'equalto', 'pago')|list|length %}
-                                {% set cancelados = folha.pessoa_folhas|selectattr('status', 'equalto', 'cancelado')|list|length %}
-                                
-                                {% if pagos == total %}
+                                {% if pessoa_folha.status == 'pago' %}
                                     <span class="badge bg-success">Pago</span>
-                                {% elif cancelados == total %}
+                                {% elif pessoa_folha.status == 'cancelado' %}
                                     <span class="badge bg-danger">Cancelado</span>
                                 {% else %}
                                     <span class="badge bg-warning">Pendente</span>
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="{{ url_for('main.folha_delete', id=folha.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir esta folha?')">
-                                    <i class="fas fa-trash"></i>
+                                <a href="{{ url_for('main.folha_delete', id=folha.id) }}" 
+                                   class="btn btn-danger btn-sm"
+                                   onclick="return confirm('Tem certeza que deseja excluir esta folha?')">
+                                    🗑️
                                 </a>
                             </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">Nenhuma folha encontrada.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-    {% else %}
-        <div class="alert alert-info">
-            Nenhuma folha de pagamento cadastrada.
-        </div>
-    {% endif %}
+    </div>
 
     <!-- Paginação Bootstrap -->
     {% if pagination.pages > 1 %}
@@ -153,7 +143,7 @@
         <ul class="pagination justify-content-center">
             {% if pagination.has_prev %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('main.folha_list', page=pagination.prev_num, busca=busca, data=data) }}">Anterior</a>
+                    <a class="page-link" href="{{ url_for('main.folha_list', page=pagination.prev_num, busca=busca, data=data, status=status) }}">Anterior</a>
                 </li>
             {% else %}
                 <li class="page-item disabled"><span class="page-link">Anterior</span></li>
@@ -161,13 +151,13 @@
 
             {% for p in range(1, pagination.pages + 1) %}
                 <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('main.folha_list', page=p, busca=busca, data=data) }}">{{ p }}</a>
+                    <a class="page-link" href="{{ url_for('main.folha_list', page=p, busca=busca, data=data, status=status) }}">{{ p }}</a>
                 </li>
             {% endfor %}
 
             {% if pagination.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('main.folha_list', page=pagination.next_num, busca=busca, data=data) }}">Próximo</a>
+                    <a class="page-link" href="{{ url_for('main.folha_list', page=pagination.next_num, busca=busca, data=data, status=status) }}">Próximo</a>
                 </li>
             {% else %}
                 <li class="page-item disabled"><span class="page-link">Próximo</span></li>

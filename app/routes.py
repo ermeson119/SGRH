@@ -532,6 +532,7 @@ def folha_list():
     page = request.args.get('page', 1, type=int)
     busca = request.args.get('busca', '')
     data = request.args.get('data', '')
+    status = request.args.get('status', '')
     per_page = 12
     
     query = Folha.query.options(joinedload(Folha.pessoa_folhas).joinedload(PessoaFolha.pessoa))
@@ -560,16 +561,12 @@ def folha_list():
                     )
                 )
             )
-            
-            # Debug: Imprime a data e a query
-            print(f"Data de busca: {data_obj}")
-            print(f"Query SQL: {query.statement.compile(compile_kwargs={'literal_binds': True})}")
-            
-            # Verifica se existem folhas para esta data
-            folhas_count = query.count()
-            
         except ValueError as e:
             pass
+    
+    if status:
+        # Busca por status específico
+        query = query.join(Folha.pessoa_folhas).filter(PessoaFolha.status == status.lower())
     
     pagination = query.order_by(Folha.data.desc()).paginate(page=page, per_page=per_page, error_out=False)
     pessoas = Pessoa.query.order_by(Pessoa.nome).all()
@@ -580,6 +577,7 @@ def folha_list():
                              pessoas=pessoas, 
                              busca=busca, 
                              data=data,
+                             status=status,
                              pagination=pagination)
     
     return render_template('folha/folha_list.html', 
@@ -587,6 +585,7 @@ def folha_list():
                          pessoas=pessoas, 
                          busca=busca, 
                          data=data,
+                         status=status,
                          pagination=pagination)
 
 @bp.route('/folhas/pessoa/create', methods=['POST'])
