@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        {% if folha %}
+                            Editar Folha de Pagamento
+                        {% else %}
+                            Nova Folha de Pagamento
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.data.label(class="form-label") }}
+                            {{ form.data(class="form-control") }}
+                            {% if form.data.errors %}
+                                {% for error in form.data.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.pessoa_ids.label(class="form-label") }}
+                            {{ form.pessoa_ids(class="form-select", multiple="multiple") }}
+                            <small class="form-text text-muted">Segure Ctrl (ou Command no Mac) para selecionar múltiplas pessoas.</small>
+                            {% if form.pessoa_ids.errors %}
+                                {% for error in form.pessoa_ids.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('main.folha_list') }}" class="btn btn-secondary me-md-2">Cancelar</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

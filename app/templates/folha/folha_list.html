@@ -12,6 +12,28 @@
         </div>
     </div>
 
+    <!-- Formulário de Busca -->
+    <form method="get" class="mb-4">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" id="busca" name="busca" class="form-control"
+                           placeholder="Buscar por nome da pessoa..." value="{{ busca }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="input-group">
+                    <input type="date" id="data" name="data" class="form-control" 
+                           value="{{ data }}"
+                           placeholder="Buscar por data">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-dark w-100" type="submit">Buscar</button>
+            </div>
+        </div>
+    </form>
+
     <!-- Modal for Creating New PessoaFolha -->
     <div class="modal fade" id="createPessoaFolhaModal" tabindex="-1" aria-labelledby="createPessoaFolhaModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -70,7 +92,7 @@
                         <th>Pessoas</th>
                         <th>Valor Total</th>
                         <th>Status</th>
-                        <th>Ações</th>
+                        <th>Excluir</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -87,13 +109,6 @@
                                                 <span class="ms-2">R$ {{ "%.2f"|format(pf.valor) }}</span>
                                             </div>
                                             <div>
-                                                {% if pf.status == 'pago' %}
-                                                    <span class="badge bg-success me-2">Pago</span>
-                                                {% elif pf.status == 'pendente' %}
-                                                    <span class="badge bg-warning text-dark me-2">Pendente</span>
-                                                {% else %}
-                                                    <span class="badge bg-danger me-2">Cancelado</span>
-                                                {% endif %}
                                                 <a href="{{ url_for('main.pessoa_folha_edit', pessoa_folha_id=pf.id) }}" class="btn btn-sm btn-primary">Editar</a>
                                             </div>
                                         </li>
@@ -109,13 +124,11 @@
                                 {% set cancelados = folha.pessoa_folhas|selectattr('status', 'equalto', 'cancelado')|list|length %}
                                 
                                 {% if pagos == total %}
-                                    <span class="badge bg-success">Todos Pagos</span>
+                                    <span class="badge bg-success">Pago</span>
                                 {% elif cancelados == total %}
-                                    <span class="badge bg-danger">Todos Cancelados</span>
-                                {% elif pagos > 0 %}
-                                    <span class="badge bg-warning">Parcialmente Pago</span>
+                                    <span class="badge bg-danger">Cancelado</span>
                                 {% else %}
-                                    <span class="badge bg-secondary">Pendente</span>
+                                    <span class="badge bg-warning">Pendente</span>
                                 {% endif %}
                             </td>
                             <td>
@@ -132,6 +145,35 @@
         <div class="alert alert-info">
             Nenhuma folha de pagamento cadastrada.
         </div>
+    {% endif %}
+
+    <!-- Paginação Bootstrap -->
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Navegação de páginas" class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.folha_list', page=pagination.prev_num, busca=busca, data=data) }}">Anterior</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+            {% endif %}
+
+            {% for p in range(1, pagination.pages + 1) %}
+                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('main.folha_list', page=p, busca=busca, data=data) }}">{{ p }}</a>
+                </li>
+            {% endfor %}
+
+            {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.folha_list', page=pagination.next_num, busca=busca, data=data) }}">Próximo</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Próximo</span></li>
+            {% endif %}
+        </ul>
+    </nav>
     {% endif %}
 </div>
 {% endblock %}

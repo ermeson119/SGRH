@@ -529,11 +529,65 @@ def setor_delete(id):
 @bp.route('/folhas')
 @login_required
 def folha_list():
-    folhas = Folha.query.options(
-        joinedload(Folha.pessoa_folhas).joinedload(PessoaFolha.pessoa)
-    ).order_by(Folha.data.desc()).all()
-    pessoas = Pessoa.query.order_by(Pessoa.nome).all()  # For the modal dropdown
-    return render_template('folha/folha_list.html', folhas=folhas, pessoas=pessoas, current_date=datetime.now().strftime('%Y-%m-%d'))
+    page = request.args.get('page', 1, type=int)
+    busca = request.args.get('busca', '')
+    data = request.args.get('data', '')
+    per_page = 12
+    
+    query = Folha.query.options(joinedload(Folha.pessoa_folhas).joinedload(PessoaFolha.pessoa))
+    
+    if busca:
+        query = query.join(Folha.pessoa_folhas).join(PessoaFolha.pessoa).filter(
+            Pessoa.nome.ilike(f'%{busca}%')
+        )
+    
+    if data:
+        try:
+            data_obj = datetime.strptime(data, '%Y-%m-%d').date()
+            
+            # Busca por mês e ano na data da folha OU na data de pagamento
+            query = query.join(Folha.pessoa_folhas).filter(
+                db.or_(
+                    # Busca na data da folha
+                    db.and_(
+                        db.extract('year', Folha.data) == data_obj.year,
+                        db.extract('month', Folha.data) == data_obj.month
+                    ),
+                    # Busca na data de pagamento
+                    db.and_(
+                        db.extract('year', PessoaFolha.data_pagamento) == data_obj.year,
+                        db.extract('month', PessoaFolha.data_pagamento) == data_obj.month
+                    )
+                )
+            )
+            
+            # Debug: Imprime a data e a query
+            print(f"Data de busca: {data_obj}")
+            print(f"Query SQL: {query.statement.compile(compile_kwargs={'literal_binds': True})}")
+            
+            # Verifica se existem folhas para esta data
+            folhas_count = query.count()
+            
+        except ValueError as e:
+            pass
+    
+    pagination = query.order_by(Folha.data.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    pessoas = Pessoa.query.order_by(Pessoa.nome).all()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template('folha/folha_list.html', 
+                             folhas=pagination.items, 
+                             pessoas=pessoas, 
+                             busca=busca, 
+                             data=data,
+                             pagination=pagination)
+    
+    return render_template('folha/folha_list.html', 
+                         folhas=pagination.items, 
+                         pessoas=pessoas, 
+                         busca=busca, 
+                         data=data,
+                         pagination=pagination)
 
 @bp.route('/folhas/pessoa/create', methods=['POST'])
 @login_required
@@ -544,19 +598,19 @@ def pessoa_folha_create():
     status = request.form.get('status')
     observacao = request.form.get('observacao')
 
-    # Validate inputs
+
     if not all([pessoa_id, valor, data_pagamento_str, status]):
         flash('Todos os campos são obrigatórios.', 'error')
         return redirect(url_for('main.folha_list'))
     
     try:
-        # Parse the payment date
+ 
         data_pagamento = datetime.strptime(data_pagamento_str, '%Y-%m-%d').date()
         
-        # Create a new Folha with the current date
+        
         folha = Folha(data=datetime.now().date())
         db.session.add(folha)
-        db.session.flush()  # Ensure folha.id is available
+        db.session.flush()  
         
         # Create the PessoaFolha record
         pessoa = Pessoa.query.get(int(pessoa_id))
@@ -564,11 +618,10 @@ def pessoa_folha_create():
             flash('Pessoa não encontrada.', 'error')
             return redirect(url_for('main.folha_list'))
         
-        # Ensure all required fields are present and valid
         pessoa_folha = PessoaFolha(
-            pessoa_id=int(pessoa_id),  # Ensure it's an integer
-            folha_id=folha.id,         # This is already an integer from the database
-            valor=float(valor),        # Ensure it's a float
+            pessoa_id=int(pessoa_id),  
+            folha_id=folha.id,         
+            valor=float(valor),        
             data_pagamento=data_pagamento,
             status=status,
             observacao=observacao
