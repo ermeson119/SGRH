@@ -611,7 +611,6 @@ def pessoa_folha_create():
         db.session.add(folha)
         db.session.flush()  
         
-        # Create the PessoaFolha record
         pessoa = Pessoa.query.get(int(pessoa_id))
         if not pessoa:
             flash('Pessoa não encontrada.', 'error')
@@ -659,7 +658,7 @@ def folha_delete(id):
 @bp.route('/folhas/pessoa/<int:pessoa_folha_id>/edit', methods=['GET', 'POST'])
 @login_required
 def pessoa_folha_edit(pessoa_folha_id):
-    pessoa_folha = PessoaFolha.query.get_or_404(pessoa_folha_id)  # Use single id
+    pessoa_folha = PessoaFolha.query.get_or_404(pessoa_folha_id) 
     form = PessoaFolhaForm(obj=pessoa_folha)
     
     if form.validate_on_submit():

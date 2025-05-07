@@ -98,7 +98,7 @@
                         <th>Valor</th>
                         <th>Data Pagamento</th>
                         <th>Status</th>
-                        <th>Excluir</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -119,6 +119,10 @@
                                 {% endif %}
                             </td>
                             <td>
+                                <a href="{{ url_for('main.pessoa_folha_edit', pessoa_folha_id=pessoa_folha.id) }}" 
+                                   class="btn btn-primary btn-sm">
+                                    ✏️
+                                </a>
                                 <a href="{{ url_for('main.folha_delete', id=folha.id) }}" 
                                    class="btn btn-danger btn-sm"
                                    onclick="return confirm('Tem certeza que deseja excluir esta folha?')">
