@@ -1311,6 +1311,28 @@ def capacitacao_relatorio():
                          capacitacoes_por_mes=capacitacoes_por_mes,
                          now=datetime.now())
 
+@bp.route('/relatorio/folhas')
+@login_required
+def folha_relatorio():
+    busca = request.args.get('busca', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 12
+
+    query = Folha.query.order_by(Folha.data.desc())
+    if busca:
+        query = query.join(Folha.pessoa_folhas).join(PessoaFolha.pessoa).filter(Pessoa.nome.ilike(f'%{busca}%'))
+
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    folhas = pagination.items
+
+    return render_template(
+        'folha/folha_relatorio.html',
+        folhas=folhas,
+        pagination=pagination,
+        busca=busca,
+        now=datetime.now()
+    )
+
 @bp.route('/keep-session-alive', methods=['GET'])
 @login_required
 def keep_session_alive():
