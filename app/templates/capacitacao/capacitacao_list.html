@@ -12,6 +12,10 @@
         </a>
     </div>
 
+    <a href="{{ url_for('main.capacitacao_relatorio') }}" class="btn btn-info mb-3">
+        <i class="fas fa-chart-bar"></i> Relatório
+    </a>
+
     <!-- Formulário de Busca -->
     <form method="get" class="mb-5" id="busca-form" data-capacitacoes-url="{{ url_for('main.capacitacao_list') }}">
         <div class="input-group">

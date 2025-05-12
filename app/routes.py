@@ -1284,9 +1284,9 @@ def capacitacao_relatorio():
     if tipo:
         query = query.filter(Capacitacao.tipo == tipo)
     if data_inicio:
-        query = query.filter(Capacitacao.data_inicio >= datetime.strptime(data_inicio, '%Y-%m-%d'))
+        query = query.filter(Capacitacao.data >= datetime.strptime(data_inicio, '%Y-%m-%d'))
     if data_fim:
-        query = query.filter(Capacitacao.data_inicio <= datetime.strptime(data_fim, '%Y-%m-%d'))
+        query = query.filter(Capacitacao.data <= datetime.strptime(data_fim, '%Y-%m-%d'))
 
     capacitacoes = query.all()
     cursos = Curso.query.all()
@@ -1297,7 +1297,7 @@ def capacitacao_relatorio():
     for i in range(12):
         mes = (datetime.now() - timedelta(days=30*i)).strftime('%m/%Y')
         meses.insert(0, mes)
-        count = sum(1 for c in capacitacoes if c.data_inicio.strftime('%m/%Y') == mes)
+        count = sum(1 for c in capacitacoes if c.data.strftime('%m/%Y') == mes)
         capacitacoes_por_mes.insert(0, count)
 
     return render_template('capacitacao/capacitacao_relatorio.html',

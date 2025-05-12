@@ -30,14 +30,6 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label for="tipo" class="form-label">Tipo</label>
-                    <select name="tipo" id="tipo" class="form-select">
-                        <option value="">Todos os tipos</option>
-                        <option value="interno" {% if tipo == 'interno' %}selected{% endif %}>Interno</option>
-                        <option value="externo" {% if tipo == 'externo' %}selected{% endif %}>Externo</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
                     <label for="data_inicio" class="form-label">Data Início</label>
                     <input type="date" class="form-control" id="data_inicio" name="data_inicio" 
                            value="{{ data_inicio if data_inicio else '' }}">
@@ -67,17 +59,9 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Em Andamento</h5>
-                    <p class="card-text display-6">{{ capacitacoes|selectattr('data_fim', 'none')|list|length }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
             <div class="card bg-info text-white">
                 <div class="card-body">
-                    <h5 class="card-title">Cursos Únicos</h5>
+                    <h5 class="card-title">Total de Cursos</h5>
                     <p class="card-text display-6">{{ capacitacoes|map(attribute='curso')|unique|list|length }}</p>
                 </div>
             </div>
@@ -85,7 +69,7 @@
         <div class="col-md-3">
             <div class="card bg-warning text-white">
                 <div class="card-body">
-                    <h5 class="card-title">Funcionários Treinados</h5>
+                    <h5 class="card-title">Total de Funcionários</h5>
                     <p class="card-text display-6">{{ capacitacoes|map(attribute='pessoa')|unique|list|length }}</p>
                 </div>
             </div>
@@ -101,12 +85,9 @@
                         <tr>
                             <th>Funcionário</th>
                             <th>Curso</th>
-                            <th>Tipo</th>
                             <th>Descrição</th>
                             <th>Data Início</th>
                             <th>Data Fim</th>
-                            <th>Status</th>
-                            <th>Duração</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -114,28 +95,9 @@
                         <tr>
                             <td>{{ capacitacao.pessoa.nome }}</td>
                             <td>{{ capacitacao.curso.nome }}</td>
-                            <td>
-                                <span class="badge {% if capacitacao.tipo == 'interno' %}bg-primary{% else %}bg-secondary{% endif %}">
-                                    {{ capacitacao.tipo|title }}
-                                </span>
-                            </td>
                             <td>{{ capacitacao.descricao }}</td>
-                            <td>{{ capacitacao.data_inicio.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ capacitacao.data.strftime('%d/%m/%Y') }}</td>
                             <td>{{ capacitacao.data_fim.strftime('%d/%m/%Y') if capacitacao.data_fim else 'Em andamento' }}</td>
-                            <td>
-                                {% if capacitacao.data_fim %}
-                                    <span class="badge bg-success">Concluída</span>
-                                {% else %}
-                                    <span class="badge bg-warning">Em andamento</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if capacitacao.data_fim %}
-                                    {{ ((capacitacao.data_fim - capacitacao.data_inicio).days / 30)|round|int }} meses
-                                {% else %}
-                                    {{ ((now - capacitacao.data_inicio).days / 30)|round|int }} meses
-                                {% endif %}
-                            </td>
                         </tr>
                         {% else %}
                         <tr>
@@ -148,25 +110,6 @@
         </div>
     </div>
 
-    <!-- Gráficos -->
-    <div class="row mt-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Distribuição por Tipo de Curso</h5>
-                    <canvas id="tipoChart"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Capacitações por Mês</h5>
-                    <canvas id="mesChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}
 
