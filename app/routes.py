@@ -303,7 +303,14 @@ def pessoa_upload_csv():
             # Lê todo o conteúdo do arquivo em memória
             file_content = file.read()
             if isinstance(file_content, bytes):
-                file_content = file_content.decode('utf-8-sig')
+                try:
+                    file_content = file_content.decode('utf-8-sig')
+                except UnicodeDecodeError:
+                    try:
+                        file_content = file_content.decode('latin1')
+                    except Exception as e:
+                        flash(f'Erro ao decodificar o arquivo: {str(e)}', 'danger')
+                        return redirect(url_for(request.endpoint))
             from io import StringIO
             stream = StringIO(file_content)
             sample = stream.read(2048)
@@ -513,6 +520,73 @@ def profissao_delete(id):
         db.session.rollback()
         flash('Erro ao excluir profissão: ' + str(e), 'error')
     return redirect(url_for('main.profissao_list'))
+
+@bp.route('/profissoes/upload_csv', methods=['GET', 'POST'])
+@login_required
+def profissao_upload_csv():
+    if request.method == 'POST':
+        file = request.files.get('csv_file')
+        if not file:
+            flash('Nenhum arquivo foi enviado.', 'danger')
+            return redirect(url_for('main.profissao_upload_csv'))
+        if not file.filename.endswith('.csv'):
+            flash('Arquivo inválido. Envie um arquivo CSV.', 'danger')
+            return redirect(url_for('main.profissao_upload_csv'))
+        try:
+            file_content = file.read()
+            if isinstance(file_content, bytes):
+                try:
+                    file_content = file_content.decode('utf-8-sig')
+                except UnicodeDecodeError:
+                    try:
+                        file_content = file_content.decode('latin1')
+                    except Exception as e:
+                        flash(f'Erro ao decodificar o arquivo: {str(e)}', 'danger')
+                        return redirect(url_for(request.endpoint))
+            from io import StringIO
+            stream = StringIO(file_content)
+            sample = stream.read(2048)
+            stream.seek(0)
+            import csv
+            sniffer = csv.Sniffer()
+            try:
+                dialect = sniffer.sniff(sample, delimiters=',;')
+            except Exception:
+                dialect = csv.excel
+            stream.seek(0)
+            reader = csv.DictReader(stream, dialect=dialect)
+            if 'nome' not in reader.fieldnames:
+                flash(f'O arquivo CSV deve conter a coluna: nome. Colunas encontradas: {reader.fieldnames}', 'danger')
+                return redirect(url_for('main.profissao_upload_csv'))
+            count = 0
+            errors = []
+            for row_num, row in enumerate(reader, start=2):
+                try:
+                    if not row.get('nome'):
+                        errors.append(f'Linha {row_num}: Nome da profissão vazio')
+                        continue
+                    if Profissao.query.filter_by(nome=row['nome']).first():
+                        errors.append(f'Linha {row_num}: Profissão já cadastrada - {row["nome"]}')
+                        continue
+                    profissao = Profissao(nome=row['nome'])
+                    db.session.add(profissao)
+                    count += 1
+                except Exception as e:
+                    errors.append(f'Linha {row_num}: Erro ao processar - {str(e)}')
+                    continue
+            if errors:
+                for error in errors:
+                    flash(error, 'warning')
+            if count > 0:
+                db.session.commit()
+                flash(f'{count} profissões importadas com sucesso!', 'success')
+            else:
+                flash('Nenhuma profissão foi importada.', 'warning')
+            return redirect(url_for('main.profissao_list'))
+        except Exception as e:
+            flash(f'Erro ao processar o arquivo: {str(e)}', 'danger')
+            return redirect(url_for('main.profissao_upload_csv'))
+    return render_template('profissional/upload_csv.html')
 
 @bp.route('/lotacoes', methods=['GET'])
 @login_required
