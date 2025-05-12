@@ -28,10 +28,20 @@
             </div>
 
             <div class="mb-3">
-                {{ form.medico.label(class="form-label") }}
+                {{ form.medico.label(class="form-label", text="Profissional que emitiu") }}
                 {{ form.medico(class="form-control") }}
                 {% if form.medico.errors %}
                     {% for error in form.medico.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.documento.label(class="form-label", text="Conselho Profissional") }}
+                {{ form.documento(class="form-control") }}
+                {% if form.documento.errors %}
+                    {% for error in form.documento.errors %}
                         <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                 {% endif %}
@@ -52,16 +62,6 @@
                 {{ form.data_fim(class="form-control", type="date") }}
                 {% if form.data_fim.errors %}
                     {% for error in form.data_fim.errors %}
-                        <div class="text-danger">{{ error }}</div>
-                    {% endfor %}
-                {% endif %}
-            </div>
-
-            <div class="mb-3">
-                {{ form.documento.label(class="form-label") }}
-                {{ form.documento(class="form-control") }}
-                {% if form.documento.errors %}
-                    {% for error in form.documento.errors %}
                         <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                 {% endif %}
