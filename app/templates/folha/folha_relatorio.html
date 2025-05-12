@@ -1,5 +1,32 @@
 {% extends 'base.html' %}
 {% block title %}Relatório de Folha de Pagamento{% endblock %}
+{% block styles %}
+{{ super() }}
+<style>
+@media print {
+    body * {
+        visibility: hidden !important;
+    }
+    table, table * {
+        visibility: visible !important;
+    }
+    table {
+        position: absolute !important;
+        left: 0;
+        top: 0;
+        width: 100% !important;
+        font-size: 12pt;
+        margin: 0 !important;
+    }
+    html, body {
+        background: #fff !important;
+    }
+    @page {
+        margin: 20mm;
+    }
+}
+</style>
+{% endblock %}
 {% block content %}
 <div class="container my-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -27,8 +54,6 @@
                             <th>Nome</th>
                             <th>Valor</th>
                             <th>Data Pagamento</th>
-                            <th>Status</th>
-                            <th>Observação</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -39,8 +64,6 @@
                                 <td>{{ pessoa_folha.pessoa.nome }}</td>
                                 <td>R$ {{ '%.2f'|format(pessoa_folha.valor) }}</td>
                                 <td>{{ pessoa_folha.data_pagamento.strftime('%d/%m/%Y') if pessoa_folha.data_pagamento else '-' }}</td>
-                                <td>{{ pessoa_folha.status|title }}</td>
-                                <td>{{ pessoa_folha.observacao or '-' }}</td>
                             </tr>
                             {% endfor %}
                         {% else %}
