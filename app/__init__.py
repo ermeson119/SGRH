@@ -129,7 +129,7 @@ def create_app(test_config=None):
 
     @app.context_processor
     def inject_now():
-        return {'now': datetime.utcnow}
+        return {'now': datetime.utcnow()}
 
     # Aplica as migrações
     with app.app_context():

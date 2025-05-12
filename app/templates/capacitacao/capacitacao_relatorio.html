@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% block title %}Relatório de Capacitações{% endblock %}
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Relatório de Capacitações</h2>
+        <div>
+            <button class="btn btn-success" onclick="window.print()">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
+            <a href="{{ url_for('main.capacitacao_list') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label for="curso" class="form-label">Curso</label>
+                    <select name="curso" id="curso" class="form-select">
+                        <option value="">Todos os cursos</option>
+                        {% for curso in cursos %}
+                            <option value="{{ curso.id }}" {% if curso_id == curso.id %}selected{% endif %}>
+                                {{ curso.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="tipo" class="form-label">Tipo</label>
+                    <select name="tipo" id="tipo" class="form-select">
+                        <option value="">Todos os tipos</option>
+                        <option value="interno" {% if tipo == 'interno' %}selected{% endif %}>Interno</option>
+                        <option value="externo" {% if tipo == 'externo' %}selected{% endif %}>Externo</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="data_inicio" class="form-label">Data Início</label>
+                    <input type="date" class="form-control" id="data_inicio" name="data_inicio" 
+                           value="{{ data_inicio if data_inicio else '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="data_fim" class="form-label">Data Fim</label>
+                    <input type="date" class="form-control" id="data_fim" name="data_fim"
+                           value="{{ data_fim if data_fim else '' }}">
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resumo -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total de Capacitações</h5>
+                    <p class="card-text display-6">{{ capacitacoes|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Em Andamento</h5>
+                    <p class="card-text display-6">{{ capacitacoes|selectattr('data_fim', 'none')|list|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Cursos Únicos</h5>
+                    <p class="card-text display-6">{{ capacitacoes|map(attribute='curso')|unique|list|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Funcionários Treinados</h5>
+                    <p class="card-text display-6">{{ capacitacoes|map(attribute='pessoa')|unique|list|length }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Capacitações -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Funcionário</th>
+                            <th>Curso</th>
+                            <th>Tipo</th>
+                            <th>Descrição</th>
+                            <th>Data Início</th>
+                            <th>Data Fim</th>
+                            <th>Status</th>
+                            <th>Duração</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for capacitacao in capacitacoes %}
+                        <tr>
+                            <td>{{ capacitacao.pessoa.nome }}</td>
+                            <td>{{ capacitacao.curso.nome }}</td>
+                            <td>
+                                <span class="badge {% if capacitacao.tipo == 'interno' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                    {{ capacitacao.tipo|title }}
+                                </span>
+                            </td>
+                            <td>{{ capacitacao.descricao }}</td>
+                            <td>{{ capacitacao.data_inicio.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ capacitacao.data_fim.strftime('%d/%m/%Y') if capacitacao.data_fim else 'Em andamento' }}</td>
+                            <td>
+                                {% if capacitacao.data_fim %}
+                                    <span class="badge bg-success">Concluída</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Em andamento</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if capacitacao.data_fim %}
+                                    {{ ((capacitacao.data_fim - capacitacao.data_inicio).days / 30)|round|int }} meses
+                                {% else %}
+                                    {{ ((now - capacitacao.data_inicio).days / 30)|round|int }} meses
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center">Nenhuma capacitação encontrada.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Distribuição por Tipo de Curso</h5>
+                    <canvas id="tipoChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Capacitações por Mês</h5>
+                    <canvas id="mesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script id="capacitacoes-por-tipo" type="application/json">{{ tipos_array|tojson }}</script>
+<script id="meses-json" type="application/json">{{ meses|tojson }}</script>
+<script id="capacitacoes-por-mes-json" type="application/json">{{ capacitacoes_por_mes|tojson }}</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Dados para o gráfico de tipos
+    const tipos = ['Interno', 'Externo'];
+    const capacitacoesPorTipo = JSON.parse(document.getElementById('capacitacoes-por-tipo').textContent);
+    const meses = JSON.parse(document.getElementById('meses-json').textContent);
+    const capacitacoesPorMes = JSON.parse(document.getElementById('capacitacoes-por-mes-json').textContent);
+
+    // Criar o gráfico de tipos
+    const tipoCtx = document.getElementById('tipoChart').getContext('2d');
+    new Chart(tipoCtx, {
+        type: 'pie',
+        data: {
+            labels: tipos,
+            datasets: [{
+                data: capacitacoesPorTipo,
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(255, 99, 132, 0.5)'
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+
+    // Criar o gráfico mensal
+    const mesCtx = document.getElementById('mesChart').getContext('2d');
+    new Chart(mesCtx, {
+        type: 'line',
+        data: {
+            labels: meses,
+            datasets: [{
+                label: 'Número de Capacitações',
+                data: capacitacoesPorMes,
+                fill: false,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

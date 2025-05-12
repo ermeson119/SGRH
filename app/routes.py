@@ -8,7 +8,7 @@ from app.forms import (
 )
 from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
 from functools import wraps
 from werkzeug.utils import secure_filename
@@ -1241,6 +1241,75 @@ def relatorio_completo():
                            pessoas=pagination.items,
                            pagination=pagination,
                            busca=busca)
+
+@bp.route('/relatorio/lotacoes')
+@login_required
+def lotacao_relatorio():
+    setor_id = request.args.get('setor', type=int)
+    data_inicio = request.args.get('data_inicio')
+    data_fim = request.args.get('data_fim')
+
+    query = Lotacao.query.join(Pessoa).join(Setor)
+
+    if setor_id:
+        query = query.filter(Lotacao.setor_id == setor_id)
+    if data_inicio:
+        query = query.filter(Lotacao.data_inicio >= datetime.strptime(data_inicio, '%Y-%m-%d'))
+    if data_fim:
+        query = query.filter(Lotacao.data_inicio <= datetime.strptime(data_fim, '%Y-%m-%d'))
+
+    lotacoes = query.all()
+    setores = Setor.query.all()
+
+    return render_template('profissional/lotacao_relatorio.html',
+                         lotacoes=lotacoes,
+                         setores=setores,
+                         setor_id=setor_id,
+                         data_inicio=data_inicio,
+                         data_fim=data_fim,
+                         now=datetime.now())
+
+@bp.route('/relatorio/capacitacoes')
+@login_required
+def capacitacao_relatorio():
+    curso_id = request.args.get('curso', type=int)
+    tipo = request.args.get('tipo')
+    data_inicio = request.args.get('data_inicio')
+    data_fim = request.args.get('data_fim')
+
+    query = Capacitacao.query.join(Pessoa).join(Curso)
+
+    if curso_id:
+        query = query.filter(Capacitacao.curso_id == curso_id)
+    if tipo:
+        query = query.filter(Capacitacao.tipo == tipo)
+    if data_inicio:
+        query = query.filter(Capacitacao.data_inicio >= datetime.strptime(data_inicio, '%Y-%m-%d'))
+    if data_fim:
+        query = query.filter(Capacitacao.data_inicio <= datetime.strptime(data_fim, '%Y-%m-%d'))
+
+    capacitacoes = query.all()
+    cursos = Curso.query.all()
+
+    # Preparar dados para o gráfico mensal
+    meses = []
+    capacitacoes_por_mes = []
+    for i in range(12):
+        mes = (datetime.now() - timedelta(days=30*i)).strftime('%m/%Y')
+        meses.insert(0, mes)
+        count = sum(1 for c in capacitacoes if c.data_inicio.strftime('%m/%Y') == mes)
+        capacitacoes_por_mes.insert(0, count)
+
+    return render_template('capacitacao/capacitacao_relatorio.html',
+                         capacitacoes=capacitacoes,
+                         cursos=cursos,
+                         curso_id=curso_id,
+                         tipo=tipo,
+                         data_inicio=data_inicio,
+                         data_fim=data_fim,
+                         meses=meses,
+                         capacitacoes_por_mes=capacitacoes_por_mes,
+                         now=datetime.now())
 
 @bp.route('/keep-session-alive', methods=['GET'])
 @login_required
