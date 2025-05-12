@@ -1333,6 +1333,17 @@ def folha_relatorio():
         now=datetime.now()
     )
 
+@bp.route('/relatorio/vacinas')
+@login_required
+def vacina_relatorio():
+    pessoa_id = request.args.get('pessoa_id', type=int)
+    pessoas = Pessoa.query.order_by(Pessoa.nome).all()
+    query = Vacina.query.join(Pessoa)
+    if pessoa_id:
+        query = query.filter(Vacina.pessoa_id == pessoa_id)
+    vacinas = query.order_by(Vacina.data.desc()).all()
+    return render_template('saude/vacina_relatorio.html', vacinas=vacinas, pessoas=pessoas, pessoa_id=pessoa_id)
+
 @bp.route('/keep-session-alive', methods=['GET'])
 @login_required
 def keep_session_alive():

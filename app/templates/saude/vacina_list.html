@@ -4,9 +4,14 @@
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>Vacinas</h2>
-            <a href="{{ url_for('main.vacina_create') }}" class="btn btn-primary">
-                Nova Vacina
-            </a>
+            <div>
+                <a href="{{ url_for('main.vacina_relatorio') }}" class="btn btn-success me-2">
+                    <i class="fas fa-chart-bar"></i> Relatório
+                </a>
+                <a href="{{ url_for('main.vacina_create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nova Vacina
+                </a>
+            </div>
         </div>
 
         <table class="table table-bordered table-striped shadow-sm">
