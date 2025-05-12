@@ -94,8 +94,8 @@ class CapacitacaoForm(FlaskForm):
 
 class TermoForm(FlaskForm):
     pessoa_id = SelectField('Pessoa', coerce=int, validators=[DataRequired()])
-    tipo = StringField('Tipo', validators=[DataRequired(), Length(max=100)])
-    descricao = StringField('Descrição', validators=[DataRequired()])
+    tipo = SelectField('Tipo', choices=[('Recusa', 'Recusa'), ('ASO', 'ASO'), ('Outros', 'Outros')], validators=[DataRequired()])
+    descricao = StringField('Descrição', validators=[DataRequired(), Length(max=200)])
     data_inicio = DateField('Data Início', validators=[DataRequired()], format='%Y-%m-%d')
     data_fim = DateField('Data Fim', format='%Y-%m-%d')
     upload = FileField('Upload', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'], 'Somente imagens e documentos são permitidos.')])

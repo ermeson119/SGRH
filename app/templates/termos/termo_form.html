@@ -18,7 +18,7 @@
 
         <div class="mb-3">
             {{ form.tipo.label(class="form-label") }}
-            {{ form.tipo(class="form-control") }}
+            {{ form.tipo(class="form-select") }}
             {% if form.tipo.errors %}
                 {% for error in form.tipo.errors %}
                     <div class="text-danger">{{ error }}</div>
