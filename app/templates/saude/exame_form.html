@@ -29,13 +29,6 @@
                         <input type="text" class="form-control" id="outroExame" name="outro_exame">
                     </div>
                     <div class="mb-3">
-                        {{ form.resultado.label(class="form-label") }}
-                        {{ form.resultado(class="form-control" + (" is-invalid" if form.resultado.errors else "")) }}
-                        {% for error in form.resultado.errors %}
-                        <div class="invalid-feedback">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    <div class="mb-3">
                         {{ form.data.label(class="form-label") }}
                         {{ form.data(class="form-control" + (" is-invalid" if form.data.errors else ""), type="date") }}
                         {% for error in form.data.errors %}
@@ -49,6 +42,13 @@
                         <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
                         <div class="form-text">Formatos permitidos para adicionar o exame: jpg, jpeg, png, gif, pdf, doc, docx, xls, xlsx, ppt, pptx</div>
+                    </div>
+                    <div class="mb-3">
+                        {{ form.resultado.label(class="form-label") }}
+                        {{ form.resultado(class="form-control" + (" is-invalid" if form.resultado.errors else "")) }}
+                        {% for error in form.resultado.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
                     </div>
                     <div class="d-flex justify-content-center gap-3 mt-4">
                         <button type="submit" class="btn btn-primary">Salvar</button>
