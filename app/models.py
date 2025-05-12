@@ -80,7 +80,7 @@ class Folha(db.Model):
 class Curso(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
-    duracao = db.Column(db.String(50), nullable=False)
+    duracao = db.Column(db.DECIMAL(10, 1), nullable=False)
     tipo = db.Column(db.String(50), nullable=False)
 
 class Capacitacao(db.Model):

@@ -1,7 +1,8 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, SelectField, SubmitField, DateField, FloatField, SelectMultipleField, TextAreaField
-from wtforms.validators import DataRequired, Length, Regexp, ValidationError, Email, EqualTo, Optional
+from wtforms.validators import DataRequired, Length, NumberRange, Regexp, ValidationError, Email, EqualTo, Optional
+import re
 from app.models import Pessoa, Profissao, Curso
 from datetime import date
 
@@ -42,13 +43,11 @@ class PessoaForm(FlaskForm):
     submit = SubmitField('Salvar')
 
     def validate_email(self, field):
-        # Verifica se o email já está cadastrado (exceto para o mesmo registro em edição)
         pessoa = Pessoa.query.filter_by(email=field.data).first()
         if pessoa and (not hasattr(self, 'pessoa') or pessoa.id != self.pessoa.id):
             raise ValidationError('Este email já está cadastrado.')
 
     def validate_cpf(self, field):
-        # Verifica se o CPF já está cadastrado (exceto para o mesmo registro em edição)
         pessoa = Pessoa.query.filter_by(cpf=field.data).first()
         if pessoa and (not hasattr(self, 'pessoa') or pessoa.id != self.pessoa.id):
             raise ValidationError('Este CPF já está cadastrado.')
@@ -154,8 +153,23 @@ class AtestadoForm(FlaskForm):
     upload = FileField('Upload', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'], 'Somente imagens e documentos são permitidos.')])
     submit = SubmitField('Salvar')
 
+def validate_decimal_places(form, field):
+    if field.data is not None:
+        value_str = str(field.data)
+        if not re.match(r'^\d*\.?\d{0,1}$', value_str):
+            raise ValidationError('A duração deve ter no máximo uma casa decimal (ex.: 0.0, 1.5).')
+
 class CursoForm(FlaskForm):
     nome = StringField('Nome', validators=[DataRequired(), Length(max=100)])
-    duracao = StringField('Duração', validators=[DataRequired(), Length(max=50)])
-    tipo = SelectField('Tipo', choices=[('Graduação', 'Graduação'), ('Pós', 'Pós'), ('Formação', 'Formação'), ('Capacitação', 'Capacitação')], validators=[DataRequired()])
+    duracao = FloatField('Duração', validators=[
+        DataRequired(),
+        NumberRange(min=0.0, message='A duração deve ser um número positivo.'),
+        validate_decimal_places
+    ])
+    tipo = SelectField('Tipo', choices=[
+        ('Graduação', 'Graduação'),
+        ('Pós-Graduação', 'Pós-Graduação'),
+        ('Formação', 'Formação'),
+        ('Capacitação', 'Capacitação')
+    ], validators=[DataRequired()])
     submit = SubmitField('Salvar')

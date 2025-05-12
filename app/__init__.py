@@ -30,7 +30,7 @@ def create_app(test_config=None):
         SECRET_KEY='dev',
         SQLALCHEMY_DATABASE_URI='postgresql://admin:1234@db:5432/sgrh',
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        UPLOAD_FOLDER=os.path.join(app.instance_path, 'uploads'),
+        UPLOAD_FOLDER=os.path.join(app.instance_path, 'Uploads'),
         PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
         SESSION_TYPE='redis'
     )
