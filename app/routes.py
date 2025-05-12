@@ -12,7 +12,10 @@ from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
 from functools import wraps
 from werkzeug.utils import secure_filename
+import csv
+from io import StringIO
 import os
+import re
 
 # Cria um Blueprint para as rotas
 bp = Blueprint('main', __name__)
@@ -281,6 +284,108 @@ def pessoa_list():
                            pessoas=pagination.items,
                            pagination=pagination,
                            busca=busca)
+
+
+@bp.route('/pessoas/upload_csv', methods=['GET', 'POST'])
+@login_required
+def pessoa_upload_csv():
+    if request.method == 'POST':
+        file = request.files.get('csv_file')
+        if not file:
+            flash('Nenhum arquivo foi enviado.', 'danger')
+            return redirect(url_for('main.pessoa_upload_csv'))
+            
+        if not file.filename.endswith('.csv'):
+            flash('Arquivo inválido. Envie um arquivo CSV.', 'danger')
+            return redirect(url_for('main.pessoa_upload_csv'))
+
+        try:
+            # Lê todo o conteúdo do arquivo em memória
+            file_content = file.read()
+            if isinstance(file_content, bytes):
+                file_content = file_content.decode('utf-8-sig')
+            from io import StringIO
+            stream = StringIO(file_content)
+            sample = stream.read(2048)
+            stream.seek(0)
+            sniffer = csv.Sniffer()
+            try:
+                dialect = sniffer.sniff(sample, delimiters=',;')
+            except Exception:
+                dialect = csv.excel  # fallback para padrão
+            stream.seek(0)
+            reader = csv.DictReader(stream, dialect=dialect)
+            
+            # Verifica se as colunas obrigatórias existem
+            required_columns = ['nome', 'email', 'cpf']
+            if not all(col in reader.fieldnames for col in required_columns):
+                flash(f'O arquivo CSV deve conter as colunas: nome, email e cpf. Colunas encontradas: {reader.fieldnames}', 'danger')
+                return redirect(url_for('main.pessoa_upload_csv'))
+
+            count = 0
+            errors = []
+            
+            for row_num, row in enumerate(reader, start=2):  # Começa do 2 pois a linha 1 é o cabeçalho
+                try:
+                    # Valida campos obrigatórios
+                    if not all(row.get(field) for field in required_columns):
+                        errors.append(f'Linha {row_num}: Campos obrigatórios faltando')
+                        continue
+
+                    # Valida formato do CPF
+                    if not re.match(r'^\d{3}\.\d{3}\.\d{3}-\d{2}$', row['cpf']):
+                        errors.append(f'Linha {row_num}: CPF inválido - {row["cpf"]}')
+                        continue
+
+                    # Valida email
+                    if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', row['email']):
+                        errors.append(f'Linha {row_num}: Email inválido - {row["email"]}')
+                        continue
+
+                    # Verifica se já existe pessoa com mesmo email ou CPF
+                    if Pessoa.query.filter_by(email=row['email']).first():
+                        errors.append(f'Linha {row_num}: Email já cadastrado - {row["email"]}')
+                        continue
+                        
+                    if Pessoa.query.filter_by(cpf=row['cpf']).first():
+                        errors.append(f'Linha {row_num}: CPF já cadastrado - {row["cpf"]}')
+                        continue
+
+                    # Cria a pessoa
+                    pessoa = Pessoa(
+                        nome=row['nome'],
+                        email=row['email'],
+                        cpf=row['cpf'],
+                        matricula=row.get('matricula', ''),
+                        vinculo=row.get('vinculo', ''),
+                        profissao_id=int(row['profissao_id']) if row.get('profissao_id') and row['profissao_id'].isdigit() else None
+                    )
+                    db.session.add(pessoa)
+                    count += 1
+
+                except Exception as e:
+                    errors.append(f'Linha {row_num}: Erro ao processar - {str(e)}')
+                    continue
+
+            if errors:
+                for error in errors:
+                    flash(error, 'warning')
+                
+            if count > 0:
+                db.session.commit()
+                flash(f'{count} pessoas importadas com sucesso!', 'success')
+            else:
+                flash('Nenhuma pessoa foi importada.', 'warning')
+                
+            return redirect(url_for('main.pessoa_list'))
+            
+        except Exception as e:
+            flash(f'Erro ao processar o arquivo: {str(e)}', 'danger')
+            return redirect(url_for('main.pessoa_upload_csv'))
+        finally:
+            file.close()
+    
+    return render_template('pessoas/upload_csv.html')
 
 @bp.route('/pessoas/create', methods=['GET', 'POST'])
 @login_required
