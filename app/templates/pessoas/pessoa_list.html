@@ -24,47 +24,42 @@
         </div>
     </form>
 
-    <table class="table table-bordered table-striped shadow-sm">
-        <thead class="table-dark">
-            <tr>
-                <th>Nome</th>
-                <th>Email</th>
-                <th>CPF</th>
-                <th>Matrícula</th>
-                <th>Vínculo</th>
-                <th>Profissão</th>
-                <th>Setor</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for pessoa in pessoas %}
-            <tr>
-                <td>{{ pessoa.nome }}</td>
-                <td>{{ pessoa.email or 'Sem email' }}</td>
-                <td>{{ pessoa.cpf or 'Não informado' }}</td>
-                <td>{{ pessoa.matricula or 'Não informado' }}</td>
-                <td>{{ pessoa.vinculo or 'Não informado' }}</td>
-                <td>{{ pessoa.profissao.nome if pessoa.profissao else 'Sem profissão' }}</td>
-                <td>{{ pessoa.setor.nome if pessoa.setor else 'Nenhum' }}</td>
-                <td>
-                    <a href="{{ url_for('main.pessoa_edit', id=pessoa.id) }}" class="btn btn-outline-primary btn-sm me-2" title="Editar">
-                        <i class="bi bi-pencil"></i>
-                        <span class="visually-hidden">Editar</span>
-                    </a>
-                    <a href="{{ url_for('main.pessoa_delete', id=pessoa.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir {{ pessoa.nome | e }}?')">
-                        <i class="bi bi-trash"></i>
-                        <span class="visually-hidden">Excluir</span>
-                    </a>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="8" class="text-center">Nenhuma pessoa registrada.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for pessoa in pessoas %}
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ pessoa.nome }}</h5>
+                    <div class="card-text">
+                        <p class="mb-1"><i class="bi bi-envelope"></i> {{ pessoa.email or 'Sem email' }}</p>
+                        <p class="mb-1"><i class="bi bi-person-badge"></i> {{ pessoa.cpf or 'Não informado' }}</p>
+                        <p class="mb-1"><i class="bi bi-card-text"></i> {{ pessoa.matricula or 'Não informado' }}</p>
+                        <p class="mb-1"><i class="bi bi-briefcase"></i> {{ pessoa.vinculo or 'Não informado' }}</p>
+                        <p class="mb-1"><i class="bi bi-person-workspace"></i> {{ pessoa.profissao.nome if pessoa.profissao else 'Sem profissão' }}</p>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('main.pessoa_edit', id=pessoa.id) }}" class="btn btn-outline-primary btn-sm" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                            <span class="visually-hidden">Editar</span>
+                        </a>
+                        <a href="{{ url_for('main.pessoa_delete', id=pessoa.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir {{ pessoa.nome | e }}?')">
+                            <i class="bi bi-trash"></i>
+                            <span class="visually-hidden">Excluir</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                Nenhuma pessoa registrada.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 
     <!-- Paginação Bootstrap -->
     {% if pagination.pages > 1 %}
