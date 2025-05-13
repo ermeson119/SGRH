@@ -1,27 +1,22 @@
 {% extends "base.html" %}
 {% block title %}Lista de Pessoas{% endblock %}
 {% block content %}
-<div class="container">
+<div class="container mt-2">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Lista de Pessoas</h2>
+        <h2>Pessoas</h2>
         <div class="d-flex gap-2">
             <a href="{{ url_for('main.pessoa_create') }}" class="btn btn-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                     class="bi bi-person-plus-fill" viewBox="0 0 16 16">
-                    <path d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
-                    <path fill-rule="evenodd"
-                          d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5"/>
-                </svg>
-                Adicionar Pessoa
+                Nova Pessoa
             </a>
             <a href="{{ url_for('main.pessoa_upload_csv') }}" class="btn btn-success">
-                Importar CSV
+                <i class="bi bi-file-earmark-arrow-up"></i>
+                <span class="visually-hidden">Importar CSV</span>
             </a>
         </div>
     </div>
 
     <!-- Formulário de Busca -->
-    <form method="get" class="mb-5" id="busca-form" data-pessoas-url="{{ url_for('main.pessoa_list') }}">
+    <form method="get" class="mb-4" id="busca-form" data-pessoas-url="{{ url_for('main.pessoa_list') }}">
         <div class="input-group">
             <input type="text" id="filtro" name="busca" class="form-control"
                    placeholder="Buscar pessoa pelo nome..." value="{{ busca }}">
@@ -29,44 +24,51 @@
         </div>
     </form>
 
-    <!-- Lista de Pessoas -->
-    <div id="resultados-container" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
-        {% for pessoa in pessoas %}
-        <div class="col">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-body">
-                    <h5 class="card-title">{{ pessoa.nome }}</h5>
-                    <p class="card-text text-muted">{{ pessoa.email or 'Sem email' }}</p>
-                    <p class="card-text text-muted"><strong>CPF:</strong> {{ pessoa.cpf or 'Não informado' }}</p>
-                    <p class="card-text text-muted"><strong>Matrícula:</strong> {{ pessoa.matricula or 'Não informado' }}</p>
-                    <p class="card-text text-muted"><strong>Vínculo:</strong> {{ pessoa.vinculo or 'Não informado' }}</p>
-                    <p class="card-text text-muted"><strong>Profissão:</strong> {{ pessoa.profissao.nome if pessoa.profissao else 'Sem profissão' }}</p>
-                    <p class="card-text text-muted"><strong>Setor:</strong> {{ pessoa.setor.nome if pessoa.setor else 'Nenhum' }}</p>
-                </div>
-                <div class="card-footer bg-white border-0 d-flex justify-content-between">
-                    <a href="{{ url_for('main.pessoa_edit', id=pessoa.id) }}" class="btn btn-outline-primary btn-sm" title="Editar">
+    <table class="table table-bordered table-striped shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>CPF</th>
+                <th>Matrícula</th>
+                <th>Vínculo</th>
+                <th>Profissão</th>
+                <th>Setor</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pessoa in pessoas %}
+            <tr>
+                <td>{{ pessoa.nome }}</td>
+                <td>{{ pessoa.email or 'Sem email' }}</td>
+                <td>{{ pessoa.cpf or 'Não informado' }}</td>
+                <td>{{ pessoa.matricula or 'Não informado' }}</td>
+                <td>{{ pessoa.vinculo or 'Não informado' }}</td>
+                <td>{{ pessoa.profissao.nome if pessoa.profissao else 'Sem profissão' }}</td>
+                <td>{{ pessoa.setor.nome if pessoa.setor else 'Nenhum' }}</td>
+                <td>
+                    <a href="{{ url_for('main.pessoa_edit', id=pessoa.id) }}" class="btn btn-outline-primary btn-sm me-2" title="Editar">
                         <i class="bi bi-pencil"></i>
                         <span class="visually-hidden">Editar</span>
                     </a>
-                    <a href="{{ url_for('main.pessoa_delete', id=pessoa.id) }}"
-                       class="btn btn-outline-danger btn-sm" title="Excluir"
-                       onclick="return confirm('Tem certeza que deseja excluir {{ pessoa.nome | e }}?')">
+                    <a href="{{ url_for('main.pessoa_delete', id=pessoa.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir {{ pessoa.nome | e }}?')">
                         <i class="bi bi-trash"></i>
                         <span class="visually-hidden">Excluir</span>
                     </a>
-                </div>
-            </div>
-        </div>
-        {% else %}
-        <div class="col">
-            <p class="text-muted">Nenhuma pessoa cadastrada.</p>
-        </div>
-        {% endfor %}
-    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="text-center">Nenhuma pessoa registrada.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
     <!-- Paginação Bootstrap -->
     {% if pagination.pages > 1 %}
-    <nav aria-label="Navegação de páginas" class="mt-5">
+    <nav aria-label="Navegação de páginas" class="mt-4">
         <ul class="pagination justify-content-center">
             {% if pagination.has_prev %}
                 <li class="page-item">

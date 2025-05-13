@@ -1,20 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Lista de Profissões/Cargos{% endblock %}
 {% block content %}
-<div class="container">
+<div class="container mt-2">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>
-            Profissões Cargos
-        </h2>
+        <h2>Profissões Cargos</h2>
         <div class="d-flex gap-2">
             <a href="{{ url_for('main.profissao_create') }}" class="btn btn-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-circle-fill" viewBox="0 0 16 16">
-                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
-                </svg>
-                Adicionar Profissão
+                Nova Profissão
             </a>
             <a href="{{ url_for('main.profissao_upload_csv') }}" class="btn btn-success">
-                Importar CSV
+                <i class="bi bi-file-earmark-arrow-up"></i>
+                <span class="visually-hidden">Importar CSV</span>
             </a>
         </div>
     </div>
@@ -28,23 +24,23 @@
         </thead>
         <tbody>
             {% for profissao in profissoes %}
-                <tr>
-                    <td>{{ profissao.nome }}</td>
-                    <td>
-                        <a href="{{ url_for('main.profissao_edit', id=profissao.id) }}" class="btn btn-outline-primary btn-sm me-2" title="Editar">
-                            <i class="bi bi-pencil"></i>
-                            <span class="visually-hidden">Editar</span>
-                        </a>
-                        <a href="{{ url_for('main.profissao_delete', id=profissao.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza?')">
-                            <i class="bi bi-trash"></i>
-                            <span class="visually-hidden">Excluir</span>
-                        </a>
-                    </td>
-                </tr>
+            <tr>
+                <td>{{ profissao.nome }}</td>
+                <td>
+                    <a href="{{ url_for('main.profissao_edit', id=profissao.id) }}" class="btn btn-outline-primary btn-sm me-2" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                        <span class="visually-hidden">Editar</span>
+                    </a>
+                    <a href="{{ url_for('main.profissao_delete', id=profissao.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir esta profissão?')">
+                        <i class="bi bi-trash"></i>
+                        <span class="visually-hidden">Excluir</span>
+                    </a>
+                </td>
+            </tr>
             {% else %}
-                <tr>
-                    <td colspan="2" class="text-center text-muted">Nenhuma profissão cadastrada.</td>
-                </tr>
+            <tr>
+                <td colspan="2" class="text-center">Nenhuma profissão registrada.</td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>

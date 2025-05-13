@@ -1,26 +1,22 @@
 {% extends "base.html" %}
 {% block title %}Lista de Capacitações{% endblock %}
 {% block content %}
-<div class="container">
+<div class="container mt-2">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Lista de Capacitações</h2>
+        <h2>Capacitações</h2>
         <div class="d-flex gap-2">
-            <a href="{{ url_for('main.capacitacao_relatorio') }}"  class="btn btn-outline-success ms-2">
-                <i class="bi bi-graph-up"></i> Relatório
+            <a href="{{ url_for('main.capacitacao_relatorio') }}"  class="btn btn-outline-success">
+                <i class="bi bi-graph-up"></i>
+                <span class="visually-hidden">Relatório</span>
             </a>
             <a href="{{ url_for('main.capacitacao_create') }}" class="btn btn-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-circle-fill" viewBox="0 0 16 16">
-                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z"/>
-                </svg>
                 Nova Capacitação
             </a>
         </div>
     </div>
 
-    
-
     <!-- Formulário de Busca -->
-    <form method="get" class="mb-5" id="busca-form" data-capacitacoes-url="{{ url_for('main.capacitacao_list') }}">
+    <form method="get" class="mb-4" id="busca-form" data-capacitacoes-url="{{ url_for('main.capacitacao_list') }}">
         <div class="input-group">
             <input type="text" id="filtro" name="busca" class="form-control"
                    placeholder="Buscar capacitação..." value="{{ busca }}">
@@ -28,44 +24,47 @@
         </div>
     </form>
 
-    <!-- Lista de Capacitações -->
-    <div id="resultados-container" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
-        {% for capacitacao in capacitacoes %}
-        <div class="col">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-body">
-                    <h5 class="card-title">{{ capacitacao.pessoa.nome }}</h5>
-                    <p class="card-text text-muted">
-                        <strong>Curso:</strong> {{ capacitacao.curso.nome if capacitacao.curso else 'N/A' }}<br>
-                        <strong>Descrição:</strong> {{ capacitacao.descricao }}<br>
-                        <strong>Data Início:</strong> {{ capacitacao.data.strftime('%d/%m/%Y') }}<br>
-                        <strong>Data Fim:</strong> {{ capacitacao.data_fim.strftime('%d/%m/%Y') if capacitacao.data_fim else 'Em andamento' }}
-                    </p>
-                </div>
-                <div class="card-footer bg-white border-0 d-flex justify-content-between">
-                    <a href="{{ url_for('main.capacitacao_edit', id=capacitacao.id) }}" class="btn btn-outline-primary btn-sm" title="Editar">
+    <table class="table table-bordered table-striped shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Nome da Pessoa</th>
+                <th>Curso</th>
+                <th>Descrição</th>
+                <th>Data Início</th>
+                <th>Data Fim</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for capacitacao in capacitacoes %}
+            <tr>
+                <td>{{ capacitacao.pessoa.nome }}</td>
+                <td>{{ capacitacao.curso.nome if capacitacao.curso else 'N/A' }}</td>
+                <td>{{ capacitacao.descricao }}</td>
+                <td>{{ capacitacao.data.strftime('%d/%m/%Y') }}</td>
+                <td>{{ capacitacao.data_fim.strftime('%d/%m/%Y') if capacitacao.data_fim else 'Em andamento' }}</td>
+                <td>
+                    <a href="{{ url_for('main.capacitacao_edit', id=capacitacao.id) }}" class="btn btn-outline-primary btn-sm me-2" title="Editar">
                         <i class="bi bi-pencil"></i>
                         <span class="visually-hidden">Editar</span>
                     </a>
-                    <a href="{{ url_for('main.capacitacao_delete', id=capacitacao.id) }}"
-                       class="btn btn-outline-danger btn-sm" title="Excluir"
-                       onclick="return confirm('Tem certeza que deseja excluir esta capacitação?')">
+                    <a href="{{ url_for('main.capacitacao_delete', id=capacitacao.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir esta capacitação?')">
                         <i class="bi bi-trash"></i>
                         <span class="visually-hidden">Excluir</span>
                     </a>
-                </div>
-            </div>
-        </div>
-        {% else %}
-        <div class="col">
-            <p class="text-muted">Nenhuma capacitação cadastrada.</p>
-        </div>
-        {% endfor %}
-    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center">Nenhuma capacitação registrada.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
     <!-- Paginação Bootstrap -->
     {% if pagination.pages > 1 %}
-    <nav aria-label="Navegação de páginas" class="mt-5">
+    <nav aria-label="Navegação de páginas" class="mt-4">
         <ul class="pagination justify-content-center">
             {% if pagination.has_prev %}
                 <li class="page-item">

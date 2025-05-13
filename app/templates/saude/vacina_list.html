@@ -1,54 +1,52 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 200px);">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Vacinas</h2>
-            <div>
-                <a href="{{ url_for('main.vacina_relatorio') }}"  class="btn btn-outline-success ms-2">
-                    <i class="bi bi-graph-up"></i> Relatório
-                </a>
-                <a href="{{ url_for('main.vacina_create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Nova Vacina
-                </a>
-            </div>
+<div class="container mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Vacinas</h2>
+        <div>
+            <a href="{{ url_for('main.vacina_relatorio') }}"  class="btn btn-outline-success ms-2">
+                <i class="bi bi-graph-up"></i> Relatório
+            </a>
+            <a href="{{ url_for('main.vacina_create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nova Vacina
+            </a>
         </div>
-
-        <table class="table table-bordered table-striped shadow-sm">
-            <thead class="table-dark">
-                <tr>
-                    <th>Nome da Pessoa</th>
-                    <th>Nome da Vacina</th>
-                    <th>Dose</th>
-                    <th>Data</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for vacina in vacinas %}
-                <tr>
-                    <td>{{ vacina.pessoa.nome }}</td>
-                    <td>{{ vacina.nome }}</td>
-                    <td>{{ vacina.dose if vacina.dose else 'N/A' }}</td>
-                    <td>{{ vacina.data.strftime('%d/%m/%Y') }}</td>
-                    <td>
-                        <a href="{{ url_for('main.vacina_edit', id=vacina.id) }}" class="btn btn-outline-primary btn-sm me-2" title="Editar">
-                            <i class="bi bi-pencil"></i>
-                            <span class="visually-hidden">Editar</span>
-                        </a>
-                        <a href="{{ url_for('main.vacina_delete', id=vacina.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir esta vacina?')">
-                            <i class="bi bi-trash"></i>
-                            <span class="visually-hidden">Excluir</span>
-                        </a>
-                    </td>
-                </tr>
-                {% else %}
-                    <tr>
-                        <td colspan="5">Nenhuma vacina cadastrada.</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
     </div>
+
+    <table class="table table-bordered table-striped shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Nome da Pessoa</th>
+                <th>Nome da Vacina</th>
+                <th>Dose</th>
+                <th>Data</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for vacina in vacinas %}
+            <tr>
+                <td>{{ vacina.pessoa.nome }}</td>
+                <td>{{ vacina.nome }}</td>
+                <td>{{ vacina.dose if vacina.dose else 'N/A' }}</td>
+                <td>{{ vacina.data.strftime('%d/%m/%Y') }}</td>
+                <td>
+                    <a href="{{ url_for('main.vacina_edit', id=vacina.id) }}" class="btn btn-outline-primary btn-sm me-2" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                        <span class="visually-hidden">Editar</span>
+                    </a>
+                    <a href="{{ url_for('main.vacina_delete', id=vacina.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir esta vacina?')">
+                        <i class="bi bi-trash"></i>
+                        <span class="visually-hidden">Excluir</span>
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+                <tr>
+                    <td colspan="5">Nenhuma vacina cadastrada.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}
