@@ -38,8 +38,14 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a href="{{ url_for('main.termo_edit', id=termo.id) }}" class="btn btn-outline-warning btn-sm me-2">Editar</a>
-                        <a href="{{ url_for('main.termo_delete', id=termo.id) }}" class="btn btn-outline-danger btn-sm"  onclick="return confirm('Tem certeza que deseja excluir este termo?')">Excluir</a>
+                        <a href="{{ url_for('main.termo_edit', id=termo.id) }}" class="btn btn-outline-primary btn-sm me-2" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                            <span class="visually-hidden">Editar</span>
+                        </a>
+                        <a href="{{ url_for('main.termo_delete', id=termo.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir este termo?')">
+                            <i class="bi bi-trash"></i>
+                            <span class="visually-hidden">Excluir</span>
+                        </a>
                     </td>
                 </tr>
                 {% endfor %}

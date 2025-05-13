@@ -31,11 +31,13 @@
                 <tr>
                     <td>{{ profissao.nome }}</td>
                     <td>
-                        <a href="{{ url_for('main.profissao_edit', id=profissao.id) }}" class="btn btn-outline-warning btn-sm me-2">
-                            ✏️ Editar
+                        <a href="{{ url_for('main.profissao_edit', id=profissao.id) }}" class="btn btn-outline-primary btn-sm me-2" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                            <span class="visually-hidden">Editar</span>
                         </a>
-                        <a href="{{ url_for('main.profissao_delete', id=profissao.id) }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Tem certeza?')">
-                            🗑️ Excluir
+                        <a href="{{ url_for('main.profissao_delete', id=profissao.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza?')">
+                            <i class="bi bi-trash"></i>
+                            <span class="visually-hidden">Excluir</span>
                         </a>
                     </td>
                 </tr>

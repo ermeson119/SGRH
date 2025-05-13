@@ -47,8 +47,14 @@
                         <td>{{ curso.duracao }}</td>
                         <td>{{ curso.tipo }}</td>
                         <td>
-                            <a href="{{ url_for('main.curso_edit', id=curso.id) }}" class="btn btn-outline-warning btn-sm me-2">Editar</a>
-                            <a href="{{ url_for('main.curso_delete', id=curso.id) }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Tem certeza que deseja excluir este curso?');">Excluir</a>
+                            <a href="{{ url_for('main.curso_edit', id=curso.id) }}" class="btn btn-outline-primary btn-sm me-2" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                                <span class="visually-hidden">Editar</span>
+                            </a>
+                            <a href="{{ url_for('main.curso_delete', id=curso.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir este curso?');">
+                                <i class="bi bi-trash"></i>
+                                <span class="visually-hidden">Excluir</span>
+                            </a>
                         </td>
                     </tr>
                 {% else %}

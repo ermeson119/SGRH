@@ -44,13 +44,15 @@
                     <p class="card-text text-muted"><strong>Setor:</strong> {{ pessoa.setor.nome if pessoa.setor else 'Nenhum' }}</p>
                 </div>
                 <div class="card-footer bg-white border-0 d-flex justify-content-between">
-                    <a href="{{ url_for('main.pessoa_edit', id=pessoa.id) }}" class="btn btn-outline-primary btn-sm">
-                        ✏️ Editar
+                    <a href="{{ url_for('main.pessoa_edit', id=pessoa.id) }}" class="btn btn-outline-primary btn-sm" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                        <span class="visually-hidden">Editar</span>
                     </a>
                     <a href="{{ url_for('main.pessoa_delete', id=pessoa.id) }}"
-                       class="btn btn-outline-danger btn-sm"
+                       class="btn btn-outline-danger btn-sm" title="Excluir"
                        onclick="return confirm('Tem certeza que deseja excluir {{ pessoa.nome | e }}?')">
-                        🗑️ Excluir
+                        <i class="bi bi-trash"></i>
+                        <span class="visually-hidden">Excluir</span>
                     </a>
                 </div>
             </div>
