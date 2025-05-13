@@ -8,6 +8,11 @@
             <button class="btn btn-success" onclick="window.print()">
                 <i class="fas fa-print"></i> Imprimir
             </button>
+
+            <a href="{{ url_for('main.capacitacao_relatorio_xlsx', curso=curso_id, tipo=tipo, data_inicio=data_inicio, data_fim=data_fim) }}" class="btn btn-success">
+                <i class="fas fa-file-excel"></i> Exportar XLSX
+            </a>
+
             <a href="{{ url_for('main.capacitacao_list') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Voltar
             </a>

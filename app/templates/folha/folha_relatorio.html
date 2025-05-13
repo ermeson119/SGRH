@@ -35,6 +35,11 @@
             <button class="btn btn-success" onclick="window.print()">
                 <i class="fas fa-print"></i> Imprimir
             </button>
+
+            <a href="{{ url_for('main.folha_relatorio_xlsx', busca=busca) }}" class="btn btn-success">
+                <i class="fas fa-file-excel"></i> Exportar XLSX
+            </a>
+
             <a href="{{ url_for('main.folha_list') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Voltar
             </a>

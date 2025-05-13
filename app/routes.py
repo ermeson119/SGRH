@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app, send_from_directory
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app, send_from_directory, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, oauth
 from app.models import User, Pessoa,Lotacao, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Curso, RegistrationRequest, PessoaFolha
@@ -13,9 +13,13 @@ from sqlalchemy.exc import IntegrityError
 from functools import wraps
 from werkzeug.utils import secure_filename
 import csv
-from io import StringIO
+from io import StringIO, BytesIO
 import os
 import re
+import pandas as pd
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill
+from openpyxl.utils import get_column_letter
 
 # Cria um Blueprint para as rotas
 bp = Blueprint('main', __name__)
@@ -1607,3 +1611,154 @@ def vacina_relatorio():
 def keep_session_alive():
     session['last_activity'] = datetime.utcnow().isoformat()
     return {'status': 'success'}, 200
+
+def generate_xlsx_report(data, headers, title):
+    """Função utilitária para gerar relatórios XLSX"""
+    wb = Workbook()
+    ws = wb.active
+    ws.title = title
+
+    # Estilo para o cabeçalho
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    header_alignment = Alignment(horizontal="center", vertical="center")
+
+    # Adiciona o cabeçalho
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+
+    # Adiciona os dados
+    for row, item in enumerate(data, 2):
+        for col, value in enumerate(item, 1):
+            cell = ws.cell(row=row, column=col, value=value)
+            cell.alignment = Alignment(horizontal="left", vertical="center")
+
+    # Ajusta a largura das colunas
+    for col in range(1, len(headers) + 1):
+        ws.column_dimensions[get_column_letter(col)].width = 15
+
+    # Salva o arquivo em memória
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return output
+
+@bp.route('/relatorio/folhas/xlsx')
+@login_required
+def folha_relatorio_xlsx():
+    busca = request.args.get('busca', '')
+    query = Folha.query.order_by(Folha.data.desc())
+    
+    if busca:
+        query = query.join(Folha.pessoa_folhas).join(PessoaFolha.pessoa).filter(Pessoa.nome.ilike(f'%{busca}%'))
+    
+    folhas = query.all()
+    
+    # Prepara os dados para o XLSX
+    headers = ['Data', 'Funcionário', 'Valor', 'Data Pagamento', 'Status', 'Observação']
+    data = []
+    
+    for folha in folhas:
+        for pf in folha.pessoa_folhas:
+            data.append([
+                folha.data.strftime('%d/%m/%Y'),
+                pf.pessoa.nome,
+                f'R$ {pf.valor:.2f}',
+                pf.data_pagamento.strftime('%d/%m/%Y') if pf.data_pagamento else '-',
+                pf.status.title(),
+                pf.observacao or '-'
+            ])
+    
+    output = generate_xlsx_report(data, headers, 'Relatório de Folha de Pagamento')
+    
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=f'relatorio_folha_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+    )
+
+@bp.route('/relatorio/capacitacoes/xlsx')
+@login_required
+def capacitacao_relatorio_xlsx():
+    curso_id = request.args.get('curso', type=int)
+    tipo = request.args.get('tipo')
+    data_inicio = request.args.get('data_inicio')
+    data_fim = request.args.get('data_fim')
+
+    query = Capacitacao.query.join(Pessoa).join(Curso)
+
+    if curso_id:
+        query = query.filter(Capacitacao.curso_id == curso_id)
+    if tipo:
+        query = query.filter(Capacitacao.tipo == tipo)
+    if data_inicio:
+        query = query.filter(Capacitacao.data >= datetime.strptime(data_inicio, '%Y-%m-%d'))
+    if data_fim:
+        query = query.filter(Capacitacao.data <= datetime.strptime(data_fim, '%Y-%m-%d'))
+
+    capacitacoes = query.all()
+    
+    # Prepara os dados para o XLSX
+    headers = ['Funcionário', 'Curso', 'Descrição', 'Data Início', 'Data Fim']
+    data = []
+    
+    for cap in capacitacoes:
+        data.append([
+            cap.pessoa.nome,
+            cap.curso.nome if cap.curso else '-',
+            cap.descricao or '-',
+            cap.data.strftime('%d/%m/%Y'),
+            cap.data_fim.strftime('%d/%m/%Y') if cap.data_fim else 'Em andamento'
+        ])
+    
+    output = generate_xlsx_report(data, headers, 'Relatório de Capacitações')
+    
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=f'relatorio_capacitacoes_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+    )
+
+@bp.route('/relatorio/lotacoes/xlsx')
+@login_required
+def lotacao_relatorio_xlsx():
+    setor_id = request.args.get('setor', type=int)
+    data_inicio = request.args.get('data_inicio')
+    data_fim = request.args.get('data_fim')
+
+    query = Lotacao.query.join(Pessoa).join(Setor)
+
+    if setor_id:
+        query = query.filter(Lotacao.setor_id == setor_id)
+    if data_inicio:
+        query = query.filter(Lotacao.data_inicio >= datetime.strptime(data_inicio, '%Y-%m-%d'))
+    if data_fim:
+        query = query.filter(Lotacao.data_inicio <= datetime.strptime(data_fim, '%Y-%m-%d'))
+
+    lotacoes = query.all()
+    
+    # Prepara os dados para o XLSX
+    headers = ['Funcionário', 'Setor', 'Data Início', 'Data Fim']
+    data = []
+    
+    for lot in lotacoes:
+        data.append([
+            lot.pessoa.nome,
+            lot.setor.nome,
+            lot.data_inicio.strftime('%d/%m/%Y'),
+            lot.data_fim.strftime('%d/%m/%Y') if lot.data_fim else 'Atual'
+        ])
+    
+    output = generate_xlsx_report(data, headers, 'Relatório de Lotações')
+    
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=f'relatorio_lotacoes_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+    )
