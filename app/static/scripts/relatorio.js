@@ -1,27 +1,25 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const input = document.getElementById('filtro');
-    const resultadosContainer = document.querySelector('#resultados-container');
+    const form = document.getElementById('busca-form');
+    const resultadosContainer = document.querySelector('#lista-funcionarios');
 
-    input.addEventListener('input', function () {
-        const busca = input.value;
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+        params.delete('page');
 
-        // Monta os parâmetros da URL
-        const params = new URLSearchParams();
-        params.set('busca', busca);
-        params.delete('page'); 
-
-        // Mostra um indicador de carregamento (opcional)
+        // Mostra um indicador de carregamento
         if (resultadosContainer) {
-            resultadosContainer.innerHTML = '<div class="loading">Carregando...</div>';
+            resultadosContainer.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Carregando...</span></div></div>';
         }
 
         // Faz uma requisição assíncrona para buscar os resultados
         fetch(`/relatorio/completo?${params.toString()}`, {
             headers: {
-                'X-Requested-With': 'XMLHttpRequest' 
+                'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        .then(response => response.text()) 
+        .then(response => response.text())
         .then(html => {
             if (resultadosContainer) {
                 resultadosContainer.innerHTML = html;
@@ -30,9 +28,21 @@ document.addEventListener('DOMContentLoaded', function () {
         .catch(error => {
             console.error('Erro ao buscar resultados:', error);
             if (resultadosContainer) {
-                resultadosContainer.innerHTML = '<div class="error">Erro ao carregar resultados.</div>';
+                resultadosContainer.innerHTML = '<div class="alert alert-danger">Erro ao carregar resultados.</div>';
             }
         });
+    });
+
+    // Atualiza a URL com os parâmetros de busca
+    function updateURL() {
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+        window.history.pushState({}, '', `/relatorio/completo?${params.toString()}`);
+    }
+
+    // Atualiza a URL quando os campos do formulário mudam
+    form.querySelectorAll('input, select').forEach(element => {
+        element.addEventListener('change', updateURL);
     });
 });
 

@@ -1394,32 +1394,111 @@ def download_atestado(atestado_id):
 def relatorio_completo():
     if request.method == 'POST':
         busca = request.form.get('busca', '')
-        return redirect(url_for('main.relatorio_completo', busca=busca))
+        tipo_relatorio = request.form.get('tipo_relatorio', 'todos')
+        data = request.form.get('data', '')
+        return redirect(url_for('main.relatorio_completo', 
+                              busca=busca, 
+                              tipo_relatorio=tipo_relatorio,
+                              data=data))
 
     page = request.args.get('page', 1, type=int)
     busca = request.args.get('busca', '', type=str)
-    per_page = 2
+    tipo_relatorio = request.args.get('tipo_relatorio', 'todos', type=str)
+    data = request.args.get('data', '', type=str)
+    per_page = 4 
 
-    query = Pessoa.query.options(
-        joinedload(Pessoa.capacitacoes),
-        joinedload(Pessoa.pessoa_folhas).joinedload(PessoaFolha.folha),
-        joinedload(Pessoa.profissao),
-        joinedload(Pessoa.termos),
-        joinedload(Pessoa.vacinas),
-        joinedload(Pessoa.exames),
-        joinedload(Pessoa.atestados),
-        joinedload(Pessoa.lotacoes)
-    )
+    # Define quais relacionamentos carregar baseado no tipo de relatório
+    options = [joinedload(Pessoa.profissao)]  # Sempre carrega profissão
+    
+    if tipo_relatorio == 'todos':
+        options.extend([
+            joinedload(Pessoa.capacitacoes),
+            joinedload(Pessoa.pessoa_folhas).joinedload(PessoaFolha.folha),
+            joinedload(Pessoa.termos),
+            joinedload(Pessoa.vacinas),
+            joinedload(Pessoa.exames),
+            joinedload(Pessoa.atestados),
+            joinedload(Pessoa.lotacoes)
+        ])
+    else:
+        if tipo_relatorio == 'capacitacoes':
+            options.append(joinedload(Pessoa.capacitacoes))
+        elif tipo_relatorio == 'lotacoes':
+            options.append(joinedload(Pessoa.lotacoes))
+        elif tipo_relatorio == 'folha':
+            options.append(joinedload(Pessoa.pessoa_folhas).joinedload(PessoaFolha.folha))
+        elif tipo_relatorio == 'termos':
+            options.append(joinedload(Pessoa.termos))
+        elif tipo_relatorio == 'vacinas':
+            options.append(joinedload(Pessoa.vacinas))
+        elif tipo_relatorio == 'exames':
+            options.append(joinedload(Pessoa.exames))
+        elif tipo_relatorio == 'atestados':
+            options.append(joinedload(Pessoa.atestados))
 
+    query = Pessoa.query.options(*options)
+
+    # Filtro por nome
     if busca:
         query = query.filter(Pessoa.nome.ilike(f'%{busca}%'))
 
+    # Filtro por tipo de relatório
+    if tipo_relatorio != 'todos':
+        if tipo_relatorio == 'capacitacoes':
+            query = query.filter(Pessoa.capacitacoes.any())
+        elif tipo_relatorio == 'lotacoes':
+            query = query.filter(Pessoa.lotacoes.any())
+        elif tipo_relatorio == 'folha':
+            query = query.filter(Pessoa.pessoa_folhas.any())
+        elif tipo_relatorio == 'termos':
+            query = query.filter(Pessoa.termos.any())
+        elif tipo_relatorio == 'vacinas':
+            query = query.filter(Pessoa.vacinas.any())
+        elif tipo_relatorio == 'exames':
+            query = query.filter(Pessoa.exames.any())
+        elif tipo_relatorio == 'atestados':
+            query = query.filter(Pessoa.atestados.any())
+
+    # Filtro por data
+    if data:
+        data_obj = datetime.strptime(data, '%Y-%m-%d').date()
+        if tipo_relatorio == 'todos':
+            query = query.filter(
+                db.or_(
+                    Pessoa.capacitacoes.any(Capacitacao.data == data_obj),
+                    Pessoa.lotacoes.any(Lotacao.data_inicio == data_obj),
+                    Pessoa.pessoa_folhas.any(PessoaFolha.folha.has(Folha.data == data_obj)),
+                    Pessoa.termos.any(Termo.data_inicio == data_obj),
+                    Pessoa.vacinas.any(Vacina.data == data_obj),
+                    Pessoa.exames.any(Exame.data == data_obj),
+                    Pessoa.atestados.any(Atestado.data_inicio == data_obj)
+                )
+            )
+        else:
+            if tipo_relatorio == 'capacitacoes':
+                query = query.filter(Pessoa.capacitacoes.any(Capacitacao.data == data_obj))
+            elif tipo_relatorio == 'lotacoes':
+                query = query.filter(Pessoa.lotacoes.any(Lotacao.data_inicio == data_obj))
+            elif tipo_relatorio == 'folha':
+                query = query.filter(Pessoa.pessoa_folhas.any(PessoaFolha.folha.has(Folha.data == data_obj)))
+            elif tipo_relatorio == 'termos':
+                query = query.filter(Pessoa.termos.any(Termo.data_inicio == data_obj))
+            elif tipo_relatorio == 'vacinas':
+                query = query.filter(Pessoa.vacinas.any(Vacina.data == data_obj))
+            elif tipo_relatorio == 'exames':
+                query = query.filter(Pessoa.exames.any(Exame.data == data_obj))
+            elif tipo_relatorio == 'atestados':
+                query = query.filter(Pessoa.atestados.any(Atestado.data_inicio == data_obj))
+
+    # Ordenação e paginação
     pagination = query.order_by(Pessoa.nome).paginate(page=page, per_page=per_page, error_out=False)
 
     return render_template('relatorio/relatorio_completo.html',
-                           pessoas=pagination.items,
-                           pagination=pagination,
-                           busca=busca)
+                         pessoas=pagination.items,
+                         pagination=pagination,
+                         busca=busca,
+                         tipo_relatorio=tipo_relatorio,
+                         data=data)
 
 @bp.route('/relatorio/lotacoes')
 @login_required

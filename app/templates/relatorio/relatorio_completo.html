@@ -8,11 +8,32 @@
 
     <!-- Formulário de Busca -->
     <form method="POST" class="mb-5" id="busca-form">
-        <div class="input-group">
-            <input type="text" name="busca" class="form-control" placeholder="Buscar por nome..." value="{{ busca }}">
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-search"></i> Buscar
-            </button>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <input type="text" name="busca" class="form-control" placeholder="Buscar por nome..." value="{{ busca }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="tipo_relatorio" class="form-select">
+                    <option value="todos" {% if tipo_relatorio == 'todos' %}selected{% endif %}>Todos os Relatórios</option>
+                    <option value="capacitacoes" {% if tipo_relatorio == 'capacitacoes' %}selected{% endif %}>Capacitações</option>
+                    <option value="lotacoes" {% if tipo_relatorio == 'lotacoes' %}selected{% endif %}>Lotações</option>
+                    <option value="folha" {% if tipo_relatorio == 'folha' %}selected{% endif %}>Folha de Pagamento</option>
+                    <option value="termos" {% if tipo_relatorio == 'termos' %}selected{% endif %}>Termos</option>
+                    <option value="vacinas" {% if tipo_relatorio == 'vacinas' %}selected{% endif %}>Vacinas</option>
+                    <option value="exames" {% if tipo_relatorio == 'exames' %}selected{% endif %}>Exames</option>
+                    <option value="atestados" {% if tipo_relatorio == 'atestados' %}selected{% endif %}>Atestados</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="date" name="data" class="form-control" placeholder="Data" value="{{ data }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+            </div>
         </div>
     </form>
 
