@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app, send_from_directory
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app, send_from_directory, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, oauth
 from app.models import User, Pessoa,Lotacao, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Curso, RegistrationRequest, PessoaFolha
@@ -16,6 +16,7 @@ import csv
 from io import StringIO
 import os
 import re
+import pandas as pd
 
 # Cria um Blueprint para as rotas
 bp = Blueprint('main', __name__)
@@ -1592,3 +1593,97 @@ def vacina_relatorio():
 def keep_session_alive():
     session['last_activity'] = datetime.utcnow().isoformat()
     return {'status': 'success'}, 200
+
+# --- Exportação XLSX: Capacitações ---
+@bp.route('/relatorio/capacitacoes/xlsx')
+@login_required
+def capacitacao_relatorio_xlsx():
+    curso_id = request.args.get('curso', type=int)
+    tipo = request.args.get('tipo')
+    data_inicio = request.args.get('data_inicio')
+    data_fim = request.args.get('data_fim')
+    query = Capacitacao.query.join(Pessoa).join(Curso)
+    if curso_id:
+        query = query.filter(Capacitacao.curso_id == curso_id)
+    if tipo:
+        query = query.filter(Capacitacao.tipo == tipo)
+    if data_inicio:
+        query = query.filter(Capacitacao.data >= datetime.strptime(data_inicio, '%Y-%m-%d'))
+    if data_fim:
+        query = query.filter(Capacitacao.data <= datetime.strptime(data_fim, '%Y-%m-%d'))
+    capacitacoes = query.all()
+    data = []
+    for c in capacitacoes:
+        data.append({
+            'Funcionário': c.pessoa.nome,
+            'Curso': c.curso.nome if c.curso else '',
+            'Descrição': c.descricao,
+            'Data Início': c.data.strftime('%d/%m/%Y'),
+            'Data Fim': c.data_fim.strftime('%d/%m/%Y') if c.data_fim else 'Em andamento'
+        })
+    df = pd.DataFrame(data)
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Capacitacoes')
+    output.seek(0)
+    return send_file(output, download_name='relatorio_capacitacoes.xlsx', as_attachment=True, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+# --- Exportação XLSX: Folhas de Pagamento ---
+@bp.route('/relatorio/folhas/xlsx')
+@login_required
+def folha_relatorio_xlsx():
+    from io import BytesIO
+    import pandas as pd
+    busca = request.args.get('busca', '')
+    query = Folha.query.order_by(Folha.data.desc())
+    if busca:
+        query = query.join(Folha.pessoa_folhas).join(PessoaFolha.pessoa).filter(Pessoa.nome.ilike(f'%{busca}%'))
+    folhas = query.all()
+    data = []
+    for folha in folhas:
+        for pf in folha.pessoa_folhas:
+            data.append({
+                'Data': folha.data.strftime('%d/%m/%Y'),
+                'Funcionário': pf.pessoa.nome,
+                'Valor': pf.valor,
+                'Data Pagamento': pf.data_pagamento.strftime('%d/%m/%Y') if pf.data_pagamento else '-',
+                'Status': pf.status
+            })
+    df = pd.DataFrame(data)
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Folhas')
+    output.seek(0)
+    return send_file(output, download_name='relatorio_folhas.xlsx', as_attachment=True, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+# --- Exportação XLSX: Lotações ---
+@bp.route('/relatorio/lotacoes/xlsx')
+@login_required
+def lotacao_relatorio_xlsx():
+    from io import BytesIO
+    import pandas as pd
+    setor_id = request.args.get('setor', type=int)
+    data_inicio = request.args.get('data_inicio')
+    data_fim = request.args.get('data_fim')
+    query = Lotacao.query.join(Pessoa).join(Setor)
+    if setor_id:
+        query = query.filter(Lotacao.setor_id == setor_id)
+    if data_inicio:
+        query = query.filter(Lotacao.data_inicio >= datetime.strptime(data_inicio, '%Y-%m-%d'))
+    if data_fim:
+        query = query.filter(Lotacao.data_inicio <= datetime.strptime(data_fim, '%Y-%m-%d'))
+    lotacoes = query.all()
+    data = []
+    for l in lotacoes:
+        data.append({
+            'Funcionário': l.pessoa.nome,
+            'Setor': l.setor.nome,
+            'Data Início': l.data_inicio.strftime('%d/%m/%Y'),
+            'Data Fim': l.data_fim.strftime('%d/%m/%Y') if l.data_fim else 'Atual'
+        })
+    df = pd.DataFrame(data)
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Lotações')
+    output.seek(0)
+    return send_file(output, download_name='relatorio_lotacoes.xlsx', as_attachment=True, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
