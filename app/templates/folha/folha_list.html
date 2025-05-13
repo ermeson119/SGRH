@@ -1,42 +1,59 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container">
+<div class="container py-4">
     <div class="row mb-4">
         <div class="col">
-            <h2>Folhas de Pagamento</h2>
+            <h2 class="h3 mb-0">Folhas de Pagamento</h2>
         </div>
         <div class="col text-end">
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPessoaFolhaModal">
-                <i class="fas fa-plus"></i> Nova Folha
+                <i class="bi bi-plus-lg"></i> Nova Folha
             </button>
-            <a href="{{ url_for('main.folha_relatorio') }}" class="btn btn-success me-2">
-                <i class="fas fa-chart-bar"></i> Relatório
+            <a href="{{ url_for('main.folha_relatorio') }}" class="btn btn-outline-success ms-2">
+                <i class="bi bi-graph-up"></i> Relatório
             </a>
         </div>
     </div>
 
     <!-- Formulário de Busca -->
-    <form method="get" class="mb-5" id="busca-form" data-folhas-url="{{ url_for('main.folha_list') }}">
+    <form method="get" class="mb-4" id="busca-form" data-folhas-url="{{ url_for('main.folha_list') }}">
         <div class="row g-3">
             <div class="col-md-4">
-                <input type="text" id="filtro" name="busca" class="form-control"
-                       placeholder="Buscar por nome..." value="{{ busca }}">
+                <div class="input-group">
+                    <span class="input-group-text bg-light">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" id="filtro" name="busca" class="form-control"
+                           placeholder="Buscar por nome..." value="{{ busca }}">
+                </div>
             </div>
             <div class="col-md-3">
-                <input type="date" id="data" name="data" class="form-control" 
-                       value="{{ data }}"
-                       placeholder="Buscar por data">
+                <div class="input-group">
+                    <span class="input-group-text bg-light">
+                        <i class="bi bi-calendar"></i>
+                    </span>
+                    <input type="date" id="data" name="data" class="form-control" 
+                           value="{{ data }}"
+                           placeholder="Buscar por data">
+                </div>
             </div>
             <div class="col-md-3">
-                <select id="status" name="status" class="form-control">
-                    <option value="">Todos os status</option>
-                    <option value="pendente" {% if status == 'pendente' %}selected{% endif %}>Pendente</option>
-                    <option value="pago" {% if status == 'pago' %}selected{% endif %}>Pago</option>
-                    <option value="cancelado" {% if status == 'cancelado' %}selected{% endif %}>Cancelado</option>
-                </select>
+                <div class="input-group">
+                    <span class="input-group-text bg-light">
+                        <i class="bi bi-funnel"></i>
+                    </span>
+                    <select id="status" name="status" class="form-select">
+                        <option value="">Todos os status</option>
+                        <option value="pendente" {% if status == 'pendente' %}selected{% endif %}>Pendente</option>
+                        <option value="pago" {% if status == 'pago' %}selected{% endif %}>Pago</option>
+                        <option value="cancelado" {% if status == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                    </select>
+                </div>
             </div>
             <div class="col-md-2">
-                <button class="btn btn-dark w-100" type="submit">Buscar</button>
+                <button class="btn btn-primary w-100" type="submit">
+                    <i class="bi bi-search"></i> Buscar
+                </button>
             </div>
         </div>
     </form>
@@ -45,8 +62,10 @@
     <div class="modal fade" id="createPessoaFolhaModal" tabindex="-1" aria-labelledby="createPessoaFolhaModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="createPessoaFolhaModalLabel">Nova Folha de Pagamento</h5>
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title" id="createPessoaFolhaModalLabel">
+                        <i class="bi bi-plus-circle me-2"></i>Nova Folha de Pagamento
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form method="POST" action="{{ url_for('main.pessoa_folha_create') }}">
@@ -62,7 +81,10 @@
                         </div>
                         <div class="mb-3">
                             <label for="valor" class="form-label">Valor</label>
-                            <input type="number" class="form-control" id="valor" name="valor" step="0.01" value="0.0" required>
+                            <div class="input-group">
+                                <span class="input-group-text">R$</span>
+                                <input type="number" class="form-control" id="valor" name="valor" step="0.01" value="0.0" required>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label for="data_pagamento" class="form-label">Data de Pagamento</label>
@@ -81,9 +103,11 @@
                             <textarea class="form-control" id="observacao" name="observacao" rows="3"></textarea>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>Salvar
+                        </button>
                     </div>
                 </form>
             </div>
@@ -93,15 +117,15 @@
     <!-- Lista de Folhas -->
     <div id="resultados-container">
         <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
                     <tr>
                         <th>Data</th>
                         <th>Nome</th>
                         <th>Valor</th>
                         <th>Data Pagamento</th>
                         <th>Status</th>
-                        <th>Ações</th>
+                        <th class="text-end">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -114,29 +138,42 @@
                             <td>{{ pessoa_folha.data_pagamento.strftime('%d/%m/%Y') if pessoa_folha.data_pagamento else '-' }}</td>
                             <td>
                                 {% if pessoa_folha.status == 'pago' %}
-                                    <span class="badge bg-success">Pago</span>
+                                    <span class="badge bg-success-subtle text-success">
+                                        <i class="bi bi-check-circle me-1"></i>Pago
+                                    </span>
                                 {% elif pessoa_folha.status == 'cancelado' %}
-                                    <span class="badge bg-danger">Cancelado</span>
+                                    <span class="badge bg-danger-subtle text-danger">
+                                        <i class="bi bi-x-circle me-1"></i>Cancelado
+                                    </span>
                                 {% else %}
-                                    <span class="badge bg-warning">Pendente</span>
+                                    <span class="badge bg-warning-subtle text-warning">
+                                        <i class="bi bi-clock me-1"></i>Pendente
+                                    </span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="text-end">
                                 <a href="{{ url_for('main.pessoa_folha_edit', pessoa_folha_id=pessoa_folha.id) }}" 
-                                   class="btn btn-primary btn-sm">
-                                    ✏️
+                                   class="btn btn-outline-primary btn-sm" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                    <span class="visually-hidden">Editar</span>
                                 </a>
                                 <a href="{{ url_for('main.folha_delete', id=folha.id) }}" 
-                                   class="btn btn-danger btn-sm"
+                                   class="btn btn-outline-danger btn-sm" title="Excluir"
                                    onclick="return confirm('Tem certeza que deseja excluir esta folha?')">
-                                    🗑️
+                                    <i class="bi bi-trash"></i>
+                                    <span class="visually-hidden">Excluir</span>
                                 </a>
                             </td>
                         </tr>
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="6" class="text-center">Nenhuma folha encontrada.</td>
+                            <td colspan="6" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                    Nenhuma folha encontrada.
+                                </div>
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -146,14 +183,20 @@
 
     <!-- Paginação Bootstrap -->
     {% if pagination.pages > 1 %}
-    <nav aria-label="Navegação de páginas" class="mt-5">
+    <nav aria-label="Navegação de páginas" class="mt-4 d-flex justify-content-center">
         <ul class="pagination justify-content-center">
             {% if pagination.has_prev %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('main.folha_list', page=pagination.prev_num, busca=busca, data=data, status=status) }}">Anterior</a>
+                    <a class="page-link" href="{{ url_for('main.folha_list', page=pagination.prev_num, busca=busca, data=data, status=status) }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
                 </li>
             {% else %}
-                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="bi bi-chevron-left"></i>
+                    </span>
+                </li>
             {% endif %}
 
             {% for p in range(1, pagination.pages + 1) %}
@@ -164,10 +207,16 @@
 
             {% if pagination.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('main.folha_list', page=pagination.next_num, busca=busca, data=data, status=status) }}">Próximo</a>
+                    <a class="page-link" href="{{ url_for('main.folha_list', page=pagination.next_num, busca=busca, data=data, status=status) }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
                 </li>
             {% else %}
-                <li class="page-item disabled"><span class="page-link">Próximo</span></li>
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="bi bi-chevron-right"></i>
+                    </span>
+                </li>
             {% endif %}
         </ul>
     </nav>
