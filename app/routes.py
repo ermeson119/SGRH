@@ -17,6 +17,10 @@ from io import StringIO
 import os
 import re
 import pandas as pd
+from io import BytesIO
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import cm
 
 # Cria um Blueprint para as rotas
 bp = Blueprint('main', __name__)
@@ -1108,6 +1112,72 @@ def termo_download(id):
         return send_from_directory(current_app.config['UPLOAD_FOLDER'], termo.arquivo, as_attachment=True)
     flash('Arquivo não encontrado.', 'error')
     return redirect(url_for('main.termo_list'))
+
+@bp.route('/termos/recusa', methods=['GET', 'POST'])
+@login_required
+def termo_recusa_form():
+    pessoas = Pessoa.query.order_by(Pessoa.nome).all()
+    if request.method == 'POST':
+        pessoa_id = request.form['pessoa_id']
+        pessoa = Pessoa.query.get(pessoa_id)
+        nome = pessoa.nome if pessoa else ''
+        matricula = pessoa.matricula if pessoa else ''
+        lotacao = pessoa.lotacoes[0].setor.nome if pessoa.lotacoes else ''
+        funcao = pessoa.profissao.nome if pessoa.profissao else ''
+        cpf = pessoa.cpf if pessoa else ''
+        cidade = request.form['cidade']
+        vacina = request.form['vacina']  # novo campo
+        data = request.form['data']
+
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
+
+        # Título centralizado
+        p.setFont("Helvetica-Bold", 14)
+        p.drawCentredString(width/2, height-2*cm, "TERMO DE RECUSA DE VACINAÇÃO")
+
+        # Corpo do termo
+        p.setFont("Helvetica", 12)
+        y = height-3.5*cm
+        texto = (
+            f"Eu, {nome}                                   Matrícula: {matricula}\n"
+            f"Lotado no (a) {lotacao}, função de {funcao}    CPF: {cpf},\n declaro estar ciente"
+            "dos benefícios e efeitos colaterais, assim como dos riscos a que estarei exposto por esta\n"
+            f"RECUSA da vacina para {vacina}, na qual fui orientado(a) por este serviço a realizar em\n"
+            "função das atividades desempenhadas nesta unidade escolar, sendo que por minha\n"
+            "responsabilidade estou deixando de ser imunizado. Desta forma, isento este serviço, bem como\n"
+            "o órgão de lotação de quaisquer problemas que a falta de imunização possa vir a trazer para\n"
+            "minha saúde ocupacional."
+        )
+        for line in texto.split('\n'):
+            p.drawString(2*cm, y, line)
+            y -= 0.7*cm
+
+        # Cidade e data
+        from datetime import datetime
+        data_formatada = datetime.strptime(data, "%Y-%m-%d").strftime("%d/%m/%Y")
+        p.drawString(width-10*cm, y-1*cm, f"{cidade}, {data_formatada}.")
+
+        # Espaço para assinaturas
+        y -= 3*cm
+        p.line(2*cm, y, width-2*cm, y)
+        p.drawCentredString(width/2, y-0.5*cm, "Assinatura do Servidor")
+
+        y -= 2*cm
+        p.line(2*cm, y, width-2*cm, y)
+        p.drawCentredString(width/2, y-0.5*cm, "Assinatura da Chefia Imediata")
+
+        y -= 2*cm
+        p.line(2*cm, y, width-2*cm, y)
+        p.drawCentredString(width/2, y-0.5*cm, "Testemunha (se houver recusa em assinar o termo)")
+
+        p.showPage()
+        p.save()
+        buffer.seek(0)
+        return send_file(buffer, as_attachment=True, download_name='termo_recusa_vacinacao.pdf', mimetype='application/pdf')
+
+    return render_template('termos/termo_recusa_form.html', pessoas=pessoas)
 
 # --- CRUD Vacina ---
 @bp.route('/vacinas', methods=['GET'])

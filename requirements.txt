@@ -15,6 +15,7 @@ Werkzeug==2.3.7
 typer==0.12.3
 openpyxl==3.1.2
 pandas==2.2.0
+reportlab
 
 #criar admin
 #docker exec -it web-1 python cli.py create-admin

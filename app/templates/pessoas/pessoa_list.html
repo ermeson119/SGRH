@@ -6,11 +6,12 @@
         <h2>Pessoas</h2>
         <div class="d-flex gap-2">
             <a href="{{ url_for('main.pessoa_create') }}" class="btn btn-primary">
-                Nova Pessoa
+                <i class="bi bi-plus-lg"></i>
+                Cadastrar Pessoa
             </a>
             <a href="{{ url_for('main.pessoa_upload_csv') }}" class="btn btn-success">
                 <i class="bi bi-file-earmark-arrow-up"></i>
-                <span class="visually-hidden">Importar CSV</span>
+                <span>Importar CSV</span>
             </a>
         </div>
     </div>
