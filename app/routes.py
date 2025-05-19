@@ -1128,6 +1128,7 @@ def termo_recusa_form():
         lotacao = pessoa.lotacoes[0].setor.nome if pessoa.lotacoes else ''
         funcao = pessoa.profissao.nome if pessoa.profissao else ''
         cpf = pessoa.cpf if pessoa else ''
+        instituicao = request.form['instituicao']  # Novo campo
         cidade = request.form['cidade']
         vacina = request.form['vacina']
         data = request.form['data']
@@ -1140,7 +1141,7 @@ def termo_recusa_form():
         p.setFont("Helvetica-Bold", 16)
         p.drawCentredString(width/2, height-2*cm, "TERMO DE RECUSA DE VACINAÇÃO")
         p.setFont("Helvetica", 10)
-        p.drawCentredString(width/2, height-3*cm, "Instituição/Órgão Responsável")  # Substituir pelo nome real da instituição
+        p.drawCentredString(width/2, height-3*cm, instituicao)  # Usar o valor do campo instituição
 
         # Estilo do parágrafo
         style = ParagraphStyle(
@@ -1160,7 +1161,7 @@ def termo_recusa_form():
             "declaro, para os devidos fins, que fui devidamente orientado(a) sobre os benefícios, possíveis efeitos colaterais e riscos associados à recusa "
             f"da vacina contra {vacina}, recomendada em razão das atividades desempenhadas nesta unidade escolar. "
             "Por decisão própria, opto por não realizar a imunização, assumindo integralmente a responsabilidade por eventuais consequências à minha saúde ocupacional. "
-            "Isento, portanto, esta instituição e o órgão de lotação de qualquer responsabilidade decorrente da ausência de imunização."
+            f"Isento, portanto, {instituicao} e o órgão de lotação de qualquer responsabilidade decorrente da ausência de imunização."
         )
 
         # Renderizar texto como parágrafo justificado
