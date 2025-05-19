@@ -1683,6 +1683,220 @@ def lotacao_relatorio_pdf():
     return send_file(buffer, as_attachment=True, download_name='relatorio_lotacoes.pdf', mimetype='application/pdf')
 
 
+@bp.route('/relatorio/folha/pdf')
+@login_required
+def folha_relatorio_pdf():
+    busca = request.args.get('busca', '')
+    page = request.args.get('page', 1, type=int)
+
+    # Build query
+    query = PessoaFolha.query.join(Folha).join(Pessoa)
+    if busca:
+        query = query.filter(Pessoa.nome.ilike(f'%{busca}%'))
+
+    # Pagination (assuming same logic as HTML route)
+    per_page = 10  # Adjust based on your app's pagination settings
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    pessoa_folhas = pagination.items
+
+    # PDF setup
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=2*cm, bottomMargin=2*cm, leftMargin=2*cm, rightMargin=2*cm)
+    elements = []
+
+    # Header
+    styles = getSampleStyleSheet()
+    title_style = styles['Heading1']
+    title_style.alignment = 1
+    title = Paragraph("Relatório de Folha de Pagamento", title_style)
+    elements.append(title)
+
+    subtitle_style = styles['Normal']
+    subtitle_style.alignment = 1
+    subtitle_style.fontSize = 10
+    subtitle = Paragraph(f"Gerado em: {datetime.now().strftime('%d de %B de %Y')}", subtitle_style)
+    elements.append(subtitle)
+    if busca:
+        subtitle = Paragraph(f"Filtro: Nome contendo '{busca}'", subtitle_style)
+        elements.append(subtitle)
+    elements.append(Spacer(1, 1*cm))
+
+    # Table data
+    data = [['Data', 'Nome', 'Valor', 'Data Pagamento']]
+    for pessoa_folha in pessoa_folhas:
+        data.append([
+            pessoa_folha.folha.data.strftime('%d/%m/%Y'),
+            pessoa_folha.pessoa.nome,
+            f"R$ {pessoa_folha.valor:.2f}",
+            pessoa_folha.data_pagamento.strftime('%d/%m/%Y') if pessoa_folha.data_pagamento else '-'
+        ])
+
+    # Table styling
+    col_widths = [3*cm, 8*cm, 3*cm, 3*cm]
+    table = Table(data, colWidths=col_widths)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.black),
+        ('BOX', (0, 0), (-1, -1), 1, colors.black),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+    ]))
+
+    elements.append(table)
+    elements.append(Spacer(1, 1*cm))
+
+    # Footer
+    footer_style = styles['Normal']
+    footer_style.fontSize = 10
+    footer = Paragraph(f"Total de registros: {len(pessoa_folhas)} (Página {page} de {pagination.pages})", footer_style)
+    elements.append(footer)
+
+    # Generate PDF
+    try:
+        doc.build(elements)
+        buffer.seek(0)
+        return send_file(buffer, as_attachment=True, download_name='relatorio_folha.pdf', mimetype='application/pdf')
+    except Exception as e:
+        flash(f"Erro ao gerar o PDF: {str(e)}", "danger")
+        return redirect(url_for('main.folha_relatorio', busca=busca, page=page))
+
+
+@bp.route('/relatorio/capacitacao/pdf')
+@login_required
+def capacitacao_relatorio_pdf():
+    curso_id = request.args.get('curso', type=int)
+    data_inicio = request.args.get('data_inicio')
+    data_fim = request.args.get('data_fim')
+
+    # Build query
+    query = Capacitacao.query.join(Pessoa).join(Curso)
+    if curso_id:
+        query = query.filter(Capacitacao.curso_id == curso_id)
+    if data_inicio:
+        try:
+            data_inicio_dt = datetime.strptime(data_inicio, '%Y-%m-%d')
+            query = query.filter(Capacitacao.data >= data_inicio_dt)
+        except ValueError:
+            flash("Formato de data inicial inválido.", "danger")
+            return redirect(url_for('main.capacitacao_relatorio'))
+    if data_fim:
+        try:
+            data_fim_dt = datetime.strptime(data_fim, '%Y-%m-%d')
+            query = query.filter(
+                or_(
+                    Capacitacao.data_fim <= data_fim_dt,
+                    Capacitacao.data_fim.is_(None)
+                )
+            )
+        except ValueError:
+            flash("Formato de data final inválido.", "danger")
+            return redirect(url_for('main.capacitacao_relatorio'))
+
+    capacitacoes = query.all()
+
+    # PDF setup
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=2*cm, bottomMargin=2*cm, leftMargin=2*cm, rightMargin=2*cm)
+    elements = []
+
+    # Header
+    styles = getSampleStyleSheet()
+    title_style = styles['Heading1']
+    title_style.alignment = 1
+    title = Paragraph("Relatório de Capacitações", title_style)
+    elements.append(title)
+
+    subtitle_style = styles['Normal']
+    subtitle_style.alignment = 1
+    subtitle_style.fontSize = 10
+    subtitle = Paragraph(f"Gerado em: {datetime.now().strftime('%d de %B de %Y')}", subtitle_style)
+    elements.append(subtitle)
+    if curso_id or data_inicio or data_fim:
+        filters = []
+        if curso_id:
+            curso = Curso.query.get(curso_id)
+            filters.append(f"Curso: {curso.nome if curso else 'Inválido'}")
+        if data_inicio:
+            filters.append(f"Data Início: {data_inicio}")
+        if data_fim:
+            filters.append(f"Data Fim: {data_fim}")
+        subtitle = Paragraph(f"Filtros: {', '.join(filters)}", subtitle_style)
+        elements.append(subtitle)
+    elements.append(Spacer(1, 1*cm))
+
+    # Summary
+    summary_style = styles['Normal']
+    summary_style.fontSize = 10
+    total_capacitacoes = len(capacitacoes)
+    total_cursos = len(set(c.curso_id for c in capacitacoes))
+    total_pessoas = len(set(c.pessoa_id for c in capacitacoes))
+    summary = Paragraph(
+        f"Total de Capacitações: {total_capacitacoes} | "
+        f"Total de Cursos: {total_cursos} | "
+        f"Total de Funcionários: {total_pessoas}",
+        summary_style
+    )
+    elements.append(summary)
+    elements.append(Spacer(1, 0.5*cm))
+
+    # Table data
+    data = [['Funcionário', 'Curso', 'Descrição', 'Data Início', 'Data Fim']]
+    for capacitacao in capacitacoes:
+        data.append([
+            capacitacao.pessoa.nome,
+            capacitacao.curso.nome,
+            capacitacao.descricao or '-',
+            capacitacao.data.strftime('%d/%m/%Y'),
+            capacitacao.data_fim.strftime('%d/%m/%Y') if capacitacao.data_fim else 'Em andamento'
+        ])
+
+    # Table styling
+    col_widths = [5*cm, 4*cm, 4*cm, 3*cm, 3*cm]
+    table = Table(data, colWidths=col_widths)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.black),
+        ('BOX', (0, 0), (-1, -1), 1, colors.black),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+    ]))
+
+    elements.append(table)
+    elements.append(Spacer(1, 1*cm))
+
+    # Footer
+    footer_style = styles['Normal']
+    footer_style.fontSize = 10
+    footer = Paragraph(f"Total de registros: {len(capacitacoes)}", footer_style)
+    elements.append(footer)
+
+    # Generate PDF
+    try:
+        doc.build(elements)
+        buffer.seek(0)
+        return send_file(buffer, as_attachment=True, download_name='relatorio_capacitacoes.pdf', mimetype='application/pdf')
+    except Exception as e:
+        flash(f"Erro ao gerar o PDF: {str(e)}", "danger")
+        return redirect(url_for('main.capacitacao_relatorio', curso=curso_id, data_inicio=data_inicio, data_fim=data_fim))
+
 @bp.route('/relatorio/capacitacoes')
 @login_required
 def capacitacao_relatorio():
