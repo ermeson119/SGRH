@@ -3,15 +3,17 @@
 {% block content %}
 <div class="container mt-2">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Termos</h2>
-        <a href="{{ url_for('main.termo_create') }}" class="btn btn-primary">
-            Novo Termo
-        </a>
+        <h2 class="mb-0">Termos</h2>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('main.termo_create') }}" class="btn btn-primary">
+                Novo Termo
+            </a>
+            <a href="{{ url_for('main.termo_recusa_form') }}" class="btn btn-warning">
+                <i class="bi bi-file-earmark-pdf"></i> Gerar Termo de Recusa
+            </a>
+        </div>
     </div>
 
-    <a href="{{ url_for('main.termo_recusa_form') }}" class="btn btn-warning mb-3">
-        <i class="bi bi-file-earmark-pdf"></i> Gerar Termo de Recusa de Vacinação
-    </a>
 
     <table class="table table-bordered table-striped shadow-sm">
         <thead class="table-dark">
