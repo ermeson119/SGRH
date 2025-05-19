@@ -21,6 +21,9 @@ from io import BytesIO
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER
 
 # Cria um Blueprint para as rotas
 bp = Blueprint('main', __name__)
@@ -1126,51 +1129,63 @@ def termo_recusa_form():
         funcao = pessoa.profissao.nome if pessoa.profissao else ''
         cpf = pessoa.cpf if pessoa else ''
         cidade = request.form['cidade']
-        vacina = request.form['vacina']  # novo campo
+        vacina = request.form['vacina']
         data = request.form['data']
 
         buffer = BytesIO()
         p = canvas.Canvas(buffer, pagesize=A4)
         width, height = A4
 
-        # Título centralizado
-        p.setFont("Helvetica-Bold", 14)
+        # Cabeçalho
+        p.setFont("Helvetica-Bold", 16)
         p.drawCentredString(width/2, height-2*cm, "TERMO DE RECUSA DE VACINAÇÃO")
+        p.setFont("Helvetica", 10)
+        p.drawCentredString(width/2, height-3*cm, "Instituição/Órgão Responsável")  # Substituir pelo nome real da instituição
+
+        # Estilo do parágrafo
+        style = ParagraphStyle(
+            name='Normal',
+            fontName='Helvetica',
+            fontSize=12,
+            leading=16,
+            spaceAfter=12,
+            alignment=4,  # Justificado
+            leftIndent=0
+        )
 
         # Corpo do termo
-        p.setFont("Helvetica", 12)
-        y = height-3.5*cm
+        y = height-4.5*cm
         texto = (
-            f"Eu, {nome}                                   Matrícula: {matricula}\n"
-            f"Lotado no (a) {lotacao}, função de {funcao}    CPF: {cpf},\n declaro estar ciente"
-            "dos benefícios e efeitos colaterais, assim como dos riscos a que estarei exposto por esta\n"
-            f"RECUSA da vacina para {vacina}, na qual fui orientado(a) por este serviço a realizar em\n"
-            "função das atividades desempenhadas nesta unidade escolar, sendo que por minha\n"
-            "responsabilidade estou deixando de ser imunizado. Desta forma, isento este serviço, bem como\n"
-            "o órgão de lotação de quaisquer problemas que a falta de imunização possa vir a trazer para\n"
-            "minha saúde ocupacional."
+            f"Eu, {nome}, matrícula {matricula}, lotado(a) no setor {lotacao}, na função de {funcao}, portador(a) do CPF {cpf}, "
+            "declaro, para os devidos fins, que fui devidamente orientado(a) sobre os benefícios, possíveis efeitos colaterais e riscos associados à recusa "
+            f"da vacina contra {vacina}, recomendada em razão das atividades desempenhadas nesta unidade escolar. "
+            "Por decisão própria, opto por não realizar a imunização, assumindo integralmente a responsabilidade por eventuais consequências à minha saúde ocupacional. "
+            "Isento, portanto, esta instituição e o órgão de lotação de qualquer responsabilidade decorrente da ausência de imunização."
         )
-        for line in texto.split('\n'):
-            p.drawString(2*cm, y, line)
-            y -= 0.7*cm
 
-        # Cidade e data
-        from datetime import datetime
-        data_formatada = datetime.strptime(data, "%Y-%m-%d").strftime("%d/%m/%Y")
-        p.drawString(width-10*cm, y-1*cm, f"{cidade}, {data_formatada}.")
+        # Renderizar texto como parágrafo justificado
+        para = Paragraph(texto, style)
+        para.wrapOn(p, width-4*cm, height)
+        para.drawOn(p, 2*cm, y - para.height)
 
-        # Espaço para assinaturas
-        y -= 3*cm
+        # Data
+        data_formatada = datetime.strptime(data, "%Y-%m-%d").strftime("%d de %B de %Y")
+        p.setFont("Helvetica", 12)
+        p.drawString(width-12*cm, y-para.height-2*cm, f"{cidade}, {data_formatada}")
+
+        # Assinaturas
+        y = y - para.height - 4*cm
+        p.setFont("Helvetica", 10)
         p.line(2*cm, y, width-2*cm, y)
-        p.drawCentredString(width/2, y-0.5*cm, "Assinatura do Servidor")
+        p.drawCentredString(width/2, y-0.5*cm, "Assinatura do(a) Servidor(a)")
 
-        y -= 2*cm
+        y -= 2.5*cm
         p.line(2*cm, y, width-2*cm, y)
         p.drawCentredString(width/2, y-0.5*cm, "Assinatura da Chefia Imediata")
 
-        y -= 2*cm
+        y -= 2.5*cm
         p.line(2*cm, y, width-2*cm, y)
-        p.drawCentredString(width/2, y-0.5*cm, "Testemunha (se houver recusa em assinar o termo)")
+        p.drawCentredString(width/2, y-0.5*cm, "Assinatura de Testemunha (em caso de recusa de assinatura)")
 
         p.showPage()
         p.save()
