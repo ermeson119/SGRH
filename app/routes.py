@@ -24,6 +24,7 @@ from reportlab.lib.units import cm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER
+import locale
 
 # Cria um Blueprint para as rotas
 bp = Blueprint('main', __name__)
@@ -1128,7 +1129,7 @@ def termo_recusa_form():
         lotacao = pessoa.lotacoes[0].setor.nome if pessoa.lotacoes else ''
         funcao = pessoa.profissao.nome if pessoa.profissao else ''
         cpf = pessoa.cpf if pessoa else ''
-        instituicao = request.form['instituicao']  # Novo campo
+        instituicao = request.form['instituicao']  
         cidade = request.form['cidade']
         vacina = request.form['vacina']
         data = request.form['data']
@@ -1159,7 +1160,7 @@ def termo_recusa_form():
         texto = (
             f"Eu, {nome}, matrícula {matricula}, lotado(a) no setor {lotacao}, na função de {funcao}, portador(a) do CPF {cpf}, "
             "declaro, para os devidos fins, que fui devidamente orientado(a) sobre os benefícios, possíveis efeitos colaterais e riscos associados à recusa "
-            f"da vacina contra {vacina}, recomendada em razão das atividades desempenhadas nesta unidade escolar. "
+            f"da vacina contra {vacina}, recomendada em razão das atividades desempenhadas nesta instituicão {instituicao}. "
             "Por decisão própria, opto por não realizar a imunização, assumindo integralmente a responsabilidade por eventuais consequências à minha saúde ocupacional. "
             f"Isento, portanto, {instituicao} e o órgão de lotação de qualquer responsabilidade decorrente da ausência de imunização."
         )
@@ -1170,7 +1171,8 @@ def termo_recusa_form():
         para.drawOn(p, 2*cm, y - para.height)
 
         # Data
-        data_formatada = datetime.strptime(data, "%Y-%m-%d").strftime("%d de %B de %Y")
+        data_obj = datetime.strptime(data, "%Y-%m-%d")
+        data_formatada = data_obj.strftime("%d de %B de %Y")  
         p.setFont("Helvetica", 12)
         p.drawString(width-12*cm, y-para.height-2*cm, f"{cidade}, {data_formatada}")
 

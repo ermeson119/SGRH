@@ -4,7 +4,7 @@
     <h2>Termo de Recusa de Vacinação</h2>
     <form method="post" id="form-termo">
         <div class="mb-3">
-            <label>Nome</label>
+            <label for="nome" class="form-label">Nome</label>
             <select name="pessoa_id" id="nome" class="form-select" required>
                 <option value="">Selecione</option>
                 {% for pessoa in pessoas %}
@@ -20,20 +20,32 @@
             </select>
         </div>
         <div class="mb-3">
-            <label>Instituição/Órgão Responsável</label>
-            <input type="text" name="instituicao" id="instituicao" class="form-control" required>
+            <label for="instituicao" class="form-label">Instituição/Órgão Responsável</label>
+            <input type="text" name="instituicao" id="instituicao" class="form-control" placeholder="Digite a instituição" required>
         </div>
         <div class="mb-3">
-            <label>Cidade</label>
-            <input type="text" name="cidade" id="cidade" class="form-control" required>
+            <label for="cidade" class="form-label">Cidade</label>
+            <input type="text" name="cidade" id="cidade" class="form-control" placeholder="Digite a cidade" required>
         </div>
         <div class="mb-3">
-            <label>Vacina</label>
-            <input type="text" name="vacina" id="vacina" class="form-control" required>
+            <label for="vacina" class="form-label">Vacina</label>
+            <select name="vacina" id="vacina" class="form-select" required>
+                <option value="">Selecione</option>
+                <option value="COVID-19">COVID-19</option>
+                <option value="Influenza (Gripe)">Influenza (Gripe)</option>
+                <option value="Hepatite B">Hepatite B</option>
+                <option value="Tétano">Tétano</option>
+                <option value="Febre Amarela">Febre Amarela</option>
+                <option value="Tríplice Viral (Sarampo, Caxumba e Rubéola)">Tríplice Viral (Sarampo, Caxumba e Rubéola)</option>
+                <option value="Pneumocócica">Pneumocócica</option>
+                <option value="Meningocócica">Meningocócica</option>
+                <option value="HPV">HPV</option>
+                <option value="Outra">Outra</option>
+            </select>
         </div>
         <div class="mb-3">
-            <label>Data</label>
-            <input type="date" name="data" class="form-control" required>
+            <label for="data" class="form-label">Data</label>
+            <input type="date" name="data" id="data" class="form-control" required>
         </div>
         <button type="submit" class="btn btn-success">Gerar PDF</button>
     </form>
