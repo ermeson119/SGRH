@@ -21,9 +21,10 @@ from io import BytesIO
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER
+from reportlab.lib import colors
 import locale
 
 # Cria um Blueprint para as rotas
@@ -1600,6 +1601,87 @@ def lotacao_relatorio():
                          data_inicio=data_inicio,
                          data_fim=data_fim,
                          now=datetime.now())
+
+@bp.route('/relatorio/lotacoes/pdf')
+@login_required
+def lotacao_relatorio_pdf():
+    setor_id = request.args.get('setor', type=int)
+    data_inicio = request.args.get('data_inicio')
+    data_fim = request.args.get('data_fim')
+
+    query = Lotacao.query.join(Pessoa).join(Setor)
+
+    if setor_id:
+        query = query.filter(Lotacao.setor_id == setor_id)
+    if data_inicio:
+        query = query.filter(Lotacao.data_inicio >= datetime.strptime(data_inicio, '%Y-%m-%d'))
+    if data_fim:
+        query = query.filter(Lotacao.data_inicio <= datetime.strptime(data_fim, '%Y-%m-%d'))
+
+    lotacoes = query.all()
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=2*cm, bottomMargin=2*cm, leftMargin=2*cm, rightMargin=2*cm)
+    elements = []
+
+    # Cabeçalho
+    styles = getSampleStyleSheet()
+    title_style = styles['Heading1']
+    title_style.alignment = 1  
+    title = Paragraph("Relatório de Lotações", title_style)
+    elements.append(title)
+
+    subtitle_style = styles['Normal']
+    subtitle_style.alignment = 1
+    subtitle_style.fontSize = 10
+    subtitle = Paragraph(f"Gerado em: {datetime.now().strftime('%d de %B de %Y')}", subtitle_style)
+    elements.append(subtitle)
+    elements.append(Spacer(1, 1*cm)) 
+
+    # Dados para a tabela
+    data = [['Funcionário', 'Setor', 'Data Início', 'Data Fim']]
+    for lotacao in lotacoes:
+        data.append([
+            lotacao.pessoa.nome,
+            lotacao.setor.nome,
+            lotacao.data_inicio.strftime('%d/%m/%Y'),
+            lotacao.data_fim.strftime('%d/%m/%Y') if lotacao.data_fim else 'Atual'
+        ])
+
+    # Criação da tabela com ajustes de espaçamento
+    col_widths = [7*cm, 5*cm, 3*cm, 3*cm]  #
+    table = Table(data, colWidths=col_widths)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.black),  
+        ('BOX', (0, 0), (-1, -1), 1, colors.black),  
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),  
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),  
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),  
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),  
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+    ]))
+
+    elements.append(table)
+    elements.append(Spacer(1, 1*cm)) 
+
+    # Rodapé
+    footer_style = styles['Normal']
+    footer_style.fontSize = 10
+    footer = Paragraph(f"Total de registros: {len(lotacoes)}", footer_style)
+    elements.append(footer)
+
+    # Geração do PDF
+    doc.build(elements)
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name='relatorio_lotacoes.pdf', mimetype='application/pdf')
+
 
 @bp.route('/relatorio/capacitacoes')
 @login_required
