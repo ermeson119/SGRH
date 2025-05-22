@@ -1896,6 +1896,80 @@ def capacitacao_relatorio_pdf():
     except Exception as e:
         flash(f"Erro ao gerar o PDF: {str(e)}", "danger")
         return redirect(url_for('main.capacitacao_relatorio', curso=curso_id, data_inicio=data_inicio, data_fim=data_fim))
+    
+@bp.route('/relatorio/vacina/pdf')
+@login_required
+def vacina_relatorio_pdf():
+    pessoa_id = request.args.get('pessoa_id', type=int)
+
+    query = Vacina.query.join(Pessoa)
+
+    if pessoa_id:
+        query = query.filter(Vacina.pessoa_id == pessoa_id)
+
+    vacinas = query.all()
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=2*cm, bottomMargin=2*cm, leftMargin=2*cm, rightMargin=2*cm)
+    elements = []
+
+    # Cabeçalho
+    styles = getSampleStyleSheet()
+    title_style = styles['Heading1']
+    title_style.alignment = 1
+    title = Paragraph("Relatório de Vacinação", title_style)
+    elements.append(title)
+
+    subtitle_style = styles['Normal']
+    subtitle_style.alignment = 1
+    subtitle_style.fontSize = 10
+    subtitle = Paragraph(f"Gerado em: {datetime.now().strftime('%d de %B de %Y')}", subtitle_style)
+    elements.append(subtitle)
+    elements.append(Spacer(1, 1*cm))
+
+    # Dados para a tabela
+    data = [['Nome', 'Vacina', 'Dose', 'Data']]
+    for vacina in vacinas:
+        data.append([
+            vacina.pessoa.nome,
+            vacina.nome,
+            str(vacina.dose),
+            vacina.data.strftime('%d/%m/%Y')
+        ])
+
+    # Criação da tabela com ajustes de espaçamento
+    col_widths = [7*cm, 5*cm, 3*cm, 3*cm]
+    table = Table(data, colWidths=col_widths)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.black),
+        ('BOX', (0, 0), (-1, -1), 1, colors.black),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+    ]))
+
+    elements.append(table)
+    elements.append(Spacer(1, 1*cm))
+
+    # Rodapé
+    footer_style = styles['Normal']
+    footer_style.fontSize = 10
+    footer = Paragraph(f"Total de registros: {len(vacinas)}", footer_style)
+    elements.append(footer)
+
+    # Geração do PDF
+    doc.build(elements)
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name='relatorio_vacinacao.pdf', mimetype='application/pdf')
 
 @bp.route('/relatorio/capacitacoes')
 @login_required
