@@ -617,8 +617,30 @@ def profissao_upload_csv():
 @bp.route('/lotacoes', methods=['GET'])
 @login_required
 def lotacao_list():
-    lotacoes = Lotacao.query.all()
-    return render_template('profissional/lotacao_list.html', lotacoes=lotacoes)
+    page = request.args.get('page', 1, type=int)
+    busca = request.args.get('busca', '', type=str)
+    per_page = 9
+
+    query = Lotacao.query.options(
+        joinedload(Lotacao.pessoa),
+        joinedload(Lotacao.setor)
+    )
+
+    if busca:
+        query = query.join(Pessoa).filter(Pessoa.nome.ilike(f'%{busca}%'))
+
+    pagination = query.order_by(Lotacao.data_inicio.desc()).paginate(page=page, per_page=per_page, error_out=False)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template('profissional/lotacao_list.html', 
+                             lotacoes=pagination.items, 
+                             pagination=pagination, 
+                             busca=busca)
+
+    return render_template('profissional/lotacao_list.html',
+                         lotacoes=pagination.items,
+                         pagination=pagination,
+                         busca=busca)
 
 @bp.route('/lotacoes/create', methods=['GET', 'POST'])
 @login_required
