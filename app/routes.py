@@ -902,8 +902,24 @@ def pessoa_folha_edit(pessoa_folha_id):
 @bp.route('/cursos', methods=['GET'])
 @login_required
 def curso_list():
-    cursos = Curso.query.all()
-    return render_template('curso/curso_list.html', cursos=cursos)
+    page = request.args.get('page', 1, type=int)
+    busca = request.args.get('busca', '', type=str)
+    per_page = 11 
+
+    query = Curso.query
+
+    if busca:
+        query = query.filter(Curso.nome.ilike(f'%{busca}%'))
+
+    pagination = query.order_by(Curso.nome).paginate(page=page, per_page=per_page, error_out=False)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template('curso/curso_list.html', cursos=pagination.items, pagination=pagination, busca=busca)
+
+    return render_template('curso/curso_list.html',
+                           cursos=pagination.items,
+                           pagination=pagination,
+                           busca=busca)
 
 @bp.route('/cursos/create', methods=['GET', 'POST'])
 @login_required

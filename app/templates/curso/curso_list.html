@@ -4,12 +4,12 @@
 <div class="container mt-2">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Lista de Cursos</h2>
-        <a href="{{ url_for('main.curso_create') }}" class="btn btn-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-circle-fill" viewBox="0 0 16 16">
-                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
-            </svg>
-            Adicionar Curso
-        </a>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('main.curso_create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i>
+                Adicionar Curso
+            </a>
+        </div>
     </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -30,38 +30,102 @@
         {% endif %}
     {% endwith %}
 
-    <table class="table table-bordered table-striped shadow-sm">
-        <thead class="table-dark">
-            <tr>
-                <th>Nome</th>
-                <th>Duração</th>
-                <th>Tipo</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for curso in cursos %}
-                <tr>
-                    <td>{{ curso.nome }}</td>
-                    <td>{{ curso.duracao }}</td>
-                    <td>{{ curso.tipo }}</td>
-                    <td>
-                        <a href="{{ url_for('main.curso_edit', id=curso.id) }}" class="btn btn-outline-primary btn-sm me-2" title="Editar">
-                            <i class="bi bi-pencil"></i>
-                            <span class="visually-hidden">Editar</span>
-                        </a>
-                        <a href="{{ url_for('main.curso_delete', id=curso.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir este curso?');">
-                            <i class="bi bi-trash"></i>
-                            <span class="visually-hidden">Excluir</span>
-                        </a>
-                    </td>
-                </tr>
+    <!-- Formulário de Busca -->
+    <form method="get" class="mb-4" id="busca-form" data-cursos-url="{{ url_for('main.curso_list') }}">
+        <div class="input-group">
+            <input type="text" id="filtro" name="busca" class="form-control"
+                   placeholder="Buscar curso pelo nome..." value="{{ busca }}">
+            <button class="btn btn-primary" type="submit">Buscar</button>
+        </div>
+    </form>
+
+    <!-- Contêiner para resultados dinâmicos -->
+    <div id="resultados-container">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Nome</th>
+                        <th scope="col">Duração</th>
+                        <th scope="col">Tipo</th>
+                        <th scope="col" class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for curso in cursos %}
+                    <tr>
+                        <td>{{ curso.nome }}</td>
+                        <td>{{ curso.duracao }}</td>
+                        <td>{{ curso.tipo }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('main.curso_edit', id=curso.id) }}" class="btn btn-outline-primary btn-sm" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                                <span class="visually-hidden">Editar</span>
+                            </a>
+                            <a href="{{ url_for('main.curso_delete', id=curso.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir"
+                               onclick="return confirm('Tem certeza que deseja excluir este curso?');">
+                                <i class="bi bi-trash"></i>
+                                <span class="visually-hidden">Excluir</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                Nenhum curso cadastrado.
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Paginação Bootstrap -->
+    <nav aria-label="Navegação de páginas" class="mt-4 d-flex justify-content-center">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.curso_list', page=pagination.prev_num, busca=busca) }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
             {% else %}
-                <tr>
-                    <td colspan="4">Nenhum curso cadastrado.</td>
-                </tr>
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="bi bi-chevron-left"></i>
+                    </span>
+                </li>
+            {% endif %}
+
+            {% for p in range(1, pagination.pages + 1) %}
+                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('main.curso_list', page=p, busca=busca) }}">{{ p }}</a>
+                </li>
             {% endfor %}
-        </tbody>
-    </table>
+
+            {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.curso_list', page=pagination.next_num, busca=busca) }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="bi bi-chevron-right"></i>
+                    </span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='scripts/curso/curso_list.js') }}"></script>
 {% endblock %}
