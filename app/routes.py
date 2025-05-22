@@ -1064,8 +1064,24 @@ def capacitacao_delete(id):
 @bp.route('/termos', methods=['GET'])
 @login_required
 def termo_list():
-    termos = Termo.query.all()
-    return render_template('termos/termo_list.html', termos=termos)
+    page = request.args.get('page', 1, type=int)
+    busca = request.args.get('busca', '', type=str)
+    per_page = 11 
+
+    query = Termo.query
+
+    if busca:
+        query = query.join(Termo.pessoa).filter(Pessoa.nome.ilike(f'%{busca}%'))
+
+    pagination = query.order_by(Termo.data_inicio).paginate(page=page, per_page=per_page, error_out=False)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template('termos/termo_list.html', termos=pagination.items, pagination=pagination, busca=busca)
+
+    return render_template('termos/termo_list.html',
+                           termos=pagination.items,
+                           pagination=pagination,
+                           busca=busca)
 
 @bp.route('/termos/create', methods=['GET', 'POST'])
 @login_required

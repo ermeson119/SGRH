@@ -1,91 +1,153 @@
 {% extends 'base.html' %}
-
 {% block content %}
 <div class="container mt-2">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">Termos</h2>
         <div class="d-flex gap-2">
-            <a href="{{ url_for('main.termo_create') }}" class="btn btn-primary">
-                Novo Termo
-            </a>
             <a href="{{ url_for('main.termo_recusa_form') }}" class="btn btn-danger">
                 <i class="bi bi-file-earmark-pdf"></i> Gerar Termo de Recusa
             </a>
+            <a href="{{ url_for('main.termo_create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i>
+                Novo Termo
+            </a>
         </div>
     </div>
 
+    <!-- Formulário de Busca -->
+    <form method="get" class="mb-4" id="busca-form" data-termos-url="{{ url_for('main.termo_list') }}">
+        <div class="input-group">
+            <input type="text" id="filtro" name="busca" class="form-control"
+                   placeholder="Buscar termo pelo nome da pessoa..." value="{{ busca }}">
+            <button class="btn btn-primary" type="submit">Buscar</button>
+        </div>
+    </form>
 
-    <table class="table table-bordered table-striped shadow-sm">
-        <thead class="table-dark">
-            <tr>
-                <th>Nome da Pessoa</th>
-                <th>Tipo</th>
-                <th>Data Início</th>
-                <th>Data Fim</th>
-                <th>Doc Termo</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for termo in termos %}
-            <tr>
-                <td>{{ termo.pessoa.nome }}</td>
-                <td>{{ termo.tipo }}</td>
-                <td>{{ termo.data_inicio.strftime('%d/%m/%Y') }}</td>
-                <td>{{ termo.data_fim.strftime('%d/%m/%Y') if termo.data_fim else '-' }}</td>
-                <td>
-                    {% if termo.arquivo %}
-                    <a href="{{ url_for('main.termo_download', id=termo.id) }}" class="btn btn-sm btn-dark" title="Download">
-                        <i class="bi bi-download"></i>
-                        <span class="visually-hidden">Download</span>
-                    </a>
+    <!-- Contêiner para resultados dinâmicos -->
+    <div id="resultados-container">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Nome da Pessoa</th>
+                        <th scope="col">Tipo</th>
+                        <th scope="col">Data Início</th>
+                        <th scope="col">Data Fim</th>
+                        <th scope="col">Doc Termo</th>
+                        <th scope="col" class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for termo in termos %}
+                    <tr>
+                        <td>{{ termo.pessoa.nome }}</td>
+                        <td>{{ termo.tipo }}</td>
+                        <td>{{ termo.data_inicio.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ termo.data_fim.strftime('%d/%m/%Y') if termo.data_fim else '-' }}</td>
+                        <td>
+                            {% if termo.arquivo %}
+                            <a href="{{ url_for('main.termo_download', id=termo.id) }}" class="btn btn-sm btn-dark" title="Download">
+                                <i class="bi bi-download"></i>
+                                <span class="visually-hidden">Download</span>
+                            </a>
+                            {% else %}
+                            <span class="text-muted">Sem arquivo</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ url_for('main.termo_edit', id=termo.id) }}" class="btn btn-outline-primary btn-sm" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                                <span class="visually-hidden">Editar</span>
+                            </a>
+                            <a href="{{ url_for('main.termo_delete', id=termo.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir este termo?');">
+                                <i class="bi bi-trash"></i>
+                                <span class="visually-hidden">Excluir</span>
+                            </a>
+                        </td>
+                    </tr>
                     {% else %}
-                    <span class="text-muted">Sem arquivo</span>
-                    {% endif %}
-                </td>
-                <td>
-                    <a href="{{ url_for('main.termo_edit', id=termo.id) }}" class="btn btn-outline-primary btn-sm me-2" title="Editar">
-                        <i class="bi bi-pencil"></i>
-                        <span class="visually-hidden">Editar</span>
-                    </a>
-                    <a href="{{ url_for('main.termo_delete', id=termo.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir este termo?')">
-                        <i class="bi bi-trash"></i>
-                        <span class="visually-hidden">Excluir</span>
-                    </a>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="6" class="text-center">Nenhum termo registrado.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                Nenhum termo registrado.
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-<!-- Modal de Confirmação de Exclusão -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Confirmar Exclusão</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                Tem certeza que deseja excluir este termo?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <a href="#" id="confirmDeleteBtn" class="btn btn-danger">Excluir</a>
+    <!-- Paginação Bootstrap -->
+    <nav aria-label="Navegação de páginas" class="mt-4 d-flex justify-content-center">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.termo_list', page=pagination.prev_num, busca=busca) }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="bi bi-chevron-left"></i>
+                    </span>
+                </li>
+            {% endif %}
+
+            {% for p in range(1, pagination.pages + 1) %}
+                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('main.termo_list', page=p, busca=busca) }}">{{ p }}</a>
+                </li>
+            {% endfor %}
+
+            {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.termo_list', page=pagination.next_num, busca=busca) }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="bi bi-chevron-right"></i>
+                    </span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <!-- Modal de Confirmação de Exclusão -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirmar Exclusão</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Tem certeza que deseja excluir este termo?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <a href="#" id="confirmDeleteBtn" class="btn btn-danger">Excluir</a>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script>
-function confirmDelete(url) {
-    document.getElementById('confirmDeleteBtn').href = url;
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
-}
-</script>
-{% endblock %} 
+    <script>
+        function confirmDelete(url) {
+            document.getElementById('confirmDeleteBtn').href = url;
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+    </script>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='scripts/termo/termo_list.js') }}"></script>
+{% endblock %}
