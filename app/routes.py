@@ -2048,7 +2048,7 @@ def vacina_relatorio():
 
 @bp.route('/keep-session-alive', methods=['GET'])
 @login_required
-def keep_session_alive():
+def keep_session_alive(): # Manter sessao ativa.
     session['last_activity'] = datetime.utcnow().isoformat()
     return {'status': 'success'}, 200
 
