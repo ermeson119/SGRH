@@ -16,8 +16,6 @@
 
     <!-- CSS -->
     <link rel="stylesheet" type="text/css" href="../static/css/base/base.css" media="screen" /> 
-    
-
 </head>
 <body>
     <!-- Navbar -->
@@ -30,6 +28,83 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if current_user.is_authenticated %}
+                    <!-- Sidebar items integrated into navbar for mobile -->
+                    <li class="nav-item d-block d-md-none">
+                        <a class="nav-link {% if request.endpoint == 'main.pessoa_list' %}active{% endif %}" 
+                           href="{{ url_for('main.pessoa_list') }}">
+                            <i class="fas fa-users"></i> Pessoas
+                        </a>
+                    </li>
+                    <li class="nav-item d-block d-md-none">
+                        <a class="nav-link {% if request.endpoint == 'main.profissao_list' %}active{% endif %}" 
+                           href="{{ url_for('main.profissao_list') }}">
+                            <i class="fas fa-briefcase"></i> Profissões
+                        </a>
+                    </li>
+                    <li class="nav-item d-block d-md-none">
+                        <a class="nav-link {% if request.endpoint == 'main.setor_list' %}active{% endif %}" 
+                           href="{{ url_for('main.setor_list') }}">
+                            <i class="fas fa-building"></i> Setores
+                        </a>
+                    </li>
+                    <li class="nav-item d-block d-md-none">
+                        <a class="nav-link {% if request.endpoint == 'main.lotacao_list' %}active{% endif %}" 
+                           href="{{ url_for('main.lotacao_list') }}">
+                            <i class="fas fa-map-marker-alt"></i> Lotações
+                        </a>
+                    </li>
+                    <li class="nav-item d-block d-md-none">
+                        <a class="nav-link {% if request.endpoint == 'main.folha_list' %}active{% endif %}" 
+                           href="{{ url_for('main.folha_list') }}">
+                            <i class="fas fa-file-invoice-dollar"></i> Folhas
+                        </a>
+                    </li>
+                    <li class="nav-item d-block d-md-none">
+                        <a class="nav-link {% if request.endpoint == 'main.curso_list' %}active{% endif %}" 
+                           href="{{ url_for('main.curso_list') }}">
+                            <i class="fas fa-graduation-cap"></i> Cursos
+                        </a>
+                    </li>
+                    <li class="nav-item d-block d-md-none">
+                        <a class="nav-link {% if request.endpoint == 'main.capacitacao_list' %}active{% endif %}" 
+                           href="{{ url_for('main.capacitacao_list') }}">
+                            <i class="fas fa-certificate"></i> Capacitações
+                        </a>
+                    </li>
+                    <li class="nav-item d-block d-md-none">
+                        <a class="nav-link {% if request.endpoint == 'main.termo_list' %}active{% endif %}" 
+                           href="{{ url_for('main.termo_list') }}">
+                            <i class="fas fa-file-contract"></i> Termos
+                        </a>
+                    </li>
+                    <li class="nav-item d-block d-md-none">
+                        <a class="nav-link {% if request.endpoint == 'main.vacina_list' %}active{% endif %}" 
+                           href="{{ url_for('main.vacina_list') }}">
+                            <i class="fas fa-syringe"></i> Vacinas
+                        </a>
+                    </li>
+                    <li class="nav-item d-block d-md-none">
+                        <a class="nav-link {% if request.endpoint == 'main.exame_list' %}active{% endif %}" 
+                           href="{{ url_for('main.exame_list') }}">
+                            <i class="fas fa-notes-medical"></i> Exames
+                        </a>
+                    </li>
+                    <li class="nav-item d-block d-md-none">
+                        <a class="nav-link {% if request.endpoint == 'main.atestado_list' %}active{% endif %}" 
+                           href="{{ url_for('main.atestado_list') }}">
+                            <i class="fas fa-file-medical"></i> Atestados
+                        </a>
+                    </li>
+                    <li class="nav-item d-block d-md-none">
+                        <a class="nav-link {% if request.endpoint == 'main.relatorio_completo' %}active{% endif %}" 
+                           href="{{ url_for('main.relatorio_completo') }}">
+                            <i class="fas fa-chart-bar"></i> Relatórios
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
                 <ul class="navbar-nav ms-auto">
                     {% if current_user.is_authenticated %}
                         {% if current_user.is_admin %}
@@ -51,10 +126,10 @@
     </nav>
 
     <div class="container-fluid">
-        <div class="row">
+        <div class="row flex-grow-1">
             {% if current_user.is_authenticated %}
-            <!-- Sidebar -->
-            <div class="col-md-2 sidebar">
+            <!-- Sidebar (visible on desktop, hidden on mobile) -->
+            <div class="col-md-2 sidebar d-none d-md-block">
                 <ul class="nav flex-column">
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'main.pessoa_list' %}active{% endif %}" 
@@ -133,7 +208,7 @@
             {% endif %}
 
             <!-- Main Content -->
-            <div class="col-md-{% if current_user.is_authenticated %}10{% else %}12{% endif %} content">
+            <div class="col-md-{% if current_user.is_authenticated %}10{% else %}12{% endif %} content flex-grow-1">
                 <!-- Flash Messages -->
                 <div class="flash-messages">
                     {% with messages = get_flashed_messages(with_categories=true) %}
