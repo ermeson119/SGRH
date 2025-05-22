@@ -3,50 +3,117 @@
 <div class="container mt-2">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Vacinas</h2>
-        <div>
-            <a href="{{ url_for('main.vacina_relatorio') }}"  class="btn btn-outline-success ms-2">
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('main.vacina_relatorio') }}" class="btn btn-outline-success">
                 <i class="bi bi-graph-up"></i> Relatório
             </a>
             <a href="{{ url_for('main.vacina_create') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Nova Vacina
+                <i class="bi bi-plus-lg"></i> Nova Vacina
             </a>
         </div>
     </div>
 
-    <table class="table table-bordered table-striped shadow-sm">
-        <thead class="table-dark">
-            <tr>
-                <th>Nome da Pessoa</th>
-                <th>Nome da Vacina</th>
-                <th>Dose</th>
-                <th>Data</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for vacina in vacinas %}
-            <tr>
-                <td>{{ vacina.pessoa.nome }}</td>
-                <td>{{ vacina.nome }}</td>
-                <td>{{ vacina.dose if vacina.dose else 'N/A' }}</td>
-                <td>{{ vacina.data.strftime('%d/%m/%Y') }}</td>
-                <td>
-                    <a href="{{ url_for('main.vacina_edit', id=vacina.id) }}" class="btn btn-outline-primary btn-sm me-2" title="Editar">
-                        <i class="bi bi-pencil"></i>
-                        <span class="visually-hidden">Editar</span>
+    <!-- Formulário de Busca -->
+    <form method="get" class="mb-4" id="busca-form" data-vacinas-url="{{ url_for('main.vacina_list') }}">
+        <div class="input-group">
+            <input type="text" id="filtro" name="busca" class="form-control"
+                   placeholder="Buscar vacina pelo nome da pessoa..." value="{{ busca }}">
+            <button class="btn btn-primary" type="submit">Buscar</button>
+        </div>
+    </form>
+
+    <!-- Contêiner para resultados dinâmicos -->
+    <div id="resultados-container">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Nome da Pessoa</th>
+                        <th scope="col">Nome da Vacina</th>
+                        <th scope="col">Dose</th>
+                        <th scope="col">Data</th>
+                        <th scope="col" class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vacina in vacinas %}
+                    <tr>
+                        <td>{{ vacina.pessoa.nome }}</td>
+                        <td>{{ vacina.nome }}</td>
+                        <td>{{ vacina.dose if vacina.dose else 'N/A' }}</td>
+                        <td>{{ vacina.data.strftime('%d/%m/%Y') }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('main.vacina_edit', id=vacina.id) }}" class="btn btn-outline-primary btn-sm" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                                <span class="visually-hidden">Editar</span>
+                            </a>
+                            <a href="{{ url_for('main.vacina_delete', id=vacina.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir esta vacina?')">
+                                <i class="bi bi-trash"></i>
+                                <span class="visually-hidden">Excluir</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                Nenhuma vacina cadastrada.
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Paginação Bootstrap -->
+    <nav aria-label="Navegação de páginas" class="mt-4 d-flex justify-content-center">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.vacina_list', page=pagination.prev_num, busca=busca) }}">
+                        <i class="bi bi-chevron-left"></i>
                     </a>
-                    <a href="{{ url_for('main.vacina_delete', id=vacina.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir esta vacina?')">
-                        <i class="bi bi-trash"></i>
-                        <span class="visually-hidden">Excluir</span>
-                    </a>
-                </td>
-            </tr>
+                </li>
             {% else %}
-                <tr>
-                    <td colspan="5">Nenhuma vacina cadastrada.</td>
-                </tr>
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="bi bi-chevron-left"></i>
+                    </span>
+                </li>
+            {% endif %}
+
+            {% for p in pagination.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                {% if p %}
+                    <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('main.vacina_list', page=p, busca=busca) }}">{{ p }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
             {% endfor %}
-        </tbody>
-    </table>
+
+            {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.vacina_list', page=pagination.next_num, busca=busca) }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="bi bi-chevron-right"></i>
+                    </span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='scripts/vacina/vacina_list.js') }}"></script>
 {% endblock %}

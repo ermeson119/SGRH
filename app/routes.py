@@ -978,7 +978,7 @@ def curso_delete(id):
 def capacitacao_list():
     page = request.args.get('page', 1, type=int)
     busca = request.args.get('busca', '', type=str)
-    per_page = 6  # 6 capacitações por página (2 linhas de 3 colunas)
+    per_page = 11 
 
     query = Capacitacao.query.options(
         joinedload(Capacitacao.pessoa),
@@ -1266,8 +1266,29 @@ def termo_recusa_form():
 @bp.route('/vacinas', methods=['GET'])
 @login_required
 def vacina_list():
-    vacinas = Vacina.query.all()
-    return render_template('saude/vacina_list.html', vacinas=vacinas)
+    page = request.args.get('page', 1, type=int)
+    busca = request.args.get('busca', '', type=str)
+    per_page = 11  
+
+    query = Vacina.query.options(
+        joinedload(Vacina.pessoa)
+    )
+
+    if busca:
+        query = query.join(Pessoa).filter(Pessoa.nome.ilike(f'%{busca}%'))
+
+    pagination = query.order_by(Vacina.data.desc()).paginate(page=page, per_page=per_page, error_out=False)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template('saude/vacina_list.html', 
+                             vacinas=pagination.items, 
+                             pagination=pagination, 
+                             busca=busca)
+
+    return render_template('saude/vacina_list.html',
+                         vacinas=pagination.items,
+                         pagination=pagination,
+                         busca=busca)
 
 @bp.route('/vacina/create', methods=['GET', 'POST'])
 @login_required
@@ -1324,8 +1345,29 @@ def vacina_delete(id):
 @bp.route('/exames', methods=['GET'])
 @login_required
 def exame_list():
-    exames = Exame.query.all()
-    return render_template('saude/exame_list.html', exames=exames)
+    page = request.args.get('page', 1, type=int)
+    busca = request.args.get('busca', '', type=str)
+    per_page = 11 
+
+    query = Exame.query.options(
+        joinedload(Exame.pessoa)
+    )
+
+    if busca:
+        query = query.join(Pessoa).filter(Pessoa.nome.ilike(f'%{busca}%'))
+
+    pagination = query.order_by(Exame.data.desc()).paginate(page=page, per_page=per_page, error_out=False)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template('saude/exame_list.html', 
+                             exames=pagination.items, 
+                             pagination=pagination, 
+                             busca=busca)
+
+    return render_template('saude/exame_list.html',
+                         exames=pagination.items,
+                         pagination=pagination,
+                         busca=busca)
 
 @bp.route('/exames/create', methods=['GET', 'POST'])
 @login_required
@@ -1440,8 +1482,29 @@ def download_exame(exame_id):
 @bp.route('/atestados', methods=['GET'])
 @login_required
 def atestado_list():
-    atestados = Atestado.query.all()
-    return render_template('saude/atestado_list.html', atestados=atestados)
+    page = request.args.get('page', 1, type=int)
+    busca = request.args.get('busca', '', type=str)
+    per_page = 11  # 11 atestados por página
+
+    query = Atestado.query.options(
+        joinedload(Atestado.pessoa)
+    )
+
+    if busca:
+        query = query.join(Pessoa).filter(Pessoa.nome.ilike(f'%{busca}%'))
+
+    pagination = query.order_by(Atestado.data_inicio.desc()).paginate(page=page, per_page=per_page, error_out=False)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template('saude/atestado_list.html', 
+                             atestados=pagination.items, 
+                             pagination=pagination, 
+                             busca=busca)
+
+    return render_template('saude/atestado_list.html',
+                         atestados=pagination.items,
+                         pagination=pagination,
+                         busca=busca)
 
 @bp.route('/atestados/create', methods=['GET', 'POST'])
 @login_required

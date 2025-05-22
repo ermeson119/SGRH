@@ -5,13 +5,11 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Capacitações</h2>
         <div class="d-flex gap-2">
-            <a href="{{ url_for('main.capacitacao_relatorio') }}"  class="btn btn-outline-success">
-                <i class="bi bi-graph-up"></i>
-                Relatório
+            <a href="{{ url_for('main.capacitacao_relatorio') }}" class="btn btn-outline-success">
+                <i class="bi bi-graph-up"></i> Relatório
             </a>
             <a href="{{ url_for('main.capacitacao_create') }}" class="btn btn-primary">
-                <i class="bi bi-plus-lg"></i>
-                Nova Capacitação
+                <i class="bi bi-plus-lg"></i> Nova Capacitação
             </a>
         </div>
     </div>
@@ -25,54 +23,70 @@
         </div>
     </form>
 
-    <table class="table table-bordered table-striped shadow-sm">
-        <thead class="table-dark">
-            <tr>
-                <th>Nome da Pessoa</th>
-                <th>Curso</th>
-                <th>Descrição</th>
-                <th>Data Início</th>
-                <th>Data Fim</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for capacitacao in capacitacoes %}
-            <tr>
-                <td>{{ capacitacao.pessoa.nome }}</td>
-                <td>{{ capacitacao.curso.nome if capacitacao.curso else 'N/A' }}</td>
-                <td>{{ capacitacao.descricao }}</td>
-                <td>{{ capacitacao.data.strftime('%d/%m/%Y') }}</td>
-                <td>{{ capacitacao.data_fim.strftime('%d/%m/%Y') if capacitacao.data_fim else 'Em andamento' }}</td>
-                <td>
-                    <a href="{{ url_for('main.capacitacao_edit', id=capacitacao.id) }}" class="btn btn-outline-primary btn-sm me-2" title="Editar">
-                        <i class="bi bi-pencil"></i>
-                        <span class="visually-hidden">Editar</span>
-                    </a>
-                    <a href="{{ url_for('main.capacitacao_delete', id=capacitacao.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir esta capacitação?')">
-                        <i class="bi bi-trash"></i>
-                        <span class="visually-hidden">Excluir</span>
-                    </a>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="6" class="text-center">Nenhuma capacitação registrada.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Contêiner para resultados dinâmicos -->
+    <div id="resultados-container">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Nome da Pessoa</th>
+                        <th scope="col">Curso</th>
+                        <th scope="col">Descrição</th>
+                        <th scope="col">Data Início</th>
+                        <th scope="col">Data Fim</th>
+                        <th scope="col" class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for capacitacao in capacitacoes %}
+                    <tr>
+                        <td>{{ capacitacao.pessoa.nome }}</td>
+                        <td>{{ capacitacao.curso.nome if capacitacao.curso else 'N/A' }}</td>
+                        <td>{{ capacitacao.descricao }}</td>
+                        <td>{{ capacitacao.data.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ capacitacao.data_fim.strftime('%d/%m/%Y') if capacitacao.data_fim else 'Em andamento' }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('main.capacitacao_edit', id=capacitacao.id) }}" class="btn btn-outline-primary btn-sm" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                                <span class="visually-hidden">Editar</span>
+                            </a>
+                            <a href="{{ url_for('main.capacitacao_delete', id=capacitacao.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir esta capacitação?')">
+                                <i class="bi bi-trash"></i>
+                                <span class="visually-hidden">Excluir</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                Nenhuma capacitação registrada.
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
     <!-- Paginação Bootstrap -->
     {% if pagination.pages > 1 %}
-    <nav aria-label="Navegação de páginas" class="mt-4">
+    <nav aria-label="Navegação de páginas" class="mt-4 d-flex justify-content-center">
         <ul class="pagination justify-content-center">
             {% if pagination.has_prev %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('main.capacitacao_list', page=pagination.prev_num, busca=busca) }}">Anterior</a>
+                    <a class="page-link" href="{{ url_for('main.capacitacao_list', page=pagination.prev_num, busca=busca) }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
                 </li>
             {% else %}
-                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="bi bi-chevron-left"></i>
+                    </span>
+                </li>
             {% endif %}
 
             {% for p in pagination.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
@@ -87,10 +101,16 @@
 
             {% if pagination.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('main.capacitacao_list', page=pagination.next_num, busca=busca) }}">Próximo</a>
+                    <a class="page-link" href="{{ url_for('main.capacitacao_list', page=pagination.next_num, busca=busca) }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
                 </li>
             {% else %}
-                <li class="page-item disabled"><span class="page-link">Próximo</span></li>
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="bi bi-chevron-right"></i>
+                    </span>
+                </li>
             {% endif %}
         </ul>
     </nav>
