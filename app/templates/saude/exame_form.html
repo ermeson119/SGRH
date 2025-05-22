@@ -44,9 +44,9 @@
                         <div class="form-text">Formatos permitidos para adicionar o exame: jpg, jpeg, png, gif, pdf, doc, docx, xls, xlsx, ppt, pptx</div>
                     </div>
                     <div class="mb-3">
-                        {{ form.resultado.label(class="form-label") }}
-                        {{ form.resultado(class="form-control" + (" is-invalid" if form.resultado.errors else "")) }}
-                        {% for error in form.resultado.errors %}
+                        {{ form.observacao.label(class="form-label") }}
+                        {{ form.observacao(class="form-control" + (" is-invalid" if form.observacao.errors else "")) }}
+                        {% for error in form.observacao.errors %}
                         <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
                     </div>

@@ -1,13 +1,14 @@
 from flask import Flask, session, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user, logout_user
-from flask_migrate import Migrate, upgrade
+from flask_migrate import Migrate
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import os
 from authlib.integrations.flask_client import OAuth
 from flask_cors import CORS
 from flask_session import Session
+from flask_wtf.csrf import CSRFProtect
 import redis
 
 # Carrega variáveis de ambiente do .env
@@ -18,6 +19,7 @@ db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
 oauth = OAuth()
+csrf = CSRFProtect()  # Instância criada globalmente, mas inicializada dentro de create_app
 
 # Importação global das models (obrigatório para funcionar com Flask-Migrate)
 from app.models import User, Pessoa, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Curso, RegistrationRequest
@@ -27,8 +29,8 @@ def create_app(test_config=None):
     
     # Configurações padrão
     app.config.from_mapping(
-        SECRET_KEY='dev',
-        SQLALCHEMY_DATABASE_URI='postgresql://admin:1234@db:5432/sgrh',
+        SECRET_KEY=os.getenv('SECRET_KEY', 'dev'),  # Obtém da variável de ambiente ou usa 'dev' como fallback
+        SQLALCHEMY_DATABASE_URI=os.getenv('DATABASE_URL', 'postgresql://admin:1234@db:5432/sgrh'),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         UPLOAD_FOLDER=os.path.join(app.instance_path, 'Uploads'),
         PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
@@ -61,7 +63,8 @@ def create_app(test_config=None):
         app.config['SESSION_REDIS'].ping()
     except redis.ConnectionError as e:
         app.logger.error(f"Erro ao conectar ao Redis: {str(e)}")
-        raise Exception("Não foi possível conectar ao Redis. Verifique se o serviço está rodando.")
+        # Fallback para sessão baseada em filesystem se Redis falhar
+        app.config['SESSION_TYPE'] = 'filesystem'
 
     app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_CLIENT_ID')
     app.config['GOOGLE_CLIENT_SECRET'] = os.getenv('GOOGLE_CLIENT_SECRET')
@@ -73,8 +76,9 @@ def create_app(test_config=None):
     login_manager.login_view = 'main.login'
     login_manager.login_message = 'Por favor, faça login para acessar esta página.'
     login_manager.login_message_category = 'info'
+    csrf.init_app(app)  # Inicializa o CSRFProtect aqui
     Session(app)
-    CORS(app, resources={r"/*": {"origins": "http://localhost:8000"}})
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)  # Ajustado para ser mais flexível
 
     oauth.init_app(app)
     oauth.register(
@@ -131,13 +135,5 @@ def create_app(test_config=None):
     def inject_now():
         return {'now': datetime.utcnow()}
 
-    # Aplica as migrações
-    with app.app_context():
-        try:
-            upgrade()  # Executa as migrações (equivalente a 'flask db upgrade')
-            print("Migrações aplicadas com sucesso!")
-        except Exception as e:
-            print(f"Erro ao aplicar migrações: {str(e)}")
-            raise
 
     return app

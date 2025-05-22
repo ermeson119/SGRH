@@ -3,51 +3,49 @@
 <div class="container mt-4">
     <h2>Termo de Recusa de Vacinação</h2>
     <form method="post" id="form-termo">
+        {{ form.hidden_tag() }} <!-- Inclui o token CSRF automaticamente -->
+        
         <div class="mb-3">
-            <label for="nome" class="form-label">Nome</label>
-            <select name="pessoa_id" id="nome" class="form-select" required>
-                <option value="">Selecione</option>
-                {% for pessoa in pessoas %}
-                <option value="{{ pessoa.id }}"
-                    data-nome="{{ pessoa.nome }}"
-                    data-matricula="{{ pessoa.matricula }}"
-                    data-lotacao="{{ pessoa.lotacoes[0].setor.nome if pessoa.lotacoes else '' }}"
-                    data-funcao="{{ pessoa.profissao.nome if pessoa.profissao else '' }}"
-                    data-cpf="{{ pessoa.cpf }}">
-                    {{ pessoa.nome }}
-                </option>
-                {% endfor %}
-            </select>
+            {{ form.pessoa_id.label(class="form-label") }}
+            {{ form.pessoa_id(class="form-select" + (" is-invalid" if form.pessoa_id.errors else ""), **{"data-nome": pessoa.nome, "data-matricula": pessoa.matricula, "data-lotacao": pessoa.lotacoes[0].setor.nome if pessoa.lotacoes else '', "data-funcao": pessoa.profissao.nome if pessoa.profissao else '', "data-cpf": pessoa.cpf} if pessoa else {}) }}
+            {% for error in form.pessoa_id.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
         </div>
+        
         <div class="mb-3">
-            <label for="instituicao" class="form-label">Instituição/Órgão Responsável</label>
-            <input type="text" name="instituicao" id="instituicao" class="form-control" placeholder="Digite a instituição" required>
+            {{ form.secretaria.label(class="form-label") }}
+            {{ form.secretaria(class="form-select" + (" is-invalid" if form.secretaria.errors else "")) }}
+            {% for error in form.secretaria.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
         </div>
+        
         <div class="mb-3">
-            <label for="cidade" class="form-label">Cidade</label>
-            <input type="text" name="cidade" id="cidade" class="form-control" placeholder="Digite a cidade" required>
+            {{ form.cidade.label(class="form-label") }}
+            {{ form.cidade(class="form-select" + (" is-invalid" if form.cidade.errors else "")) }}
+            {% for error in form.cidade.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
         </div>
+        
         <div class="mb-3">
-            <label for="vacina" class="form-label">Vacina</label>
-            <select name="vacina" id="vacina" class="form-select" required>
-                <option value="">Selecione</option>
-                <option value="COVID-19">COVID-19</option>
-                <option value="Influenza (Gripe)">Influenza (Gripe)</option>
-                <option value="Hepatite B">Hepatite B</option>
-                <option value="Tétano">Tétano</option>
-                <option value="Febre Amarela">Febre Amarela</option>
-                <option value="Tríplice Viral (Sarampo, Caxumba e Rubéola)">Tríplice Viral (Sarampo, Caxumba e Rubéola)</option>
-                <option value="Pneumocócica">Pneumocócica</option>
-                <option value="Meningocócica">Meningocócica</option>
-                <option value="HPV">HPV</option>
-                <option value="Outra">Outra</option>
-            </select>
+            {{ form.vacina.label(class="form-label") }}
+            {{ form.vacina(class="form-select" + (" is-invalid" if form.vacina.errors else "")) }}
+            {% for error in form.vacina.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
         </div>
+        
         <div class="mb-3">
-            <label for="data" class="form-label">Data</label>
-            <input type="date" name="data" id="data" class="form-control" required>
+            {{ form.data.label(class="form-label") }}
+            {{ form.data(class="form-control" + (" is-invalid" if form.data.errors else "")) }}
+            {% for error in form.data.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
         </div>
-        <button type="submit" class="btn btn-danger">Gerar PDF</button>
+        
+        {{ form.submit(class="btn btn-danger") }}
     </form>
 </div>
 {% endblock %}
@@ -56,12 +54,10 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(function() {
-    $('#nome').on('change', function() {
+    $('#pessoa_id').on('change', function() {
         var selected = $(this).find('option:selected');
-        $('#matricula').val(selected.data('matricula') || '');
-        $('#lotacao').val(selected.data('lotacao') || '');
-        $('#funcao').val(selected.data('funcao') || '');
-        $('#cpf').val(selected.data('cpf') || '');
+        // Aqui você pode adicionar lógica se precisar exibir dados em outros campos (se existirem)
+        console.log('Pessoa selecionada:', selected.data('nome'));
     });
 });
 </script>

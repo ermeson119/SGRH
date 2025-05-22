@@ -4,7 +4,7 @@ from app import db, oauth
 from app.models import User, Pessoa,Lotacao, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Curso, RegistrationRequest, PessoaFolha
 from app.forms import (
     LoginForm, RegisterForm, PessoaForm, LotacaoForm, ProfissaoForm, SetorForm, FolhaForm,
-    CapacitacaoForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, CursoForm, ApproveRequestForm, PessoaFolhaForm
+    CapacitacaoForm,TermoRecusaForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, CursoForm, ApproveRequestForm, PessoaFolhaForm
 )
 from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -1207,19 +1207,29 @@ def termo_download(id):
 @bp.route('/termos/recusa', methods=['GET', 'POST'])
 @login_required
 def termo_recusa_form():
+    form = TermoRecusaForm()
+    today = datetime.now().strftime('%Y-%m-%d')
+    form.data.default = datetime.now()  # Definir data padrão
     pessoas = Pessoa.query.order_by(Pessoa.nome).all()
-    if request.method == 'POST':
-        pessoa_id = request.form['pessoa_id']
-        pessoa = Pessoa.query.get(pessoa_id)
-        nome = pessoa.nome if pessoa else ''
-        matricula = pessoa.matricula if pessoa else ''
+    form.pessoa_id.choices = [(p.id, p.nome) for p in pessoas]
+
+    if form.validate_on_submit():
+        pessoa = Pessoa.query.get(form.pessoa_id.data)
+        if not pessoa:
+            return "Erro: Pessoa não encontrada.", 404
+
+        nome = pessoa.nome
+        matricula = pessoa.matricula or ''
         lotacao = pessoa.lotacoes[0].setor.nome if pessoa.lotacoes else ''
         funcao = pessoa.profissao.nome if pessoa.profissao else ''
-        cpf = pessoa.cpf if pessoa else ''
-        instituicao = request.form['instituicao']  
-        cidade = request.form['cidade']
-        vacina = request.form['vacina']
-        data = request.form['data']
+        cpf = pessoa.cpf or ''
+
+        secretaria = form.secretaria.data
+        cidade = form.cidade.data
+        vacina = form.vacina.data
+        data = form.data.data.strftime('%Y-%m-%d')
+        data_obj = datetime.strptime(data, "%Y-%m-%d")
+        data_formatada = data_obj.strftime("%d de %B de %Y")
 
         buffer = BytesIO()
         p = canvas.Canvas(buffer, pagesize=A4)
@@ -1229,7 +1239,7 @@ def termo_recusa_form():
         p.setFont("Helvetica-Bold", 16)
         p.drawCentredString(width/2, height-2*cm, "TERMO DE RECUSA DE VACINAÇÃO")
         p.setFont("Helvetica", 10)
-        p.drawCentredString(width/2, height-3*cm, instituicao)  # Usar o valor do campo instituição
+        p.drawCentredString(width/2, height-3*cm, secretaria)
 
         # Estilo do parágrafo
         style = ParagraphStyle(
@@ -1238,7 +1248,7 @@ def termo_recusa_form():
             fontSize=12,
             leading=16,
             spaceAfter=12,
-            alignment=4,  # Justificado
+            alignment=4,
             leftIndent=0
         )
 
@@ -1247,19 +1257,16 @@ def termo_recusa_form():
         texto = (
             f"Eu, {nome}, matrícula {matricula}, lotado(a) no setor {lotacao}, na função de {funcao}, portador(a) do CPF {cpf}, "
             "declaro, para os devidos fins, que fui devidamente orientado(a) sobre os benefícios, possíveis efeitos colaterais e riscos associados à recusa "
-            f"da vacina contra {vacina}, recomendada em razão das atividades desempenhadas nesta instituicão {instituicao}. "
+            f"da vacina contra {vacina}, recomendada em razão das atividades desempenhadas nesta instituição {secretaria}. "
             "Por decisão própria, opto por não realizar a imunização, assumindo integralmente a responsabilidade por eventuais consequências à minha saúde ocupacional. "
-            f"Isento, portanto, {instituicao} e o órgão de lotação de qualquer responsabilidade decorrente da ausência de imunização."
+            f"Isento, portanto, {secretaria} e o órgão de lotação de qualquer responsabilidade decorrente da ausência de imunização."
         )
 
-        # Renderizar texto como parágrafo justificado
         para = Paragraph(texto, style)
         para.wrapOn(p, width-4*cm, height)
         para.drawOn(p, 2*cm, y - para.height)
 
         # Data
-        data_obj = datetime.strptime(data, "%Y-%m-%d")
-        data_formatada = data_obj.strftime("%d de %B de %Y")  
         p.setFont("Helvetica", 12)
         p.drawString(width-12*cm, y-para.height-2*cm, f"{cidade}, {data_formatada}")
 
@@ -1282,7 +1289,7 @@ def termo_recusa_form():
         buffer.seek(0)
         return send_file(buffer, as_attachment=True, download_name='termo_recusa_vacinacao.pdf', mimetype='application/pdf')
 
-    return render_template('termos/termo_recusa_form.html', pessoas=pessoas)
+    return render_template('termos/termo_recusa_form.html', form=form, today=today)
 
 # --- CRUD Vacina ---
 @bp.route('/vacinas', methods=['GET'])
@@ -1413,7 +1420,7 @@ def exame_create():
         exame = Exame(
             pessoa_id=form.pessoa_id.data,
             tipo=tipo,
-            resultado=form.resultado.data,
+            observacao=form.observacao.data,
             data=form.data.data,
             arquivo=nome_arquivo
         )

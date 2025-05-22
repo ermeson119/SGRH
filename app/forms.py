@@ -5,6 +5,7 @@ from wtforms.validators import DataRequired, Length, NumberRange, Regexp, Valida
 import re
 from app.models import Pessoa, Profissao, Curso
 from datetime import date
+from datetime import datetime
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Length(max=100), Email()])
@@ -127,6 +128,46 @@ class VacinaForm(FlaskForm):
     data = DateField('Data', validators=[DataRequired()], format='%Y-%m-%d')
     submit = SubmitField('Salvar')
 
+class TermoRecusaForm(FlaskForm):
+    pessoa_id = SelectField('Nome', coerce=int, validators=[DataRequired()])
+    secretaria = SelectField('Secretaria', choices=[
+        ('', 'Selecione uma secretaria'),
+        ('Secretaria do Tocantins de Palmas', 'Secretaria do Tocantins de Palmas'),
+        ('Secretaria do Tocantins de Araguaína', 'Secretaria do Tocantins de Araguaína'),
+        ('Secretaria do Tocantins de Gurupi', 'Secretaria do Tocantins de Gurupi'),
+        ('Secretaria do Tocantins de Porto Nacional', 'Secretaria do Tocantins de Porto Nacional'),
+        ('Secretaria do Tocantins de Paraíso do Tocantins', 'Secretaria do Tocantins de Paraíso do Tocantins'),
+        ('Secretaria do Tocantins de Tocantinópolis', 'Secretaria do Tocantins de Tocantinópolis'),
+        ('Secretaria do Tocantins de Alvorada', 'Secretaria do Tocantins de Alvorada'),
+        ('Secretaria do Tocantins de Guaraí', 'Secretaria do Tocantins de Guaraí')
+    ], validators=[DataRequired()])
+    cidade = SelectField('Cidade', choices=[
+        ('', 'Selecione uma cidade'),
+        ('Palmas', 'Palmas'),
+        ('Araguaína', 'Araguaína'),
+        ('Gurupi', 'Gurupi'),
+        ('Porto Nacional', 'Porto Nacional'),
+        ('Paraíso do Tocantins', 'Paraíso do Tocantins'),
+        ('Tocantinópolis', 'Tocantinópolis'),
+        ('Alvorada', 'Alvorada'),
+        ('Guaraí', 'Guaraí')
+    ], validators=[DataRequired()])
+    vacina = SelectField('Vacina', choices=[
+        ('', 'Selecione'),
+        ('COVID-19', 'COVID-19'),
+        ('Influenza (Gripe)', 'Influenza (Gripe)'),
+        ('Hepatite B', 'Hepatite B'),
+        ('Tétano', 'Tétano'),
+        ('Febre Amarela', 'Febre Amarela'),
+        ('Tríplice Viral (Sarampo, Caxumba e Rubéola)', 'Tríplice Viral (Sarampo, Caxumba e Rubéola)'),
+        ('Pneumocócica', 'Pneumocócica'),
+        ('Meningocócica', 'Meningocócica'),
+        ('HPV', 'HPV'),
+        ('Outra', 'Outra')
+    ], validators=[DataRequired()])
+    data = DateField('Data', validators=[DataRequired()], default=datetime.now)
+    submit = SubmitField('Gerar PDF')
+
 class ExameForm(FlaskForm):
     pessoa_id = SelectField('Pessoa', coerce=int, validators=[DataRequired()])
     tipo = SelectField('Tipo de Exame', choices=[
@@ -138,7 +179,7 @@ class ExameForm(FlaskForm):
         ('Exame de Vírus HIV', 'Exame de Vírus HIV'),
         ('Outro', 'Outro')
     ], validators=[DataRequired()])
-    resultado = StringField('Resultado')
+    observacao = TextAreaField('Observação', validators=[Optional()])
     data = DateField('Data', validators=[DataRequired()], format='%Y-%m-%d')
     upload = FileField('Upload', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'], 'Somente imagens e documentos são permitidos.')])
     submit = SubmitField('Salvar')

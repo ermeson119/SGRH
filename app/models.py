@@ -115,7 +115,7 @@ class Exame(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False)
     tipo = db.Column(db.String(100), nullable=False)
-    resultado = db.Column(db.Text)
+    observacao = db.Column(db.Text)
     data = db.Column(db.Date, nullable=False)
     arquivo = db.Column(db.String(255)) 
     pessoa = db.relationship('Pessoa', backref=db.backref('exames', lazy=True))
