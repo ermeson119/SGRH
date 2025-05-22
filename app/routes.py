@@ -681,8 +681,24 @@ def lotacao_delete(id):
 @bp.route('/setores', methods=['GET'])
 @login_required
 def setor_list():
-    setores = Setor.query.all()
-    return render_template('profissional/setor_list.html', setores=setores)
+    page = request.args.get('page', 1, type=int)
+    busca = request.args.get('busca', '', type=str)
+    per_page = 11 
+
+    query = Setor.query
+
+    if busca:
+        query = query.filter(Setor.nome.ilike(f'%{busca}%'))
+
+    pagination = query.order_by(Setor.nome).paginate(page=page, per_page=per_page, error_out=False)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template('profissional/setor_list.html', setores=pagination.items, pagination=pagination, busca=busca)
+
+    return render_template('profissional/setor_list.html',
+                           setores=pagination.items,
+                           pagination=pagination,
+                           busca=busca)
 
 @bp.route('/setores/create', methods=['GET', 'POST'])
 @login_required

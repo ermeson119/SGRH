@@ -4,41 +4,107 @@
 <div class="container mt-2">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Setores</h2>
-        <a href="{{ url_for('main.setor_create') }}" class="btn btn-primary">
-            Novo Setor
-        </a>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('main.setor_create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Novo Setor
+            </a>
+        </div>
     </div>
 
-    <table class="table table-bordered table-striped shadow-sm">
-        <thead class="table-dark">
-            <tr>
-                <th>Nome</th>
-                <th>Descrição</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for setor in setores %}
-            <tr>
-                <td>{{ setor.nome }}</td>
-                <td>{{ setor.descricao if setor.descricao else 'N/A' }}</td>
-                <td>
-                    <a href="{{ url_for('main.setor_edit', id=setor.id) }}" class="btn btn-outline-primary btn-sm me-2" title="Editar">
-                        <i class="bi bi-pencil"></i>
-                        <span class="visually-hidden">Editar</span>
+    <!-- Formulário de Busca -->
+    <form method="get" class="mb-4" id="busca-form" data-setores-url="{{ url_for('main.setor_list') }}">
+        <div class="input-group">
+            <input type="text" id="filtro" name="busca" class="form-control"
+                   placeholder="Buscar setor pelo nome..." value="{{ busca }}">
+            <button class="btn btn-primary" type="submit">Buscar</button>
+        </div>
+    </form>
+
+    <!-- Contêiner para resultados dinâmicos -->
+    <div id="resultados-container">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Nome</th>
+                        <th scope="col">Descrição</th>
+                        <th scope="col" class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for setor in setores %}
+                    <tr>
+                        <td>{{ setor.nome }}</td>
+                        <td>{{ setor.descricao if setor.descricao else 'N/A' }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('main.setor_edit', id=setor.id) }}" class="btn btn-outline-primary btn-sm" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                                <span class="visually-hidden">Editar</span>
+                            </a>
+                            <a href="{{ url_for('main.setor_delete', id=setor.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir"
+                               onclick="return confirm('Tem certeza que deseja excluir este setor?')">
+                                <i class="bi bi-trash"></i>
+                                <span class="visually-hidden">Excluir</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                Nenhum setor registrado.
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Paginação Bootstrap -->
+    <nav aria-label="Navegação de páginas" class="mt-4 d-flex justify-content-center">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.setor_list', page=pagination.prev_num, busca=busca) }}">
+                        <i class="bi bi-chevron-left"></i>
                     </a>
-                    <a href="{{ url_for('main.setor_delete', id=setor.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir este setor?')">
-                        <i class="bi bi-trash"></i>
-                        <span class="visually-hidden">Excluir</span>
-                    </a>
-                </td>
-            </tr>
+                </li>
             {% else %}
-            <tr>
-                <td colspan="3" class="text-center">Nenhum setor registrado.</td>
-            </tr>
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="bi bi-chevron-left"></i>
+                    </span>
+                </li>
+            {% endif %}
+
+            {% for p in range(1, pagination.pages + 1) %}
+                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('main.setor_list', page=p, busca=busca) }}">{{ p }}</a>
+                </li>
             {% endfor %}
-        </tbody>
-    </table>
+
+            {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.setor_list', page=pagination.next_num, busca=busca) }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="bi bi-chevron-right"></i>
+                    </span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='scripts/setor/setor_list.js') }}"></script>
 {% endblock %}
