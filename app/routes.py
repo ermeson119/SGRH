@@ -483,8 +483,24 @@ def pessoa_delete(id):
 @bp.route('/profissoes', methods=['GET'])
 @login_required
 def profissao_list():
-    profissoes = Profissao.query.all()
-    return render_template('profissional/profissao_list.html', profissoes=profissoes)
+    page = request.args.get('page', 1, type=int)
+    busca = request.args.get('busca', '', type=str)
+    per_page = 11  # 11 profissões por página
+
+    query = Profissao.query
+
+    if busca:
+        query = query.filter(Profissao.nome.ilike(f'%{busca}%'))
+
+    pagination = query.order_by(Profissao.nome).paginate(page=page, per_page=per_page, error_out=False)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template('profissional/profissao_list.html', profissoes=pagination.items, pagination=pagination, busca=busca)
+
+    return render_template('profissional/profissao_list.html',
+                           profissoes=pagination.items,
+                           pagination=pagination,
+                           busca=busca)
 
 @bp.route('/profissoes/create', methods=['GET', 'POST'])
 @login_required
