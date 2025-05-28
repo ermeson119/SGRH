@@ -1218,76 +1218,21 @@ def termo_recusa_form():
         if not pessoa:
             return "Erro: Pessoa não encontrada.", 404
 
-        nome = pessoa.nome
-        matricula = pessoa.matricula or ''
-        lotacao = pessoa.lotacoes[0].setor.nome if pessoa.lotacoes else ''
-        funcao = pessoa.profissao.nome if pessoa.profissao else ''
-        cpf = pessoa.cpf or ''
-
-        secretaria = form.secretaria.data
-        cidade = form.cidade.data
-        vacina = form.vacina.data
-        data = form.data.data.strftime('%Y-%m-%d')
-        data_obj = datetime.strptime(data, "%Y-%m-%d")
-        data_formatada = data_obj.strftime("%d de %B de %Y")
-
-        buffer = BytesIO()
-        p = canvas.Canvas(buffer, pagesize=A4)
-        width, height = A4
-
-        # Cabeçalho
-        p.setFont("Helvetica-Bold", 16)
-        p.drawCentredString(width/2, height-2*cm, "TERMO DE RECUSA DE VACINAÇÃO")
-        p.setFont("Helvetica", 10)
-        p.drawCentredString(width/2, height-3*cm, secretaria)
-
-        # Estilo do parágrafo
-        style = ParagraphStyle(
-            name='Normal',
-            fontName='Helvetica',
-            fontSize=12,
-            leading=16,
-            spaceAfter=12,
-            alignment=4,
-            leftIndent=0
-        )
-
-        # Corpo do termo
-        y = height-4.5*cm
-        texto = (
-            f"Eu, {nome}, matrícula {matricula}, lotado(a) no setor {lotacao}, na função de {funcao}, portador(a) do CPF {cpf}, "
-            "declaro, para os devidos fins, que fui devidamente orientado(a) sobre os benefícios, possíveis efeitos colaterais e riscos associados à recusa "
-            f"da vacina contra {vacina}, recomendada em razão das atividades desempenhadas nesta instituição {secretaria}. "
-            "Por decisão própria, opto por não realizar a imunização, assumindo integralmente a responsabilidade por eventuais consequências à minha saúde ocupacional. "
-            f"Isento, portanto, {secretaria} e o órgão de lotação de qualquer responsabilidade decorrente da ausência de imunização."
-        )
-
-        para = Paragraph(texto, style)
-        para.wrapOn(p, width-4*cm, height)
-        para.drawOn(p, 2*cm, y - para.height)
-
-        # Data
-        p.setFont("Helvetica", 12)
-        p.drawString(width-12*cm, y-para.height-2*cm, f"{cidade}, {data_formatada}")
-
-        # Assinaturas
-        y = y - para.height - 4*cm
-        p.setFont("Helvetica", 10)
-        p.line(2*cm, y, width-2*cm, y)
-        p.drawCentredString(width/2, y-0.5*cm, "Assinatura do(a) Servidor(a)")
-
-        y -= 2.5*cm
-        p.line(2*cm, y, width-2*cm, y)
-        p.drawCentredString(width/2, y-0.5*cm, "Assinatura da Chefia Imediata")
-
-        y -= 2.5*cm
-        p.line(2*cm, y, width-2*cm, y)
-        p.drawCentredString(width/2, y-0.5*cm, "Assinatura de Testemunha (em caso de recusa de assinatura)")
-
-        p.showPage()
-        p.save()
-        buffer.seek(0)
-        return send_file(buffer, as_attachment=True, download_name='termo_recusa_vacinacao.pdf', mimetype='application/pdf')
+        try:
+            # Gerar o PDF usando nossa nova função
+            from app.pdf_generator import generate_termo_recusa_pdf
+            pdf_path = generate_termo_recusa_pdf(form, pessoa)
+            
+            # Enviar o arquivo para download
+            return send_file(
+                pdf_path,
+                as_attachment=True,
+                download_name=os.path.basename(pdf_path),
+                mimetype='application/pdf'
+            )
+        except Exception as e:
+            flash(f'Erro ao gerar o PDF: {str(e)}', 'error')
+            return redirect(url_for('main.termo_recusa_form'))
 
     return render_template('termos/termo_recusa_form.html', form=form, today=today)
 
