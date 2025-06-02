@@ -3,7 +3,7 @@
 <div class="container mt-4">
     <h2>Termo de Recusa de Vacinação</h2>
     <form method="post" id="form-termo">
-        {{ form.hidden_tag() }} <!-- Inclui o token CSRF automaticamente -->
+        {{ form.hidden_tag() }}
         
         <div class="mb-3">
             {{ form.pessoa_id.label(class="form-label") }}
@@ -51,14 +51,4 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-$(function() {
-    $('#pessoa_id').on('change', function() {
-        var selected = $(this).find('option:selected');
-        // Aqui você pode adicionar lógica se precisar exibir dados em outros campos (se existirem)
-        console.log('Pessoa selecionada:', selected.data('nome'));
-    });
-});
-</script>
 {% endblock %}
