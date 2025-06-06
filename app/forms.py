@@ -204,7 +204,7 @@ class ExameForm(FlaskForm):
 
 class AtestadoForm(FlaskForm):
     pessoa_id = SelectField('Pessoa', coerce=int, validators=[DataRequired()])
-    motivo = StringField('Motivo', validators=[DataRequired(), Length(max=200)])
+    observacao = StringField('Observação', validators=[DataRequired(), Length(max=200)])
     data_inicio = DateField('Data Início', validators=[DataRequired()], format='%Y-%m-%d')
     data_fim = DateField('Data Fim', validators=[DataRequired()], format='%Y-%m-%d')
     documento = StringField('Documento', validators=[Length(max=200)])

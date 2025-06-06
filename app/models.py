@@ -123,7 +123,7 @@ class Exame(db.Model):
 class Atestado(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     pessoa_id = db.Column(db.Integer, db.ForeignKey('pessoa.id'), nullable=False, index=True)
-    motivo = db.Column(db.String(200), nullable=False)
+    observacao = db.Column(db.String(200), nullable=False)
     data_inicio = db.Column(db.Date, nullable=False)
     data_fim = db.Column(db.Date, nullable=False)
     documento = db.Column(db.String(200))

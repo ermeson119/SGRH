@@ -18,16 +18,6 @@
             </div>
 
             <div class="mb-3">
-                {{ form.motivo.label(class="form-label") }}
-                {{ form.motivo(class="form-control") }}
-                {% if form.motivo.errors %}
-                    {% for error in form.motivo.errors %}
-                        <div class="text-danger">{{ error }}</div>
-                    {% endfor %}
-                {% endif %}
-            </div>
-
-            <div class="mb-3">
                 {{ form.medico.label(class="form-label", text="Profissional que emitiu") }}
                 {{ form.medico(class="form-control") }}
                 {% if form.medico.errors %}
@@ -76,6 +66,16 @@
                     {% endfor %}
                 {% endif %}
                 <div class="form-text">Formatos permitidos para adicionar o atestado: jpg, jpeg, png, gif, pdf, doc, docx, xls, xlsx, ppt, pptx</div>
+            </div>
+
+            <div class="mb-3">
+                {{ form.observacao.label(class="form-label") }}
+                {{ form.observacao(class="form-control") }}
+                {% if form.observacao.errors %}
+                    {% for error in form.observacao.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
             </div>
 
             <button type="submit" class="btn btn-primary">Salvar</button>
