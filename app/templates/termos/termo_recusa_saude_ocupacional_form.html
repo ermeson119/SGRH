@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Termo de Recusa Saúde Ocupacional</h2>
+    <form id="termoRecusaSaudeOcupacionalForm" method="POST" action="{{ url_for('main.termo_recusa_saude_ocupacional_form') }}">
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+            <label for="pessoa_id" class="form-label">Nome:</label>
+            {{ form.pessoa_id(class="form-control", required=True) }}
+            {% if form.pessoa_id.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.pessoa_id.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="mb-3">
+            <label for="secretaria" class="form-label">Secretaria:</label>
+            {{ form.secretaria(class="form-control", required=True) }}
+            {% if form.secretaria.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.secretaria.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="mb-3">
+            <label for="cidade" class="form-label">Cidade:</label>
+            {{ form.cidade(class="form-control", required=True) }}
+            {% if form.cidade.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.cidade.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="mb-3">
+            <label for="data" class="form-label">Data:</label>
+            {{ form.data(class="form-control", value=today, required=True) }}
+            {% if form.data.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.data.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Gerar PDF</button>
+        <a href="{{ url_for('main.termo_list') }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+<script>
+    document.getElementById('termoRecusaSaudeOcupacionalForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+
+        fetch("{{ url_for('main.termo_recusa_saude_ocupacional_form') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errorData => {
+                    throw new Error(errorData.error || 'Erro desconhecido');
+                });
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'termo_recusa_saude_ocupacional.pdf';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            window.location.href = "{{ url_for('main.termo_list') }}";
+        })
+        .catch(error => {
+            console.error('Erro ao gerar o PDF:', error);
+            alert(`Erro ao gerar o PDF: ${error.message}. Verifique os dados e tente novamente.`);
+        });
+    });
+</script>
+{% endblock %}

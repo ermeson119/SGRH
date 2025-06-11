@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Termo de Recusa de Vacinação</h2>
+    <form id="termoRecusaForm" method="POST" action="{{ url_for('main.termo_recusa') }}">
+        <div class="mb-3">
+            <label for="nome" class="form-label">Nome:</label>
+            <input type="text" class="form-control" id="nome" name="nome" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="matricula" class="form-label">Matrícula:</label>
+            <input type="text" class="form-control" id="matricula" name="matricula" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="lotacao" class="form-label">Lotação:</label>
+            <input type="text" class="form-control" id="lotacao" name="lotacao" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="funcao" class="form-label">Função:</label>
+            <input type="text" class="form-control" id="funcao" name="funcao" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="cpf" class="form-label">CPF:</label>
+            <input type="text" class="form-control" id="cpf" name="cpf" required pattern="\d{3}\.\d{3}\.\d{3}-\d{2}" placeholder="000.000.000-00">
+            <div class="form-text">Formato: 000.000.000-00</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="data" class="form-label">Data:</label>
+            <input type="date" class="form-control" id="data" name="data" value="{{ now.strftime('%Y-%m-%d') }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="assinatura_servidor" class="form-label">Assinatura do Servidor:</label>
+            <input type="text" class="form-control" id="assinatura_servidor" name="assinatura_servidor">
+        </div>
+
+        <div class="mb-3">
+            <label for="assinatura_chefia" class="form-label">Assinatura da Chefia Imediata:</label>
+            <input type="text" class="form-control" id="assinatura_chefia" name="assinatura_chefia">
+        </div>
+
+        <div class="mb-3">
+            <label for="testemunha" class="form-label">Testemunha:</label>
+            <input type="text" class="form-control" id="testemunha" name="testemunha">
+        </div>
+
+        <button type="submit" class="btn btn-primary">Gerar PDF</button>
+        <a href="{{ url_for('main.termo_list') }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+<script>
+    // Máscara para CPF
+    document.getElementById('cpf').addEventListener('input', function (e) {
+        let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,3})(\d{0,2})/);
+        e.target.value = !x[2] ? x[1] : x[1] + '.' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '-' + x[4] : '');
+    });
+
+    document.getElementById('termoRecusaForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        // Validação do CPF
+        const cpf = document.getElementById('cpf').value;
+        if (!/^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(cpf)) {
+            alert('Por favor, insira um CPF válido no formato 000.000.000-00');
+            return;
+        }
+
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+
+        fetch("{{ url_for('main.termo_recusa') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errorData => {
+                    throw new Error(errorData.error || 'Erro desconhecido');
+                });
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'termo_recusa_vacinacao.pdf';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            window.location.href = "{{ url_for('main.termo_list') }}";
+        })
+        .catch(error => {
+            console.error('Erro ao gerar o PDF:', error);
+            alert(`Erro ao gerar o PDF: ${error.message}. Verifique os dados e tente novamente.`);
+        });
+    });
+</script>
+{% endblock %}

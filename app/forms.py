@@ -232,3 +232,48 @@ class CursoForm(FlaskForm):
         ('Capacitação', 'Capacitação')
     ], validators=[DataRequired()])
     submit = SubmitField('Salvar')
+
+class TermoRecusaSaudeOcupacionalForm(FlaskForm):
+    pessoa_id = SelectField('Nome', coerce=int, validators=[DataRequired()])
+    secretaria = SelectField('Secretaria', choices=[
+        ('', 'Selecione uma secretaria'),
+        ('Secretaria do Tocantins de Palmas', 'Secretaria do Tocantins de Palmas'),
+        ('Secretaria do Tocantins de Araguaína', 'Secretaria do Tocantins de Araguaína'),
+        ('Secretaria do Tocantins de Gurupi', 'Secretaria do Tocantins de Gurupi'),
+        ('Secretaria do Tocantins de Porto Nacional', 'Secretaria do Tocantins de Porto Nacional'),
+        ('Secretaria do Tocantins de Paraíso do Tocantins', 'Secretaria do Tocantins de Paraíso do Tocantins'),
+        ('Secretaria do Tocantins de Tocantinópolis', 'Secretaria do Tocantins de Tocantinópolis'),
+        ('Secretaria do Tocantins de Alvorada', 'Secretaria do Tocantins de Alvorada'),
+        ('Secretaria do Tocantins de Guaraí', 'Secretaria do Tocantins de Guaraí')
+    ], validators=[DataRequired()])
+    logo_path = StringField('Logo Path')
+    cidade = SelectField('Cidade', choices=[
+        ('', 'Selecione uma cidade'),
+        ('Palmas', 'Palmas'),
+        ('Araguaína', 'Araguaína'),
+        ('Gurupi', 'Gurupi'),
+        ('Porto Nacional', 'Porto Nacional'),
+        ('Paraíso do Tocantins', 'Paraíso do Tocantins'),
+        ('Tocantinópolis', 'Tocantinópolis'),
+        ('Alvorada', 'Alvorada'),
+        ('Guaraí', 'Guaraí')
+    ], validators=[DataRequired()])
+    data = DateField('Data', validators=[DataRequired()], default=datetime.now)
+    submit = SubmitField('Gerar PDF')
+
+    def __init__(self, *args, **kwargs):
+        super(TermoRecusaSaudeOcupacionalForm, self).__init__(*args, **kwargs)
+        self.logo_path.data = 'static/img/logo_padrao.png'
+
+    def validate_secretaria(self, field):
+        logo_mapping = {
+            'Secretaria do Tocantins de Palmas': 'static/img/logo_palmas.png',
+            'Secretaria do Tocantins de Araguaína': 'static/img/logo_araguaina.png',
+            'Secretaria do Tocantins de Gurupi': 'static/img/logo_gurupi.png',
+            'Secretaria do Tocantins de Porto Nacional': 'static/img/logo_porto_nacional.png',
+            'Secretaria do Tocantins de Paraíso do Tocantins': 'static/img/logo_paraiso.png',
+            'Secretaria do Tocantins de Tocantinópolis': 'static/img/logo_tocantinopolis.png',
+            'Secretaria do Tocantins de Alvorada': 'static/img/logo_alvorada.png',
+            'Secretaria do Tocantins de Guaraí': 'static/img/logo_guarai.png'
+        }
+        self.logo_path.data = logo_mapping.get(field.data, 'static/img/logo_padrao.png')

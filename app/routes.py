@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app, send_from_directory, send_file
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app, send_from_directory, send_file, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, oauth
 from app.models import User, Pessoa,Lotacao, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Curso, RegistrationRequest, PessoaFolha
 from app.forms import (
     LoginForm, RegisterForm, PessoaForm, LotacaoForm, ProfissaoForm, SetorForm, FolhaForm,
-    CapacitacaoForm,TermoRecusaForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, CursoForm, ApproveRequestForm, PessoaFolhaForm
+    CapacitacaoForm,TermoRecusaForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, CursoForm, ApproveRequestForm, PessoaFolhaForm,
+    TermoRecusaSaudeOcupacionalForm
 )
 from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -26,6 +27,9 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER
 from reportlab.lib import colors
 import locale
+import json
+from app.pdf_generator import generate_termo_recusa_saude_ocupacional_pdf
+import tempfile
 
 # Cria um Blueprint para as rotas
 bp = Blueprint('main', __name__)
@@ -1235,6 +1239,50 @@ def termo_recusa_form():
             return redirect(url_for('main.termo_recusa_form'))
 
     return render_template('termos/termo_recusa_form.html', form=form, today=today)
+
+
+
+@bp.route('/termos/recusa_saude_ocupacional', methods=['GET', 'POST'])
+@login_required
+def termo_recusa_saude_ocupacional_form():
+    form = TermoRecusaSaudeOcupacionalForm()
+    form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.order_by(Pessoa.nome).all()]
+    
+    if request.method == 'POST':
+        if request.is_json:
+            try:
+                data = request.get_json()
+                form = TermoRecusaSaudeOcupacionalForm(data=data)
+                form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.order_by(Pessoa.nome).all()]
+                
+                if form.validate():
+                    pessoa = Pessoa.query.get(form.pessoa_id.data)
+                    if pessoa:
+                        try:
+                            pdf_path = generate_termo_recusa_saude_ocupacional_pdf(form, pessoa)
+                            if os.path.exists(pdf_path):
+                                return send_file(
+                                    pdf_path,
+                                    as_attachment=True,
+                                    download_name=f'termo_recusa_saude_ocupacional_{pessoa.nome.replace(" ", "_")}.pdf',
+                                    mimetype='application/pdf'
+                                )
+                            else:
+                                return jsonify({'error': 'Arquivo PDF não foi gerado corretamente'}), 500
+                        except Exception as e:
+                            print(f"Erro ao gerar PDF: {str(e)}")
+                            return jsonify({'error': f'Erro ao gerar PDF: {str(e)}'}), 500
+                    else:
+                        return jsonify({'error': 'Pessoa não encontrada'}), 404
+                else:
+                    return jsonify({'error': 'Dados inválidos', 'details': form.errors}), 400
+            except Exception as e:
+                print(f"Erro ao processar requisição: {str(e)}")
+                return jsonify({'error': f'Erro ao processar requisição: {str(e)}'}), 500
+    
+    return render_template('termos/termo_recusa_saude_ocupacional_form.html', 
+                         form=form, 
+                         today=datetime.now().strftime('%Y-%m-%d'))
 
 # --- CRUD Vacina ---
 @bp.route('/vacinas', methods=['GET'])
