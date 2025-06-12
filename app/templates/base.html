@@ -108,10 +108,14 @@
                 <ul class="navbar-nav ms-auto">
                     {% if current_user.is_authenticated %}
                         {% if current_user.is_admin %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('main.request_list') }}">
-                                    <i class="fas fa-user-shield"></i> Admin
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-gear"></i> Administração
                                 </a>
+                                <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                                    <li><a class="dropdown-item" href="{{ url_for('main.request_list') }}">Solicitações de Acesso</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('main.user_permissions') }}">Gerenciar Permissões</a></li>
+                                </ul>
                             </li>
                         {% endif %}
                         <li class="nav-item">

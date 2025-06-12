@@ -4,6 +4,7 @@ from app import create_app, db
 from app.models import User
 from werkzeug.security import generate_password_hash
 from flask_migrate import upgrade
+from datetime import datetime
 
 app = typer.Typer()
 
@@ -44,9 +45,14 @@ def create_admin():
 
             admin = User(
                 email=email,
-                password=generate_password_hash(password),
-                status='approved',
-                is_admin=True
+                password_hash=generate_password_hash(password),
+                is_admin=True,
+                is_active=True,
+                is_approved=True,
+                can_edit=True,
+                can_delete=True,
+                can_create=True,
+                created_at=datetime.utcnow()
             )
             db.session.add(admin)
             db.session.commit()

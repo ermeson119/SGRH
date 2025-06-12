@@ -5,12 +5,18 @@
     <div class="w-100" style="max-width: 400px;">
         <div class="bg-light p-4 rounded shadow border">
             <h2 class="mb-4 text-center">Login</h2>
-            {% if request_status and request_message %}
-                <div class="alert alert-warning">
-                    {{ request_message }}
-                </div>
-            {% endif %}
-            <form method="POST">
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('main.login') }}">
                 {{ form.hidden_tag() }}
                 <div class="mb-3">
                     {{ form.email.label(class="form-label") }}
@@ -32,10 +38,12 @@
                 </div>
                 <button type="submit" class="btn btn-primary w-100 mb-3">Entrar</button>
             </form>
+            
             <a href="{{ url_for('main.google_login') }}" class="btn btn-outline-secondary w-100 mb-3 d-flex align-items-center justify-content-center">
                 <img src="https://img.icons8.com/color/16/000000/google-logo.png" alt="Google Logo" class="me-2">
                 Entrar com Google
             </a>
+            
             <p class="text-center">
                 Não tem uma conta? <a href="{{ url_for('main.register') }}">Cadastre-se aqui</a>
             </p>

@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, SelectField, SubmitField, DateField, FloatField, SelectMultipleField, TextAreaField
+from wtforms import StringField, SelectField, SubmitField, DateField, FloatField, SelectMultipleField, TextAreaField, BooleanField
 from wtforms.validators import DataRequired, Length, NumberRange, Regexp, ValidationError, Email, EqualTo, Optional
 import re
 from app.models import Pessoa, Profissao, Curso
@@ -322,3 +322,10 @@ class TermoASOForm(FlaskForm):
             'Secretaria do Tocantins de Guaraí': 'static/img/logo_guarai.png'
         }
         self.logo_path.data = logo_mapping.get(field.data, 'static/img/logo_padrao.png')
+
+class UserPermissionsForm(FlaskForm):
+    can_edit = BooleanField('Pode Editar')
+    can_delete = BooleanField('Pode Excluir')
+    can_create = BooleanField('Pode Criar')
+    is_active = BooleanField('Usuário Ativo')
+    submit = SubmitField('Salvar Permissões')

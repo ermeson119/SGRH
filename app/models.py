@@ -4,21 +4,40 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(UserMixin, db.Model):
-    __tablename__ = 'users'
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(100), unique=True, nullable=False, index=True)
-    password = db.Column(db.String(255), nullable=True)
-    status = db.Column(db.String(20), default='pending', nullable=False)  # pending, approved, rejected
-    is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128))
+    is_admin = db.Column(db.Boolean, default=False)
+    can_edit = db.Column(db.Boolean, default=False)
+    can_delete = db.Column(db.Boolean, default=False)
+    can_create = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_login = db.Column(db.DateTime)
+    google_id = db.Column(db.String(100), unique=True)
+    google_email = db.Column(db.String(120), unique=True)
+    google_name = db.Column(db.String(120))
+    google_picture = db.Column(db.String(200))
+    is_active = db.Column(db.Boolean, default=True)
+    is_approved = db.Column(db.Boolean, default=False)
+    approval_requested = db.Column(db.Boolean, default=False)
+    approval_date = db.Column(db.DateTime)
+    approved_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    approver = db.relationship('User', remote_side=[id], backref='approved_users')
 
     def set_password(self, password):
-        self.password = generate_password_hash(password)
+        self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        return check_password_hash(self.password, password)
+        return check_password_hash(self.password_hash, password)
 
-    def is_approved(self):
-        return self.status == 'approved'
+    def has_permission(self, permission):
+        if self.is_admin:
+            return True
+        return getattr(self, f'can_{permission}', False)
+
+    def get_id(self):
+        return str(self.id)
 
 class RegistrationRequest(db.Model):
     __tablename__ = 'registration_requests'

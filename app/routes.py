@@ -5,7 +5,7 @@ from app.models import User, Pessoa,Lotacao, Profissao, Setor, Folha, Capacitaca
 from app.forms import (
     LoginForm, RegisterForm, PessoaForm, LotacaoForm, ProfissaoForm, SetorForm, FolhaForm,
     CapacitacaoForm,TermoRecusaForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, CursoForm, ApproveRequestForm, PessoaFolhaForm,
-    TermoRecusaSaudeOcupacionalForm, TermoASOForm
+    TermoRecusaSaudeOcupacionalForm, TermoASOForm, UserPermissionsForm
 )
 from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -30,54 +30,16 @@ import locale
 import json
 from app.pdf_generator import generate_termo_recusa_saude_ocupacional_pdf, generate_termo_aso_pdf
 import tempfile
+from werkzeug.urls import url_parse
 
 # Cria um Blueprint para as rotas
 bp = Blueprint('main', __name__)
 
 @bp.route('/')
 def index():
-    return redirect(url_for('main.login'))
-
-@bp.before_request
-def check_session_timeout():
-    # endpoints que não devem passar pela checagem de tempo de sessão
-    if request.endpoint in [
-        'main.login', 'main.register',
-        'main.google_login', 'main.google_callback',
-        'main.keep_session_alive'
-    ]:
-        return
-
     if current_user.is_authenticated:
-        session.permanent = True
-
-        if not session:
-            flash('Erro na sessão. Faça login novamente.', 'error')
-            logout_user()
-            return redirect(url_for('main.login'))
-
-        if 'last_activity' not in session:
-            session['last_activity'] = datetime.utcnow().isoformat()
-
-        last_activity_str = session.get('last_activity')
-        try:
-            last_activity = datetime.fromisoformat(last_activity_str)
-            current_time = datetime.utcnow()
-            # usa current_app.config em vez de app.config
-            timeout = current_app.config['PERMANENT_SESSION_LIFETIME']
-            if (current_time - last_activity) > timeout:
-                flash('Sua sessão expirou. Faça login novamente.', 'info')
-                logout_user()
-                session.clear()
-                session['next'] = request.url
-                return redirect(url_for('main.login'))
-        except ValueError:
-            flash('Erro na sessão. Faça login novamente.', 'error')
-            logout_user()
-            session.clear()
-            return redirect(url_for('main.login'))
-
-        session['last_activity'] = datetime.utcnow().isoformat()
+        return redirect(url_for('main.pessoa_list'))
+    return redirect(url_for('main.login'))
 
 def admin_required(f):
     @wraps(f)
@@ -107,16 +69,24 @@ def request_manage(id):
             if request_obj.auth_method == 'form':
                 user = User(
                     email=request_obj.email,
-                    status='approved',
-                    is_admin=False
+                    password_hash=request_obj.password,  # Use password_hash
+                    is_admin=False,
+                    is_approved=True,  # Definir como aprovado
+                    is_active=True,    # Definir como ativo
+                    can_edit=False,    # Permissões padrão para novo usuário
+                    can_delete=False,
+                    can_create=False
                 )
-                user.password = request_obj.password 
             else:  # Google
                 user = User(
                     email=request_obj.email,
-                    password='google-auth',  
-                    status='approved',
-                    is_admin=False
+                    password_hash='google-auth',  # Use password_hash
+                    is_admin=False,
+                    is_approved=True,  # Definir como aprovado
+                    is_active=True,    # Definir como ativo
+                    can_edit=False,    # Permissões padrão para novo usuário
+                    can_delete=False,
+                    can_create=False
                 )
             db.session.add(user)
             request_obj.status = 'approved'
@@ -185,50 +155,80 @@ def google_callback():
         flash('Erro ao autenticar com Google: ' + str(e), 'error')
         return redirect(url_for('main.login'))
 
+@bp.route('/admin/users/permissions', methods=['GET'])
+@login_required
+@admin_required
+def user_permissions():
+    users = User.query.filter(User.id != current_user.id).all()
+    form = UserPermissionsForm()
+    return render_template('admin/user_permissions.html', users=users, form=form)
+
+@bp.route('/admin/users/<int:user_id>/permissions', methods=['POST'])
+@login_required
+@admin_required
+def update_user_permissions(user_id):
+    user = User.query.get_or_404(user_id)
+    form = UserPermissionsForm()
+    
+    if form.validate_on_submit():
+        user.can_edit = form.can_edit.data
+        user.can_delete = form.can_delete.data
+        user.can_create = form.can_create.data
+        user.is_active = form.is_active.data
+        
+        db.session.commit()
+        flash('Permissões atualizadas com sucesso!', 'success')
+    else:
+        flash('Erro ao atualizar permissões.', 'error')
+    
+    return redirect(url_for('main.user_permissions'))
+
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('main.pessoa_list'))
+        print("Usuário já está autenticado")
+        return redirect(url_for('main.index'))
     
     form = LoginForm()
-    request_status = None
-    request_message = None
-    
     if form.validate_on_submit():
-        email = form.email.data.lower()
-        # Verificar se há uma solicitação de registro para o email
-        registration_request = RegistrationRequest.query.filter_by(email=email).first()
+        print(f"Tentando login com email: {form.email.data}")
+        user = User.query.filter_by(email=form.email.data).first()
         
-        if registration_request:
-            if registration_request.status == 'pending':
-                request_status = 'pending'
-                request_message = 'Seu cadastro está em análise pelo administrador.'
-            elif registration_request.status == 'rejected':
-                request_status = 'rejected'
-                request_message = 'Cadastro rejeitado pela administração.'
-        
-        if not request_status:  # Prosseguir com a autenticação se não houver solicitação pendente/rejeitada
-            user = User.query.filter_by(email=email).first()
-            if user:
-                if not user.is_approved():
-                    flash('Sua conta ainda não foi aprovada pelo administrador.', 'warning')
-                elif user.password == 'google-auth':
-                    flash('Este usuário deve fazer login via Google.', 'error')
-                elif user.check_password(form.password.data):
-                    login_user(user)
-                    session['last_activity'] = datetime.utcnow().isoformat()
-                    next_page = request.args.get('next') or session.get('next') or url_for('main.pessoa_list')
-                    session.pop('next', None)
-                    return redirect(next_page)
-                else:
-                    flash('Email ou senha inválidos.', 'danger')
+        if user:
+            print(f"Usuário encontrado: {user.email}")
+            print(f"is_active: {user.is_active}")
+            print(f"is_approved: {user.is_approved}")
+            print(f"is_admin: {user.is_admin}")
+            
+            if not user.is_active:
+                print("Usuário inativo")
+                flash('Sua conta está inativa. Entre em contato com o administrador.', 'error')
+                return redirect(url_for('main.login'))
+            
+            if not user.is_approved:
+                print("Usuário não aprovado")
+                flash('Sua conta ainda não foi aprovada. Aguarde a aprovação do administrador.', 'warning')
+                return redirect(url_for('main.login'))
+            
+            if user.check_password(form.password.data):
+                print("Senha correta, fazendo login")
+                login_user(user, remember=True)
+                user.last_login = datetime.utcnow()
+                db.session.commit()
+                
+                next_page = request.args.get('next')
+                if not next_page or url_parse(next_page).netloc != '':
+                    next_page = url_for('main.index')
+                print(f"Redirecionando para: {next_page}")
+                return redirect(next_page)
             else:
-                flash('Email ou senha inválidos.', 'danger')
+                print("Senha incorreta")
+        else:
+            print("Usuário não encontrado")
+        
+        flash('Email ou senha inválidos.', 'error')
     
-    if 'next' not in session and request.args.get('next'):
-        session['next'] = request.args.get('next')
-    
-    return render_template('login.html', form=form, request_status=request_status, request_message=request_message)
+    return render_template('login.html', form=form)
 
 @bp.route('/logout')
 @login_required
@@ -405,8 +405,6 @@ def pessoa_upload_csv():
             return redirect(url_for('main.pessoa_upload_csv'))
         finally:
             file.close()
-    
-    return render_template('pessoas/upload_csv.html')
 
 @bp.route('/pessoas/create', methods=['GET', 'POST'])
 @login_required
