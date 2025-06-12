@@ -9,7 +9,6 @@
         <table class="table table-hover">
             <thead class="table-light">
                 <tr>
-                    <th>Nome</th>
                     <th>Email</th>
                     <th>Pode Editar</th>
                     <th>Pode Excluir</th>
@@ -21,7 +20,6 @@
             <tbody>
                 {% for user in users %}
                 <tr>
-                    <td>{{ user.google_name or user.email }}</td>
                     <td>{{ user.email }}</td>
                     <td>
                         <span class="badge {% if user.can_edit %}bg-success{% else %}bg-danger{% endif %}">
