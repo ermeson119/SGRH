@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Atestado de Saúde Ocupacional - ASO</h2>
+    <form method="post" id="form-termo">
+        {{ form.hidden_tag() }}
+        
+        <div class="mb-3">
+            {{ form.pessoa_id.label(class="form-label") }}
+            {{ form.pessoa_id(class="form-select" + (" is-invalid" if form.pessoa_id.errors else ""), **{"data-nome": pessoa.nome, "data-matricula": pessoa.matricula, "data-lotacao": pessoa.lotacoes[0].setor.nome if pessoa.lotacoes else '', "data-funcao": pessoa.profissao.nome if pessoa.profissao else '', "data-cpf": pessoa.cpf} if pessoa else {}) }}
+            {% for error in form.pessoa_id.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        <div class="mb-3">
+            {{ form.secretaria.label(class="form-label") }}
+            {{ form.secretaria(class="form-select" + (" is-invalid" if form.secretaria.errors else "")) }}
+            {% for error in form.secretaria.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        <div class="mb-3">
+            {{ form.cidade.label(class="form-label") }}
+            {{ form.cidade(class="form-select" + (" is-invalid" if form.cidade.errors else "")) }}
+            {% for error in form.cidade.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        <div class="mb-3">
+            {{ form.data.label(class="form-label") }}
+            {{ form.data(class="form-control" + (" is-invalid" if form.data.errors else "")) }}
+            {% for error in form.data.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        {{ form.submit(class="btn btn-primary") }}
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %} 

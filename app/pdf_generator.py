@@ -225,7 +225,6 @@ def generate_termo_recusa_saude_ocupacional_pdf(form, pessoa):
     data_formatada = data_obj.strftime("%d de %B de %Y")
 
     # Texto do termo, ajustado para saúde ocupacional
-# Texto do termo ajustado para saúde ocupacional
     texto = (
         f"Eu, {nome}, matrícula {matricula}, lotado(a) no setor {lotacao}, na função de {funcao}, portador(a) do CPF {cpf}, "
         f"declaro, para os devidos fins, que fui devidamente orientado(a) sobre os benefícios, riscos e as possíveis consequências associadas à recusa "
@@ -234,7 +233,6 @@ def generate_termo_recusa_saude_ocupacional_pdf(form, pessoa):
         "pelas eventuais consequências à minha saúde relacionadas a essa recusa. "
         f"Isento, portanto, {secretaria} e o órgão de lotação de qualquer responsabilidade decorrente da minha ausência nos programas de saúde ocupacional."
     )
-
 
     elements.append(Paragraph(texto, normal_style))
     elements.append(Spacer(1, 20))
@@ -252,6 +250,129 @@ def generate_termo_recusa_saude_ocupacional_pdf(form, pessoa):
 
     elements.append(Paragraph("____________________________________________________________________", normal_style)) 
     elements.append(Paragraph("Assinatura de Testemunha (em caso de recusa de assinatura)", centered_style)) 
+
+    # Gerar o PDF
+    doc.build(elements)
+    
+    return filepath
+
+def generate_termo_aso_pdf(form, pessoa):
+    """
+    Gera um PDF para o Atestado de Saúde Ocupacional (ASO).
+    """
+    # Criar o nome do arquivo com timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"termo_aso_{pessoa.nome.replace(' ', '_')}_{timestamp}.pdf"
+    
+    # Criar um diretório temporário para salvar o PDF
+    temp_dir = tempfile.gettempdir()
+    filepath = os.path.join(temp_dir, filename)
+    
+    # Criar o documento PDF
+    doc = SimpleDocTemplate(
+        filepath,
+        pagesize=A4,
+        rightMargin=2*cm,
+        leftMargin=2*cm,
+        topMargin=0*cm,
+        bottomMargin=2*cm
+    )
+
+    # Lista para armazenar os elementos do PDF
+    elements = []
+
+    # Estilos
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=16,
+        spaceAfter=30,
+        alignment=1  
+    )
+    normal_style = ParagraphStyle(
+        'CustomNormal',
+        parent=styles['Normal'],
+        fontSize=12,
+        leading=16,
+        spaceAfter=12,
+        alignment=4, 
+        leftIndent=0
+    )
+    date_style = ParagraphStyle(
+        'CustomDate',
+        parent=styles['Normal'],
+        fontSize=12,
+        leading=16,
+        spaceAfter=12,
+        alignment=2, 
+        leftIndent=0
+    )
+    centered_style = ParagraphStyle(
+        'CustomCentered',
+        parent=styles['Normal'],
+        fontSize=12,
+        leading=16,
+        spaceAfter=12,
+        alignment=1,  
+        leftIndent=0,
+        rightIndent=0 
+    )
+
+    # Adicionar a logo
+    logo_full_path = os.path.join('app', form.logo_path.data) 
+    if os.path.exists(logo_full_path):
+        try:
+            img = Image(logo_full_path, width=6*cm, height=3*cm)
+            elements.append(img)
+            elements.append(Spacer(1, 20))
+        except Exception as e:
+            print(f"Erro ao adicionar imagem {logo_full_path}: {e}")
+            pass 
+
+    # Título
+    elements.append(Paragraph("ATESTADO DE SAÚDE OCUPACIONAL – ASO", title_style))
+    elements.append(Spacer(1, 10))
+
+    # Dados do funcionário
+    nome = pessoa.nome
+    matricula = pessoa.matricula or ''
+    lotacao = pessoa.lotacoes[0].setor.nome if pessoa.lotacoes else ''
+    funcao = pessoa.profissao.nome if pessoa.profissao else ''
+    cpf = pessoa.cpf or ''
+
+    # Dados do formulário
+    secretaria = form.secretaria.data
+    cidade = form.cidade.data
+    data = form.data.data.strftime('%Y-%m-%d')
+    data_obj = datetime.strptime(data, "%Y-%m-%d")
+    data_formatada = data_obj.strftime("%d de %B de %Y")
+
+    # Texto do ASO
+    texto = (
+        f"Eu, {nome}, matrícula {matricula}, lotado(a) no setor {lotacao}, na função de {funcao}, "
+        f"portador(a) do CPF {cpf}, declaro, para os devidos fins, que fui submetido(a) a exame médico "
+        f"ocupacional realizado em {data_formatada}, na {secretaria}, e fui considerado(a) APTO(A) "
+        "para o exercício das atividades inerentes ao cargo/função, não apresentando restrições "
+        "médicas que impeçam o desempenho das atividades laborais."
+    )
+
+    elements.append(Paragraph(texto, normal_style))
+    elements.append(Spacer(1, 20))
+
+    elements.append(Paragraph(f"{cidade}, {data_formatada}", date_style))
+    elements.append(Spacer(1, 40))
+
+    elements.append(Paragraph("____________________________________________________________________", normal_style)) 
+    elements.append(Paragraph("Assinatura do Médico do Trabalho", centered_style)) 
+    elements.append(Spacer(1, 20))
+
+    elements.append(Paragraph("____________________________________________________________________", normal_style)) 
+    elements.append(Paragraph("Carimbo e Registro do Médico", centered_style)) 
+    elements.append(Spacer(1, 20))
+
+    elements.append(Paragraph("____________________________________________________________________", normal_style)) 
+    elements.append(Paragraph("Assinatura do(a) Servidor(a)", centered_style)) 
 
     # Gerar o PDF
     doc.build(elements)

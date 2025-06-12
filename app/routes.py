@@ -5,7 +5,7 @@ from app.models import User, Pessoa,Lotacao, Profissao, Setor, Folha, Capacitaca
 from app.forms import (
     LoginForm, RegisterForm, PessoaForm, LotacaoForm, ProfissaoForm, SetorForm, FolhaForm,
     CapacitacaoForm,TermoRecusaForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, CursoForm, ApproveRequestForm, PessoaFolhaForm,
-    TermoRecusaSaudeOcupacionalForm
+    TermoRecusaSaudeOcupacionalForm, TermoASOForm
 )
 from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -28,7 +28,7 @@ from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER
 from reportlab.lib import colors
 import locale
 import json
-from app.pdf_generator import generate_termo_recusa_saude_ocupacional_pdf
+from app.pdf_generator import generate_termo_recusa_saude_ocupacional_pdf, generate_termo_aso_pdf
 import tempfile
 
 # Cria um Blueprint para as rotas
@@ -1208,6 +1208,8 @@ def termo_download(id):
     flash('Arquivo não encontrado.', 'error')
     return redirect(url_for('main.termo_list'))
 
+
+#Gerar pdf de recusa vacinação
 @bp.route('/termos/recusa', methods=['GET', 'POST'])
 @login_required
 def termo_recusa_form():
@@ -1283,6 +1285,30 @@ def termo_recusa_saude_ocupacional_form():
     return render_template('termos/termo_recusa_saude_ocupacional_form.html', 
                          form=form, 
                          today=datetime.now().strftime('%Y-%m-%d'))
+
+@bp.route('/termos/aso', methods=['GET', 'POST'])
+@login_required
+def termo_aso_form():
+    form = TermoASOForm()
+    form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.order_by(Pessoa.nome).all()]
+    
+    if form.validate_on_submit():
+        pessoa = Pessoa.query.get(form.pessoa_id.data)
+        if pessoa:
+            try:
+                filepath = generate_termo_aso_pdf(form, pessoa)
+                return send_file(
+                    filepath,
+                    as_attachment=True,
+                    download_name=f"termo_aso_{pessoa.nome.replace(' ', '_')}.pdf",
+                    mimetype='application/pdf'
+                )
+            except Exception as e:
+                flash(f'Erro ao gerar o PDF: {str(e)}', 'error')
+        else:
+            flash('Pessoa não encontrada.', 'error')
+    
+    return render_template('termos/termo_aso_form.html', form=form)
 
 # --- CRUD Vacina ---
 @bp.route('/vacinas', methods=['GET'])
