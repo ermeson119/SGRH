@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed
+from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import StringField, SelectField, SubmitField, DateField, FloatField, SelectMultipleField, TextAreaField, BooleanField
 from wtforms.validators import DataRequired, Length, NumberRange, Regexp, ValidationError, Email, EqualTo, Optional
 import re
@@ -84,6 +84,13 @@ class PessoaFolhaForm(FlaskForm):
     ])
     observacao = TextAreaField('Observação')
     submit = SubmitField('Salvar')
+
+class PessoaUploadCSVForm(FlaskForm):
+    csv_file = FileField('Selecione o arquivo CSV', validators=[
+        FileRequired(),
+        FileAllowed(['csv'], 'Somente arquivos CSV são permitidos.')
+    ])
+    submit = SubmitField('Importar')
 
 class CapacitacaoForm(FlaskForm):
     pessoa_id = SelectField('Pessoa', coerce=int, validators=[DataRequired()])

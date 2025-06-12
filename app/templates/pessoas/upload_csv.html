@@ -22,16 +22,20 @@
             </div>
 
             <form method="POST" enctype="multipart/form-data">
+                {{ form.hidden_tag() }} <!-- Inclui o token CSRF -->
                 <div class="mb-3">
-                    <label for="csv_file" class="form-label">Selecione o arquivo CSV</label>
-                    <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+                    <label for="csv_file" class="form-label">{{ form.csv_file.label }}</label>
+                    {{ form.csv_file(class="form-control", accept=".csv") }}
+                    {% for error in form.csv_file.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
                 </div>
                 <div class="d-flex gap-3">
-                    <button type="submit" class="btn btn-primary">Importar</button>
+                    {{ form.submit(class="btn btn-primary") }}
                     <a href="{{ url_for('main.pessoa_list') }}" class="btn btn-secondary">Cancelar</a>
                 </div>
             </form>
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

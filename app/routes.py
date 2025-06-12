@@ -31,6 +31,8 @@ import json
 from app.pdf_generator import generate_termo_recusa_saude_ocupacional_pdf, generate_termo_aso_pdf
 import tempfile
 from werkzeug.urls import url_parse
+from app.forms import PessoaUploadCSVForm
+
 
 # Cria um Blueprint para as rotas
 bp = Blueprint('main', __name__)
@@ -303,12 +305,9 @@ def pessoa_list():
 @bp.route('/pessoas/upload_csv', methods=['GET', 'POST'])
 @login_required
 def pessoa_upload_csv():
-    if request.method == 'POST':
-        file = request.files.get('csv_file')
-        if not file:
-            flash('Nenhum arquivo foi enviado.', 'danger')
-            return redirect(url_for('main.pessoa_upload_csv'))
-            
+    form = PessoaUploadCSVForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        file = form.csv_file.data
         if not file.filename.endswith('.csv'):
             flash('Arquivo inválido. Envie um arquivo CSV.', 'danger')
             return redirect(url_for('main.pessoa_upload_csv'))
@@ -324,8 +323,7 @@ def pessoa_upload_csv():
                         file_content = file_content.decode('latin1')
                     except Exception as e:
                         flash(f'Erro ao decodificar o arquivo: {str(e)}', 'danger')
-                        return redirect(url_for(request.endpoint))
-            from io import StringIO
+                        return redirect(url_for('main.pessoa_upload_csv'))
             stream = StringIO(file_content)
             sample = stream.read(2048)
             stream.seek(0)
@@ -405,6 +403,9 @@ def pessoa_upload_csv():
             return redirect(url_for('main.pessoa_upload_csv'))
         finally:
             file.close()
+
+    # Para GET, renderiza o template com o formulário
+    return render_template('pessoas/upload_csv.html', form=form)
 
 @bp.route('/pessoas/create', methods=['GET', 'POST'])
 @login_required
