@@ -5,7 +5,7 @@ from app.models import User, Pessoa,Lotacao, Profissao, Setor, Folha, Capacitaca
 from app.forms import (
     LoginForm, RegisterForm, PessoaForm, LotacaoForm, ProfissaoForm, SetorForm, FolhaForm,
     CapacitacaoForm,TermoRecusaForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, CursoForm, ApproveRequestForm, PessoaFolhaForm,
-    TermoRecusaSaudeOcupacionalForm, TermoASOForm, UserPermissionsForm
+    TermoRecusaSaudeOcupacionalForm, TermoASOForm, UserPermissionsForm, RelatorioCompletoForm
 )
 from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -1769,98 +1769,93 @@ def download_atestado(atestado_id):
 @bp.route('/relatorio/completo', methods=['GET', 'POST'])
 @login_required
 def relatorio_completo():
-    if request.method == 'POST':
-        busca = request.form.get('busca', '')
-        tipo_relatorio = request.form.get('tipo_relatorio', 'todos')
-        data = request.form.get('data', '')
-        return redirect(url_for('main.relatorio_completo', 
-                              busca=busca, 
-                              tipo_relatorio=tipo_relatorio,
-                              data=data))
+    form = RelatorioCompletoForm()  # Instancia o formulário
+    
+    # Valores padrão para a busca
+    busca = ''
+    tipo_relatorio = 'todos'
+    data = ''
+    
+    # Se o formulário for submetido (POST) e válido
+    if form.validate_on_submit():
+        busca = form.busca.data
+        tipo_relatorio = form.tipo_relatorio.data
+        data = form.data.data.strftime('%Y-%m-%d') if form.data.data else ''
+        
+        # Redireciona para a mesma página com os parâmetros de busca na URL
+        return redirect(url_for('main.relatorio_completo', busca=busca, tipo_relatorio=tipo_relatorio, data=data))
 
-    page = request.args.get('page', 1, type=int)
+    # Se for uma requisição GET ou o formulário não for válido após POST
     busca = request.args.get('busca', '', type=str)
     tipo_relatorio = request.args.get('tipo_relatorio', 'todos', type=str)
-    data = request.args.get('data', '', type=str)
-    per_page = 4
-
-    query = Pessoa.query.options(
-        joinedload(Pessoa.capacitacoes),
-        joinedload(Pessoa.pessoa_folhas).joinedload(PessoaFolha.folha),
+    data_str = request.args.get('data', '', type=str)
+    data = datetime.strptime(data_str, '%Y-%m-%d').date() if data_str else None
+    
+    # Preenche o formulário com os dados da URL
+    form.busca.data = busca
+    form.tipo_relatorio.data = tipo_relatorio
+    form.data.data = data
+    
+    # Query com joinedload para carregar relacionamentos
+    pessoas_query = Pessoa.query.options(
         joinedload(Pessoa.profissao),
+        joinedload(Pessoa.lotacoes).joinedload(Lotacao.setor),
+        joinedload(Pessoa.capacitacoes).joinedload(Capacitacao.curso),
+        joinedload(Pessoa.pessoa_folhas).joinedload(PessoaFolha.folha),
         joinedload(Pessoa.termos),
         joinedload(Pessoa.vacinas),
         joinedload(Pessoa.exames),
-        joinedload(Pessoa.atestados),
-        joinedload(Pessoa.lotacoes)
+        joinedload(Pessoa.atestados)
     )
 
     if busca:
-        query = query.filter(Pessoa.nome.ilike(f'%{busca}%'))
+        pessoas_query = pessoas_query.filter(Pessoa.nome.ilike(f'%{busca}%'))
 
-    # Filtro por tipo de relatório
-    if tipo_relatorio != 'todos':
-        if tipo_relatorio == 'capacitacoes':
-            query = query.filter(Pessoa.capacitacoes.any())
-        elif tipo_relatorio == 'lotacoes':
-            query = query.filter(Pessoa.lotacoes.any())
-        elif tipo_relatorio == 'folha':
-            query = query.filter(Pessoa.pessoa_folhas.any())
-        elif tipo_relatorio == 'termos':
-            query = query.filter(Pessoa.termos.any())
-        elif tipo_relatorio == 'vacinas':
-            query = query.filter(Pessoa.vacinas.any())
-        elif tipo_relatorio == 'exames':
-            query = query.filter(Pessoa.exames.any())
-        elif tipo_relatorio == 'atestados':
-            query = query.filter(Pessoa.atestados.any())
-
-    # Filtro por data
-    if data:
-        data_obj = datetime.strptime(data, '%Y-%m-%d').date()
-        if tipo_relatorio == 'todos':
-            query = query.filter(
-                db.or_(
-                    # Capacitações
-                    Pessoa.capacitacoes.any(Capacitacao.data == data_obj),
-                    # Lotações
-                    Pessoa.lotacoes.any(Lotacao.data_inicio == data_obj),
-                    # Folha de Pagamento
-                    Pessoa.pessoa_folhas.any(PessoaFolha.folha.has(Folha.data == data_obj)),
-                    # Termos
-                    Pessoa.termos.any(Termo.data_inicio == data_obj),
-                    # Vacinas
-                    Pessoa.vacinas.any(Vacina.data == data_obj),
-                    # Exames
-                    Pessoa.exames.any(Exame.data == data_obj),
-                    # Atestados
-                    Pessoa.atestados.any(Atestado.data_inicio == data_obj)
-                )
-            )
-        else:
+    # Adiciona paginação
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  # Número de registros por página
+    pessoas_paginated = pessoas_query.order_by(Pessoa.nome).paginate(page=page, per_page=per_page, error_out=False)
+    
+    # Filtra os detalhes de cada pessoa com base no tipo_relatorio e data
+    pessoas = pessoas_paginated.items  # Lista de pessoas na página atual
+    for pessoa in pessoas:
+        if tipo_relatorio != 'todos':
             if tipo_relatorio == 'capacitacoes':
-                query = query.filter(Pessoa.capacitacoes.any(Capacitacao.data == data_obj))
+                pessoa.capacitacoes = [c for c in pessoa.capacitacoes if not data or c.data == data]
             elif tipo_relatorio == 'lotacoes':
-                query = query.filter(Pessoa.lotacoes.any(Lotacao.data_inicio == data_obj))
+                pessoa.lotacoes = [l for l in pessoa.lotacoes if not data or l.data_inicio == data or l.data_fim == data]
             elif tipo_relatorio == 'folha':
-                query = query.filter(Pessoa.pessoa_folhas.any(PessoaFolha.folha.has(Folha.data == data_obj)))
+                pessoa.pessoa_folhas = [pf for pf in pessoa.pessoa_folhas if not data or pf.data_pagamento == data]
             elif tipo_relatorio == 'termos':
-                query = query.filter(Pessoa.termos.any(Termo.data_inicio == data_obj))
+                pessoa.termos = [t for t in pessoa.termos if not data or t.data_inicio == data or t.data_fim == data]
             elif tipo_relatorio == 'vacinas':
-                query = query.filter(Pessoa.vacinas.any(Vacina.data == data_obj))
+                pessoa.vacinas = [v for v in pessoa.vacinas if not data or v.data == data]
             elif tipo_relatorio == 'exames':
-                query = query.filter(Pessoa.exames.any(Exame.data == data_obj))
+                pessoa.exames = [e for e in pessoa.exames if not data or e.data == data]
             elif tipo_relatorio == 'atestados':
-                query = query.filter(Pessoa.atestados.any(Atestado.data_inicio == data_obj))
+                pessoa.atestados = [a for a in pessoa.atestados if not data or a.data_inicio == data or a.data_fim == data]
+    
+    # Filtra as pessoas que não têm nenhum item de relatório após a filtragem
+    if tipo_relatorio != 'todos':
+        pessoas = [p for p in pessoas if 
+                   (tipo_relatorio == 'capacitacoes' and p.capacitacoes) or
+                   (tipo_relatorio == 'lotacoes' and p.lotacoes) or
+                   (tipo_relatorio == 'folha' and p.pessoa_folhas) or
+                   (tipo_relatorio == 'termos' and p.termos) or
+                   (tipo_relatorio == 'vacinas' and p.vacinas) or
+                   (tipo_relatorio == 'exames' and p.exames) or
+                   (tipo_relatorio == 'atestados' and p.atestados)
+                  ]
 
-    pagination = query.order_by(Pessoa.nome).paginate(page=page, per_page=per_page, error_out=False)
-
-    return render_template('relatorio/relatorio_completo.html',
-                         pessoas=pagination.items,
-                         pagination=pagination,
-                         busca=busca,
-                         tipo_relatorio=tipo_relatorio,
-                         data=data)
+    return render_template(
+        'relatorio/relatorio_completo.html',
+        pessoas=pessoas,  # Passa a lista de pessoas
+        pagination=pessoas_paginated,  # Passa o objeto de paginação
+        busca=busca,
+        tipo_relatorio=tipo_relatorio,
+        data=data,
+        form=form
+    )
 
 @bp.route('/relatorio/lotacoes')
 @login_required

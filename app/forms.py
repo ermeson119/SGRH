@@ -329,3 +329,18 @@ class UserPermissionsForm(FlaskForm):
     can_create = BooleanField('Pode Criar')
     is_active = BooleanField('Usuário Ativo')
     submit = SubmitField('Salvar Permissões')
+
+class RelatorioCompletoForm(FlaskForm):
+    busca = StringField('Buscar')
+    tipo_relatorio = SelectField('Tipo de Relatório', choices=[
+        ('todos', 'Todos os Relatórios'),
+        ('capacitacoes', 'Capacitações'),
+        ('lotacoes', 'Lotações'),
+        ('folha', 'Folha de Pagamento'),
+        ('termos', 'Termos'),
+        ('vacinas', 'Vacinas'),
+        ('exames', 'Exames'),
+        ('atestados', 'Atestados')
+    ])
+    data = DateField('Data', format='%Y-%m-%d', validators=[Optional()])
+    submit = SubmitField('Buscar')

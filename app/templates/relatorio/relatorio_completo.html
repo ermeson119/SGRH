@@ -7,32 +7,22 @@
     </div>
 
     <!-- Formulário de Busca -->
-    <form method="POST" class="mb-5" id="busca-form">
+    <form method="POST" class="mb-5" id="form-busca">
+        {{ form.hidden_tag() }}
         <div class="row g-3">
             <div class="col-md-4">
                 <div class="input-group">
-                    <input type="text" name="busca" class="form-control" placeholder="Buscar por nome..." value="{{ busca }}">
+                    {{ form.busca(class="form-control", placeholder="Buscar por nome...") }}
                 </div>
             </div>
             <div class="col-md-3">
-                <select name="tipo_relatorio" class="form-select">
-                    <option value="todos" {% if tipo_relatorio == 'todos' %}selected{% endif %}>Todos os Relatórios</option>
-                    <option value="capacitacoes" {% if tipo_relatorio == 'capacitacoes' %}selected{% endif %}>Capacitações</option>
-                    <option value="lotacoes" {% if tipo_relatorio == 'lotacoes' %}selected{% endif %}>Lotações</option>
-                    <option value="folha" {% if tipo_relatorio == 'folha' %}selected{% endif %}>Folha de Pagamento</option>
-                    <option value="termos" {% if tipo_relatorio == 'termos' %}selected{% endif %}>Termos</option>
-                    <option value="vacinas" {% if tipo_relatorio == 'vacinas' %}selected{% endif %}>Vacinas</option>
-                    <option value="exames" {% if tipo_relatorio == 'exames' %}selected{% endif %}>Exames</option>
-                    <option value="atestados" {% if tipo_relatorio == 'atestados' %}selected{% endif %}>Atestados</option>
-                </select>
+                {{ form.tipo_relatorio(class="form-select") }}
             </div>
             <div class="col-md-3">
-                <input type="date" name="data" class="form-control" placeholder="Data" value="{{ data }}">
+                {{ form.data(class="form-control", placeholder="Data") }}
             </div>
             <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="fas fa-search"></i> Buscar
-                </button>
+                {{ form.submit(class="btn btn-primary w-100") }}
             </div>
         </div>
     </form>
@@ -44,16 +34,19 @@
                 <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
                     <div>
                         <strong class="nome">{{ pessoa.nome }}</strong>
-                        <span class="ms-2 badge bg-primary">{{ pessoa.profissao.nome }}</span>
-                        {% if pessoa.setor %}
-                        <span class="ms-2 badge bg-secondary disabled">{{ pessoa.setor.nome }}</span>
+                        <span class="ms-2 badge bg-primary">{{ pessoa.profissao.nome if pessoa.profissao else 'Sem profissão' }}</span>
+                        {% if pessoa.lotacoes %}
+                            {% set lotacao_atual = pessoa.lotacoes | selectattr('data_fim', 'none') | first or pessoa.lotacoes | sort(attribute='data_inicio', reverse=True) | first %}
+                            <span class="ms-2 badge bg-secondary">{{ lotacao_atual.setor.nome }}</span>
+                        {% else %}
+                            <span class="ms-2 badge bg-secondary">Sem lotação</span>
                         {% endif %}
                     </div>
                     <div class="btn-group">
                         <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse" 
                                 data-bs-target="#detalhes-{{ pessoa.id }}" aria-expanded="false">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
-                                    <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/>
+                                    <path fill="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/>
                                 </svg>
                         </button>
                     </div>
@@ -255,7 +248,7 @@
                                         <thead class="table-light">
                                             <tr>
                                                 <th>Tipo</th>
-                                                <th>Resultado</th>
+                                                <th>Observação</th>
                                                 <th>Data</th>
                                                 <th>Documento</th>
                                             </tr>
@@ -264,7 +257,7 @@
                                             {% for exame in pessoa.exames %}
                                                 <tr>
                                                     <td>{{ exame.tipo }}</td>
-                                                    <td>{{ exame.resultado }}</td>
+                                                    <td>{{ exame.observacao or 'N/A' }}</td>
                                                     <td>{{ exame.data.strftime('%d/%m/%Y') }}</td>
                                                     <td>
                                                         {% if exame.arquivo %}
@@ -295,7 +288,7 @@
                                     <table class="table table-sm table-bordered">
                                         <thead class="table-light">
                                             <tr>
-                                                <th>Motivo</th>
+                                                <th>Observação</th>
                                                 <th>Data Início</th>
                                                 <th>Data Fim</th>
                                                 <th>Médico</th>
@@ -305,7 +298,7 @@
                                         <tbody>
                                             {% for atestado in pessoa.atestados %}
                                                 <tr>
-                                                    <td>{{ atestado.motivo }}</td>
+                                                    <td>{{ atestado.observacao }}</td>
                                                     <td>{{ atestado.data_inicio.strftime('%d/%m/%Y') }}</td>
                                                     <td>{{ atestado.data_fim.strftime('%d/%m/%Y') }}</td>
                                                     <td>{{ atestado.medico }}</td>
@@ -339,7 +332,7 @@
         <ul class="pagination justify-content-center">
             {% if pagination.has_prev %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('main.relatorio_completo', page=pagination.prev_num, busca=busca) }}">Anterior</a>
+                    <a class="page-link" href="{{ url_for('main.relatorio_completo', page=pagination.prev_num, busca=busca, tipo_relatorio=tipo_relatorio, data=data|default('', true)) }}">Anterior</a>
                 </li>
             {% else %}
                 <li class="page-item disabled"><span class="page-link">Anterior</span></li>
@@ -347,13 +340,13 @@
 
             {% for p in range(1, pagination.pages + 1) %}
                 <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('main.relatorio_completo', page=p, busca=busca) }}">{{ p }}</a>
+                    <a class="page-link" href="{{ url_for('main.relatorio_completo', page=p, busca=busca, tipo_relatorio=tipo_relatorio, data=data|default('', true)) }}">{{ p }}</a>
                 </li>
             {% endfor %}
 
             {% if pagination.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('main.relatorio_completo', page=pagination.next_num, busca=busca) }}">Próximo</a>
+                    <a class="page-link" href="{{ url_for('main.relatorio_completo', page=pagination.next_num, busca=busca, tipo_relatorio=tipo_relatorio, data=data|default('', true)) }}">Próximo</a>
                 </li>
             {% else %}
                 <li class="page-item disabled"><span class="page-link">Próximo</span></li>
@@ -362,5 +355,4 @@
     </nav>
     {% endif %}
 </div>
-
 {% endblock %}
