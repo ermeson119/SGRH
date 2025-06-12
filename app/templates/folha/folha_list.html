@@ -152,17 +152,21 @@
                                 {% endif %}
                             </td>
                             <td class="text-end">
+                                {% if current_user.has_permission('edit') %}
                                 <a href="{{ url_for('main.pessoa_folha_edit', pessoa_folha_id=pessoa_folha.id) }}" 
                                    class="btn btn-outline-primary btn-sm" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                     <span class="visually-hidden">Editar</span>
                                 </a>
+                                {% endif %}
+                                {% if current_user.has_permission('delete') %}
                                 <a href="{{ url_for('main.folha_delete', id=folha.id) }}" 
                                    class="btn btn-outline-danger btn-sm" title="Excluir"
                                    onclick="return confirm('Tem certeza que deseja excluir esta folha?')">
                                     <i class="bi bi-trash"></i>
                                     <span class="visually-hidden">Excluir</span>
                                 </a>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}

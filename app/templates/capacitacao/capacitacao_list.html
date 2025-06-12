@@ -8,9 +8,11 @@
             <a href="{{ url_for('main.capacitacao_relatorio') }}" class="btn btn-outline-success">
                 <i class="bi bi-graph-up"></i> Relatório
             </a>
+            {% if current_user.has_permission('create') %}
             <a href="{{ url_for('main.capacitacao_create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-lg"></i> Nova Capacitação
             </a>
+            {% endif %}
         </div>
     </div>
 
@@ -34,7 +36,9 @@
                         <th scope="col">Descrição</th>
                         <th scope="col">Data Início</th>
                         <th scope="col">Data Fim</th>
+                        {% if current_user.has_permission('edit') or current_user.has_permission('delete') %}
                         <th scope="col" class="text-end">Ações</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -45,20 +49,26 @@
                         <td>{{ capacitacao.descricao }}</td>
                         <td>{{ capacitacao.data.strftime('%d/%m/%Y') }}</td>
                         <td>{{ capacitacao.data_fim.strftime('%d/%m/%Y') if capacitacao.data_fim else 'Em andamento' }}</td>
+                        {% if current_user.has_permission('edit') or current_user.has_permission('delete') %}
                         <td class="text-end">
+                            {% if current_user.has_permission('edit') %}
                             <a href="{{ url_for('main.capacitacao_edit', id=capacitacao.id) }}" class="btn btn-outline-primary btn-sm" title="Editar">
                                 <i class="bi bi-pencil"></i>
                                 <span class="visually-hidden">Editar</span>
                             </a>
+                            {% endif %}
+                            {% if current_user.has_permission('delete') %}
                             <a href="{{ url_for('main.capacitacao_delete', id=capacitacao.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir esta capacitação?')">
                                 <i class="bi bi-trash"></i>
                                 <span class="visually-hidden">Excluir</span>
                             </a>
+                            {% endif %}
                         </td>
+                        {% endif %}
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="text-center py-4">
+                        <td colspan="{{ 6 if current_user.has_permission('edit') or current_user.has_permission('delete') else 5 }}" class="text-center py-4">
                             <div class="text-muted">
                                 <i class="bi bi-inbox fs-4 d-block mb-2"></i>
                                 Nenhuma capacitação registrada.

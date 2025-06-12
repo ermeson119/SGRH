@@ -5,10 +5,12 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Lista de Cursos</h2>
         <div class="d-flex gap-2">
+            {% if current_user.has_permission('create') %}
             <a href="{{ url_for('main.curso_create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-lg"></i>
                 Adicionar Curso
             </a>
+            {% endif %}
         </div>
     </div>
 
@@ -58,15 +60,19 @@
                         <td>{{ curso.duracao }}</td>
                         <td>{{ curso.tipo }}</td>
                         <td class="text-end">
+                            {% if current_user.has_permission('edit') %}
                             <a href="{{ url_for('main.curso_edit', id=curso.id) }}" class="btn btn-outline-primary btn-sm" title="Editar">
                                 <i class="bi bi-pencil"></i>
                                 <span class="visually-hidden">Editar</span>
                             </a>
+                            {% endif %}
+                            {% if current_user.has_permission('delete') %}
                             <a href="{{ url_for('main.curso_delete', id=curso.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir"
                                onclick="return confirm('Tem certeza que deseja excluir este curso?');">
                                 <i class="bi bi-trash"></i>
                                 <span class="visually-hidden">Excluir</span>
                             </a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% else %}

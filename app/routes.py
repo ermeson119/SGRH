@@ -409,6 +409,9 @@ def pessoa_upload_csv():
 @bp.route('/pessoas/create', methods=['GET', 'POST'])
 @login_required
 def pessoa_create():
+    if not current_user.has_permission('create'):
+        flash('Você não tem permissão para criar pessoas.', 'error')
+        return redirect(url_for('main.pessoa_list'))
     form = PessoaForm()
     profissoes = Profissao.query.all()
     
@@ -440,6 +443,9 @@ def pessoa_create():
 @bp.route('/pessoas/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def pessoa_edit(id):
+    if not current_user.has_permission('edit'):
+        flash('Você não tem permissão para editar pessoas.', 'error')
+        return redirect(url_for('main.pessoa_list'))
     pessoa = Pessoa.query.get_or_404(id)
     form = PessoaForm(obj=pessoa)
     form.pessoa = pessoa  # Adiciona a pessoa ao formulário para validação
@@ -471,6 +477,9 @@ def pessoa_edit(id):
 @bp.route('/pessoas/delete/<int:id>', methods=['GET'])
 @login_required
 def pessoa_delete(id):
+    if not current_user.has_permission('delete'):
+        flash('Você não tem permissão para excluir pessoas.', 'error')
+        return redirect(url_for('main.pessoa_list'))
     pessoa = Pessoa.query.get_or_404(id)
     try:
         db.session.delete(pessoa)
@@ -507,6 +516,9 @@ def profissao_list():
 @bp.route('/profissoes/create', methods=['GET', 'POST'])
 @login_required
 def profissao_create():
+    if not current_user.has_permission('create'):
+        flash('Você não tem permissão para criar profissões.', 'error')
+        return redirect(url_for('main.profissao_list'))
     form = ProfissaoForm()
     if form.validate_on_submit():
         profissao = Profissao(nome=form.nome.data)
@@ -523,6 +535,9 @@ def profissao_create():
 @bp.route('/profissoes/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def profissao_edit(id):
+    if not current_user.has_permission('edit'):
+        flash('Você não tem permissão para editar profissões.', 'error')
+        return redirect(url_for('main.profissao_list'))
     profissao = Profissao.query.get_or_404(id)
     form = ProfissaoForm(obj=profissao)
     if form.validate_on_submit():
@@ -539,6 +554,9 @@ def profissao_edit(id):
 @bp.route('/profissoes/delete/<int:id>', methods=['GET'])
 @login_required
 def profissao_delete(id):
+    if not current_user.has_permission('delete'):
+        flash('Você não tem permissão para excluir profissões.', 'error')
+        return redirect(url_for('main.profissao_list'))
     profissao = Profissao.query.get_or_404(id)
     try:
         db.session.delete(profissao)
@@ -647,6 +665,9 @@ def lotacao_list():
 @bp.route('/lotacoes/create', methods=['GET', 'POST'])
 @login_required
 def lotacao_create():
+    if not current_user.has_permission('create'):
+        flash('Você não tem permissão para criar lotações.', 'error')
+        return redirect(url_for('main.lotacao_list'))
     form = LotacaoForm()
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
     form.setor_id.choices = [(s.id, s.nome) for s in Setor.query.all()]
@@ -670,6 +691,9 @@ def lotacao_create():
 @bp.route('/lotacoes/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def lotacao_edit(id):
+    if not current_user.has_permission('edit'):
+        flash('Você não tem permissão para editar lotações.', 'error')
+        return redirect(url_for('main.lotacao_list'))
     lotacao = Lotacao.query.get_or_404(id)
     form = LotacaoForm(obj=lotacao)
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
@@ -691,6 +715,9 @@ def lotacao_edit(id):
 @bp.route('/lotacoes/delete/<int:id>', methods=['GET'])
 @login_required
 def lotacao_delete(id):
+    if not current_user.has_permission('delete'):
+        flash('Você não tem permissão para excluir lotações.', 'error')
+        return redirect(url_for('main.lotacao_list'))
     lotacao = Lotacao.query.get_or_404(id)
     try:
         db.session.delete(lotacao)
@@ -727,6 +754,9 @@ def setor_list():
 @bp.route('/setores/create', methods=['GET', 'POST'])
 @login_required
 def setor_create():
+    if not current_user.has_permission('create'):
+        flash('Você não tem permissão para criar setores.', 'error')
+        return redirect(url_for('main.setor_list'))
     form = SetorForm()
     if form.validate_on_submit():
         setor = Setor(nome=form.nome.data, descricao=form.descricao.data)
@@ -743,6 +773,9 @@ def setor_create():
 @bp.route('/setores/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def setor_edit(id):
+    if not current_user.has_permission('edit'):
+        flash('Você não tem permissão para editar setores.', 'error')
+        return redirect(url_for('main.setor_list'))
     setor = Setor.query.get_or_404(id)
     form = SetorForm(obj=setor)
     if form.validate_on_submit():
@@ -760,6 +793,9 @@ def setor_edit(id):
 @bp.route('/setores/delete/<int:id>', methods=['GET'])
 @login_required
 def setor_delete(id):
+    if not current_user.has_permission('delete'):
+        flash('Você não tem permissão para excluir setores.', 'error')
+        return redirect(url_for('main.setor_list'))
     setor = Setor.query.get_or_404(id)
     try:
         db.session.delete(setor)
@@ -836,6 +872,9 @@ def folha_list():
 @bp.route('/folhas/pessoa/create', methods=['POST'])
 @login_required
 def pessoa_folha_create():
+    if not current_user.has_permission('create'):
+        flash('Você não tem permissão para criar registros de folha de pagamento.', 'error')
+        return redirect(url_for('main.folha_list'))
     pessoa_id = request.form.get('pessoa_id')
     valor = request.form.get('valor', type=float)
     data_pagamento_str = request.form.get('data_pagamento')
@@ -886,6 +925,9 @@ def pessoa_folha_create():
 @bp.route('/folhas/delete/<int:id>', methods=['GET'])
 @login_required
 def folha_delete(id):
+    if not current_user.has_permission('delete'):
+        flash('Você não tem permissão para excluir folhas de pagamento.', 'error')
+        return redirect(url_for('main.folha_list'))
     folha = Folha.query.get_or_404(id)
     try:
         # Primeiro exclui todos os registros relacionados em pessoa_folha
@@ -903,6 +945,9 @@ def folha_delete(id):
 @bp.route('/folhas/pessoa/<int:pessoa_folha_id>/edit', methods=['GET', 'POST'])
 @login_required
 def pessoa_folha_edit(pessoa_folha_id):
+    if not current_user.has_permission('edit'):
+        flash('Você não tem permissão para editar registros de folha de pagamento.', 'error')
+        return redirect(url_for('main.folha_list'))
     pessoa_folha = PessoaFolha.query.get_or_404(pessoa_folha_id) 
     form = PessoaFolhaForm(obj=pessoa_folha)
     
@@ -948,6 +993,9 @@ def curso_list():
 @bp.route('/cursos/create', methods=['GET', 'POST'])
 @login_required
 def curso_create():
+    if not current_user.has_permission('create'):
+        flash('Você não tem permissão para criar cursos.', 'error')
+        return redirect(url_for('main.curso_list'))
     form = CursoForm()
     if form.validate_on_submit():
         curso = Curso(
@@ -968,6 +1016,9 @@ def curso_create():
 @bp.route('/cursos/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def curso_edit(id):
+    if not current_user.has_permission('edit'):
+        flash('Você não tem permissão para editar cursos.', 'error')
+        return redirect(url_for('main.curso_list'))
     curso = Curso.query.get_or_404(id)
     form = CursoForm(obj=curso)
     if form.validate_on_submit():
@@ -986,6 +1037,9 @@ def curso_edit(id):
 @bp.route('/cursos/delete/<int:id>', methods=['GET'])
 @login_required
 def curso_delete(id):
+    if not current_user.has_permission('delete'):
+        flash('Você não tem permissão para excluir cursos.', 'error')
+        return redirect(url_for('main.curso_list'))
     curso = Curso.query.get_or_404(id)
     try:
         db.session.delete(curso)
@@ -1028,6 +1082,9 @@ def capacitacao_list():
 @bp.route('/capacitacoes/create', methods=['GET', 'POST'])
 @login_required
 def capacitacao_create():
+    if not current_user.has_permission('create'):
+        flash('Você não tem permissão para criar capacitações.', 'error')
+        return redirect(url_for('main.capacitacao_list'))
     form = CapacitacaoForm()
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
     form.curso_id.choices = [(c.id, c.nome) for c in Curso.query.all()]
@@ -1052,6 +1109,9 @@ def capacitacao_create():
 @bp.route('/capacitacoes/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def capacitacao_edit(id):
+    if not current_user.has_permission('edit'):
+        flash('Você não tem permissão para editar capacitações.', 'error')
+        return redirect(url_for('main.capacitacao_list'))
     capacitacao = Capacitacao.query.get_or_404(id)
     form = CapacitacaoForm(obj=capacitacao)
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
@@ -1074,6 +1134,9 @@ def capacitacao_edit(id):
 @bp.route('/capacitacoes/delete/<int:id>', methods=['GET'])
 @login_required
 def capacitacao_delete(id):
+    if not current_user.has_permission('delete'):
+        flash('Você não tem permissão para excluir capacitações.', 'error')
+        return redirect(url_for('main.capacitacao_list'))
     capacitacao = Capacitacao.query.get_or_404(id)
     try:
         db.session.delete(capacitacao)
@@ -1110,6 +1173,9 @@ def termo_list():
 @bp.route('/termos/create', methods=['GET', 'POST'])
 @login_required
 def termo_create():
+    if not current_user.has_permission('create'):
+        flash('Você não tem permissão para criar termos.', 'error')
+        return redirect(url_for('main.termo_list'))
     form = TermoForm()
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
     if form.validate_on_submit():
@@ -1146,6 +1212,9 @@ def termo_create():
 @bp.route('/termos/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def termo_edit(id):
+    if not current_user.has_permission('edit'):
+        flash('Você não tem permissão para editar termos.', 'error')
+        return redirect(url_for('main.termo_list'))
     termo = Termo.query.get_or_404(id)
     form = TermoForm(obj=termo)
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
@@ -1187,6 +1256,9 @@ def termo_edit(id):
 @bp.route('/termos/delete/<int:id>', methods=['GET'])
 @login_required
 def termo_delete(id):
+    if not current_user.has_permission('delete'):
+        flash('Você não tem permissão para excluir termos.', 'error')
+        return redirect(url_for('main.termo_list'))
     termo = Termo.query.get_or_404(id)
     try:
         db.session.delete(termo)
@@ -1200,6 +1272,9 @@ def termo_delete(id):
 @bp.route('/termos/download/<int:id>')
 @login_required
 def termo_download(id):
+    if not current_user.has_permission('edit'):
+        flash('Você não tem permissão para baixar termos.', 'error')
+        return redirect(url_for('main.termo_list'))
     termo = Termo.query.get_or_404(id)
     if termo.arquivo:
         return send_from_directory(current_app.config['UPLOAD_FOLDER'], termo.arquivo, as_attachment=True)
@@ -1339,6 +1414,9 @@ def vacina_list():
 @bp.route('/vacina/create', methods=['GET', 'POST'])
 @login_required
 def vacina_create():
+    if not current_user.has_permission('create'):
+        flash('Você não tem permissão para criar registros de vacina.', 'error')
+        return redirect(url_for('main.vacina_list'))
     form = VacinaForm()
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
     
@@ -1359,6 +1437,9 @@ def vacina_create():
 @bp.route('/vacina/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def vacina_edit(id):
+    if not current_user.has_permission('edit'):
+        flash('Você não tem permissão para editar registros de vacina.', 'error')
+        return redirect(url_for('main.vacina_list'))
     vacina = Vacina.query.get_or_404(id)
     form = VacinaForm(obj=vacina)
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
@@ -1377,6 +1458,9 @@ def vacina_edit(id):
 @bp.route('/vacinas/delete/<int:id>', methods=['GET'])
 @login_required
 def vacina_delete(id):
+    if not current_user.has_permission('delete'):
+        flash('Você não tem permissão para excluir registros de vacina.', 'error')
+        return redirect(url_for('main.vacina_list'))
     vacina = Vacina.query.get_or_404(id)
     try:
         db.session.delete(vacina)
@@ -1418,6 +1502,9 @@ def exame_list():
 @bp.route('/exames/create', methods=['GET', 'POST'])
 @login_required
 def exame_create():
+    if not current_user.has_permission('create'):
+        flash('Você não tem permissão para criar registros de exames.', 'error')
+        return redirect(url_for('main.exame_list'))
     form = ExameForm()
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
     if form.validate_on_submit():
@@ -1454,11 +1541,14 @@ def exame_create():
 @bp.route('/exames/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def exame_edit(id):
+    if not current_user.has_permission('edit'):
+        flash('Você não tem permissão para editar registros de exames.', 'error')
+        return redirect(url_for('main.exame_list'))
     exame = Exame.query.get_or_404(id)
     form = ExameForm(obj=exame)
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
     if form.validate_on_submit():
-        tipo = request.form.get('outro_exame') if form.tipo.data == 'Outro' else form.tipo.data
+        tipo = request.form.get('outro_exame') if form.tipo.data == 'Outra' else form.tipo.data
         arquivo = form.upload.data
         
         if arquivo:
@@ -1495,6 +1585,9 @@ def exame_edit(id):
 @bp.route('/exames/delete/<int:id>', methods=['GET'])
 @login_required
 def exame_delete(id):
+    if not current_user.has_permission('delete'):
+        flash('Você não tem permissão para excluir registros de exames.', 'error')
+        return redirect(url_for('main.exame_list'))
     exame = Exame.query.get_or_404(id)
     # Remove o arquivo associado, se existir
     if exame.arquivo:
@@ -1514,6 +1607,9 @@ def exame_delete(id):
 @bp.route('/exames/download/<int:exame_id>', methods=['GET'])
 @login_required
 def download_exame(exame_id):
+    if not current_user.has_permission('edit'):
+        flash('Você não tem permissão para baixar exames.', 'error')
+        return redirect(url_for('main.exame_list'))
     exame = Exame.query.get_or_404(exame_id)
     if not exame.arquivo:
         flash('Nenhum arquivo associado a este exame.', 'error')
@@ -1555,6 +1651,9 @@ def atestado_list():
 @bp.route('/atestados/create', methods=['GET', 'POST'])
 @login_required
 def atestado_create():
+    if not current_user.has_permission('create'):
+        flash('Você não tem permissão para criar atestados.', 'error')
+        return redirect(url_for('main.atestado_list'))
     form = AtestadoForm()
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
     if form.validate_on_submit():
@@ -1592,6 +1691,9 @@ def atestado_create():
 @bp.route('/atestados/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def atestado_edit(id):
+    if not current_user.has_permission('edit'):
+        flash('Você não tem permissão para editar atestados.', 'error')
+        return redirect(url_for('main.atestado_list'))
     atestado = Atestado.query.get_or_404(id)
     form = AtestadoForm(obj=atestado)
     form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
@@ -1634,22 +1736,34 @@ def atestado_edit(id):
 @bp.route('/atestados/delete/<int:id>', methods=['GET'])
 @login_required
 def atestado_delete(id):
+    if not current_user.has_permission('delete'):
+        flash('Você não tem permissão para excluir atestados.', 'error')
+        return redirect(url_for('main.atestado_list'))
     atestado = Atestado.query.get_or_404(id)
-    db.session.delete(atestado)
-    db.session.commit()
-    flash('Atestado excluído com sucesso!', 'success')
+    try:
+        db.session.delete(atestado)
+        db.session.commit()
+        flash('Atestado excluído com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Erro ao excluir atestado: ' + str(e), 'error')
     return redirect(url_for('main.atestado_list'))
 
 @bp.route('/atestados/download/<int:atestado_id>', methods=['GET'])
 @login_required
 def download_atestado(atestado_id):
+    if not current_user.has_permission('edit'):
+        flash('Você não tem permissão para baixar atestados.', 'error')
+        return redirect(url_for('main.atestado_list'))
     atestado = Atestado.query.get_or_404(atestado_id)
     if not atestado.arquivo:
-        flash('Este atestado não possui arquivo anexado.', 'warning')
+        flash('Nenhum arquivo associado a este atestado.', 'error')
         return redirect(url_for('main.atestado_list'))
-    
-    upload_folder = current_app.config['UPLOAD_FOLDER']
-    return send_from_directory(upload_folder, atestado.arquivo, as_attachment=True)
+    try:
+        return send_from_directory(current_app.config['UPLOAD_FOLDER'], atestado.arquivo, as_attachment=True)
+    except FileNotFoundError:
+        flash('Arquivo não encontrado no servidor.', 'error')
+        return redirect(url_for('main.atestado_list'))
 
 # --- Relatório Completo ---
 @bp.route('/relatorio/completo', methods=['GET', 'POST'])

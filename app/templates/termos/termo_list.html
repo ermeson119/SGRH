@@ -61,14 +61,18 @@
                             {% endif %}
                         </td>
                         <td class="text-end">
+                            {% if current_user.has_permission('edit') %}
                             <a href="{{ url_for('main.termo_edit', id=termo.id) }}" class="btn btn-outline-primary btn-sm" title="Editar">
                                 <i class="bi bi-pencil"></i>
                                 <span class="visually-hidden">Editar</span>
                             </a>
+                            {% endif %}
+                            {% if current_user.has_permission('delete') %}
                             <a href="{{ url_for('main.termo_delete', id=termo.id) }}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir este termo?');">
                                 <i class="bi bi-trash"></i>
                                 <span class="visually-hidden">Excluir</span>
                             </a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% else %}
