@@ -16,7 +16,6 @@ function buscarResultados() {
     const form = document.getElementById('busca-form');
     const url = form.dataset.folhasUrl;
     const busca = document.getElementById('filtro').value;
-    const data = document.getElementById('data').value;
     const status = document.getElementById('status').value;
     const container = document.getElementById('resultados-container');
     
@@ -29,8 +28,13 @@ function buscarResultados() {
         </div>
     `;
     
+    // Constrói a URL com os parâmetros
+    const params = new URLSearchParams();
+    if (busca) params.append('busca', busca);
+    if (status) params.append('status', status);
+    
     // Faz a requisição AJAX
-    fetch(`${url}?busca=${encodeURIComponent(busca)}&data=${encodeURIComponent(data)}&status=${encodeURIComponent(status)}`, {
+    fetch(`${url}?${params.toString()}`, {
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
         }
@@ -73,7 +77,6 @@ function buscarResultados() {
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('busca-form');
     const filtro = document.getElementById('filtro');
-    const data = document.getElementById('data');
     const status = document.getElementById('status');
     
     // Usa debounce para limitar as requisições
@@ -81,7 +84,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Event listeners para mudanças nos campos
     filtro.addEventListener('input', buscarComDebounce);
-    data.addEventListener('change', buscarComDebounce);
     status.addEventListener('change', buscarComDebounce);
     
     // Previne o envio do formulário

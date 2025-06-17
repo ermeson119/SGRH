@@ -813,17 +813,19 @@ def setor_delete(id):
 def folha_list():
     page = request.args.get('page', 1, type=int)
     busca = request.args.get('busca', '')
-    mes_ano = request.args.get('mes_ano', '')
     status = request.args.get('status', '')
     per_page = 12
     
     query = Folha.query
     
     if busca:
-        query = query.filter(Folha.mes_ano.ilike(f'%{busca}%'))
-    
-    if mes_ano:
-        query = query.filter(Folha.mes_ano == mes_ano)
+        # Busca por texto pode ser no mês/ano ou na observação
+        query = query.filter(
+            db.or_(
+                Folha.mes_ano.ilike(f'%{busca}%'),
+                Folha.observacao.ilike(f'%{busca}%')
+            )
+        )
     
     if status:
         query = query.filter(Folha.status == status)
@@ -834,14 +836,12 @@ def folha_list():
         return render_template('folha/folha_list.html', 
                              folhas=pagination.items, 
                              busca=busca, 
-                             mes_ano=mes_ano,
                              status=status,
                              pagination=pagination)
     
     return render_template('folha/folha_list.html', 
                          folhas=pagination.items, 
                          busca=busca, 
-                         mes_ano=mes_ano,
                          status=status,
                          pagination=pagination)
 
@@ -2034,15 +2034,18 @@ def lotacao_relatorio_pdf():
 @login_required
 def folha_relatorio_pdf():
     busca = request.args.get('busca', '')
-    mes_ano = request.args.get('mes_ano', '')
     page = request.args.get('page', 1, type=int)
 
     # Build query
     query = Folha.query
     if busca:
-        query = query.filter(Folha.mes_ano.ilike(f'%{busca}%'))
-    if mes_ano:
-        query = query.filter(Folha.mes_ano == mes_ano)
+        # Busca por texto pode ser no mês/ano ou na observação
+        query = query.filter(
+            db.or_(
+                Folha.mes_ano.ilike(f'%{busca}%'),
+                Folha.observacao.ilike(f'%{busca}%')
+            )
+        )
 
     # Pagination
     per_page = 10
@@ -2066,13 +2069,8 @@ def folha_relatorio_pdf():
     subtitle_style.fontSize = 10
     subtitle = Paragraph(f"Gerado em: {datetime.now().strftime('%d de %B de %Y')}", subtitle_style)
     elements.append(subtitle)
-    if busca or mes_ano:
-        filters = []
-        if busca:
-            filters.append(f"Busca: '{busca}'")
-        if mes_ano:
-            filters.append(f"Mês/Ano: {mes_ano}")
-        subtitle = Paragraph(f"Filtros: {', '.join(filters)}", subtitle_style)
+    if busca:
+        subtitle = Paragraph(f"Filtro: '{busca}'", subtitle_style)
         elements.append(subtitle)
     elements.append(Spacer(1, 1*cm))
 
@@ -2121,11 +2119,11 @@ def folha_relatorio_pdf():
     try:
         doc.build(elements)
         buffer.seek(0)
-        return send_file(buffer, as_attachment=True, download_name='relatorio_capacitacoes.pdf', mimetype='application/pdf')
+        return send_file(buffer, as_attachment=True, download_name='relatorio_folhas.pdf', mimetype='application/pdf')
     except Exception as e:
         flash(f"Erro ao gerar o PDF: {str(e)}", "danger")
-        return redirect(url_for('main.capacitacao_relatorio', curso=curso_id, data_inicio=data_inicio, data_fim=data_fim))
-    
+        return redirect(url_for('main.folha_relatorio', busca=busca, page=page))
+
 @bp.route('/relatorio/vacina/pdf')
 @login_required
 def vacina_relatorio_pdf():
@@ -2246,17 +2244,19 @@ def capacitacao_relatorio():
 @login_required
 def folha_relatorio():
     busca = request.args.get('busca', '')
-    mes_ano = request.args.get('mes_ano', '')
     page = request.args.get('page', 1, type=int)
     per_page = 12
 
     query = Folha.query.order_by(Folha.data.desc())
     
     if busca:
-        query = query.filter(Folha.mes_ano.ilike(f'%{busca}%'))
-    
-    if mes_ano:
-        query = query.filter(Folha.mes_ano == mes_ano)
+        # Busca por texto pode ser no mês/ano ou na observação
+        query = query.filter(
+            db.or_(
+                Folha.mes_ano.ilike(f'%{busca}%'),
+                Folha.observacao.ilike(f'%{busca}%')
+            )
+        )
 
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     folhas = pagination.items
@@ -2266,7 +2266,6 @@ def folha_relatorio():
         folhas=folhas,
         pagination=pagination,
         busca=busca,
-        mes_ano=mes_ano,
         now=datetime.now()
     )
 
@@ -2328,20 +2327,28 @@ def folha_relatorio_xlsx():
     from io import BytesIO
     import pandas as pd
     busca = request.args.get('busca', '')
+    
     query = Folha.query.order_by(Folha.data.desc())
     if busca:
-        query = query.join(Folha.pessoa_folhas).join(PessoaFolha.pessoa).filter(Pessoa.nome.ilike(f'%{busca}%'))
+        # Busca por texto pode ser no mês/ano ou na observação
+        query = query.filter(
+            db.or_(
+                Folha.mes_ano.ilike(f'%{busca}%'),
+                Folha.observacao.ilike(f'%{busca}%')
+            )
+        )
+    
     folhas = query.all()
     data = []
     for folha in folhas:
-        for pf in folha.pessoa_folhas:
-            data.append({
-                'Data': folha.data.strftime('%d/%m/%Y'),
-                'Funcionário': pf.pessoa.nome,
-                'Valor': pf.valor,
-                'Data Pagamento': pf.data_pagamento.strftime('%d/%m/%Y') if pf.data_pagamento else '-',
-                'Status': pf.status
-            })
+        data.append({
+            'Mês/Ano': folha.mes_ano,
+            'Data': folha.data.strftime('%d/%m/%Y'),
+            'Valor Total': folha.valor_total,
+            'Status': folha.status.title(),
+            'Qtd. Pessoas': len(folha.pessoa_folhas),
+            'Observação': folha.observacao or ''
+        })
     df = pd.DataFrame(data)
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:

@@ -5,11 +5,11 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Relatório de Folha de Pagamento</h2>
         <div>
-            <a href="{{ url_for('main.folha_relatorio_pdf', busca=busca, mes_ano=mes_ano, page=pagination.page) }}" class="btn btn-danger">
+            <a href="{{ url_for('main.folha_relatorio_pdf', busca=busca, page=pagination.page) }}" class="btn btn-danger">
                 <i class="fas fa-file-pdf"></i> Imprimir
             </a>
 
-            <a href="{{ url_for('main.folha_relatorio_xlsx', busca=busca, mes_ano=mes_ano) }}" class="btn btn-success">
+            <a href="{{ url_for('main.folha_relatorio_xlsx', busca=busca) }}" class="btn btn-success">
                 <i class="fas fa-file-excel"></i> Exportar XLSX
             </a>
 
@@ -21,14 +21,24 @@
     
     <form method="get" class="mb-4">
         <div class="row g-3">
-            <div class="col-md-4">
-                <input type="text" name="busca" class="form-control" placeholder="Buscar por mês/ano..." value="{{ busca|default('') }}">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-light">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" name="busca" class="form-control" placeholder="Buscar por mês/ano (ex: 2024-01) ou texto..." value="{{ busca|default('') }}">
+                </div>
+                <small class="form-text text-muted">Digite o mês/ano Ex: 2025-01</small>
             </div>
-            <div class="col-md-4">
-                <input type="month" name="mes_ano" class="form-control" value="{{ mes_ano|default('') }}">
-            </div>
-            <div class="col-md-4">
-                <button class="btn btn-dark" type="submit">Buscar</button>
+            <div class="col-md-6">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-dark" type="submit">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                    <a href="{{ url_for('main.folha_relatorio') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-clockwise"></i> Limpar
+                    </a>
+                </div>
             </div>
         </div>
     </form>
@@ -85,7 +95,7 @@
         <ul class="pagination justify-content-center">
             {% if pagination.has_prev %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('main.folha_relatorio', page=pagination.prev_num, busca=busca, mes_ano=mes_ano) }}">Anterior</a>
+                    <a class="page-link" href="{{ url_for('main.folha_relatorio', page=pagination.prev_num, busca=busca) }}">Anterior</a>
                 </li>
             {% else %}
                 <li class="page-item disabled"><span class="page-link">Anterior</span></li>
@@ -93,13 +103,13 @@
 
             {% for p in range(1, pagination.pages + 1) %}
                 <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('main.folha_relatorio', page=p, busca=busca, mes_ano=mes_ano) }}">{{ p }}</a>
+                    <a class="page-link" href="{{ url_for('main.folha_relatorio', page=p, busca=busca) }}">{{ p }}</a>
                 </li>
             {% endfor %}
 
             {% if pagination.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('main.folha_relatorio', page=pagination.next_num, busca=busca, mes_ano=mes_ano) }}">Próximo</a>
+                    <a class="page-link" href="{{ url_for('main.folha_relatorio', page=pagination.next_num, busca=busca) }}">Próximo</a>
                 </li>
             {% else %}
                 <li class="page-item disabled"><span class="page-link">Próximo</span></li>
