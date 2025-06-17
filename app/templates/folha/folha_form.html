@@ -28,11 +28,20 @@
                         </div>
 
                         <div class="mb-3">
-                            {{ form.pessoa_ids.label(class="form-label") }}
-                            {{ form.pessoa_ids(class="form-select", multiple="multiple") }}
-                            <small class="form-text text-muted">Segure Ctrl (ou Command no Mac) para selecionar múltiplas pessoas.</small>
-                            {% if form.pessoa_ids.errors %}
-                                {% for error in form.pessoa_ids.errors %}
+                            {{ form.status.label(class="form-label") }}
+                            {{ form.status(class="form-select") }}
+                            {% if form.status.errors %}
+                                {% for error in form.status.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.observacao.label(class="form-label") }}
+                            {{ form.observacao(class="form-control", rows=3) }}
+                            {% if form.observacao.errors %}
+                                {% for error in form.observacao.errors %}
                                     <span class="text-danger">{{ error }}</span>
                                 {% endfor %}
                             {% endif %}

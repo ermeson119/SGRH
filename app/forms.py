@@ -71,10 +71,28 @@ class SetorForm(FlaskForm):
 
 class FolhaForm(FlaskForm):
     data = DateField('Data', validators=[DataRequired()], format='%Y-%m-%d')
-    pessoa_ids = SelectMultipleField('Pessoas', coerce=int, validators=[DataRequired()])
+    status = SelectField('Status', choices=[
+        ('aberta', 'Aberta'),
+        ('fechada', 'Fechada'),
+        ('cancelada', 'Cancelada')
+    ], validators=[DataRequired()])
+    observacao = TextAreaField('Observação')
     submit = SubmitField('Salvar')
 
 class PessoaFolhaForm(FlaskForm):
+    folha_id = SelectField('Folha', coerce=int, validators=[DataRequired()])
+    pessoa_id = SelectField('Pessoa', coerce=int, validators=[DataRequired()])
+    valor = FloatField('Valor', validators=[DataRequired()])
+    data_pagamento = DateField('Data de Pagamento', format='%Y-%m-%d')
+    status = SelectField('Status', choices=[
+        ('pendente', 'Pendente'),
+        ('pago', 'Pago'),
+        ('cancelado', 'Cancelado')
+    ])
+    observacao = TextAreaField('Observação')
+    submit = SubmitField('Salvar')
+
+class EditarPessoaFolhaForm(FlaskForm):
     valor = FloatField('Valor', validators=[DataRequired()])
     data_pagamento = DateField('Data de Pagamento', format='%Y-%m-%d')
     status = SelectField('Status', choices=[

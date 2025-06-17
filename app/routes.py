@@ -4,7 +4,7 @@ from app import db, oauth
 from app.models import User, Pessoa,Lotacao, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Curso, RegistrationRequest, PessoaFolha
 from app.forms import (
     LoginForm, RegisterForm, PessoaForm, LotacaoForm, ProfissaoForm, SetorForm, FolhaForm,
-    CapacitacaoForm,TermoRecusaForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, CursoForm, ApproveRequestForm, PessoaFolhaForm,
+    CapacitacaoForm,TermoRecusaForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, CursoForm, ApproveRequestForm, PessoaFolhaForm, EditarPessoaFolhaForm,
     TermoRecusaSaudeOcupacionalForm, TermoASOForm, UserPermissionsForm, RelatorioCompletoForm
 )
 from sqlalchemy.orm import joinedload
@@ -813,135 +813,149 @@ def setor_delete(id):
 def folha_list():
     page = request.args.get('page', 1, type=int)
     busca = request.args.get('busca', '')
-    data = request.args.get('data', '')
+    mes_ano = request.args.get('mes_ano', '')
     status = request.args.get('status', '')
     per_page = 12
     
-    query = Folha.query.options(joinedload(Folha.pessoa_folhas).joinedload(PessoaFolha.pessoa))
+    query = Folha.query
     
     if busca:
-        query = query.join(Folha.pessoa_folhas).join(PessoaFolha.pessoa).filter(
-            Pessoa.nome.ilike(f'%{busca}%')
-        )
+        query = query.filter(Folha.mes_ano.ilike(f'%{busca}%'))
     
-    if data:
-        try:
-            data_obj = datetime.strptime(data, '%Y-%m-%d').date()
-            
-            # Busca por mês e ano na data da folha OU na data de pagamento
-            query = query.join(Folha.pessoa_folhas).filter(
-                db.or_(
-                    # Busca na data da folha
-                    db.and_(
-                        db.extract('year', Folha.data) == data_obj.year,
-                        db.extract('month', Folha.data) == data_obj.month
-                    ),
-                    # Busca na data de pagamento
-                    db.and_(
-                        db.extract('year', PessoaFolha.data_pagamento) == data_obj.year,
-                        db.extract('month', PessoaFolha.data_pagamento) == data_obj.month
-                    )
-                )
-            )
-        except ValueError as e:
-            pass
+    if mes_ano:
+        query = query.filter(Folha.mes_ano == mes_ano)
     
     if status:
-        # Busca por status específico
-        query = query.join(Folha.pessoa_folhas).filter(PessoaFolha.status == status.lower())
+        query = query.filter(Folha.status == status)
     
     pagination = query.order_by(Folha.data.desc()).paginate(page=page, per_page=per_page, error_out=False)
-    pessoas = Pessoa.query.order_by(Pessoa.nome).all()
     
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return render_template('folha/folha_list.html', 
                              folhas=pagination.items, 
-                             pessoas=pessoas, 
                              busca=busca, 
-                             data=data,
+                             mes_ano=mes_ano,
                              status=status,
                              pagination=pagination)
     
     return render_template('folha/folha_list.html', 
                          folhas=pagination.items, 
-                         pessoas=pessoas, 
                          busca=busca, 
-                         data=data,
+                         mes_ano=mes_ano,
                          status=status,
                          pagination=pagination)
 
-@bp.route('/folhas/pessoa/create', methods=['POST'])
+@bp.route('/folhas/create', methods=['GET', 'POST'])
+@login_required
+def folha_create():
+    if not current_user.has_permission('create'):
+        flash('Você não tem permissão para criar folhas de pagamento.', 'error')
+        return redirect(url_for('main.folha_list'))
+    
+    form = FolhaForm()
+    if form.validate_on_submit():
+        folha = Folha(
+            data=form.data.data,
+            mes_ano=form.data.data.strftime('%Y-%m'),
+            status=form.status.data,
+            observacao=form.observacao.data
+        )
+        db.session.add(folha)
+        try:
+            db.session.commit()
+            flash('Folha criada com sucesso!', 'success')
+            return redirect(url_for('main.folha_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao criar folha: {str(e)}', 'error')
+    
+    return render_template('folha/folha_form.html', form=form)
+
+@bp.route('/folhas/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def folha_edit(id):
+    if not current_user.has_permission('edit'):
+        flash('Você não tem permissão para editar folhas de pagamento.', 'error')
+        return redirect(url_for('main.folha_list'))
+    
+    folha = Folha.query.get_or_404(id)
+    form = FolhaForm(obj=folha)
+    
+    if form.validate_on_submit():
+        folha.data = form.data.data
+        folha.mes_ano = form.data.data.strftime('%Y-%m')
+        folha.status = form.status.data
+        folha.observacao = form.observacao.data
+        
+        try:
+            db.session.commit()
+            flash('Folha atualizada com sucesso!', 'success')
+            return redirect(url_for('main.folha_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao atualizar folha: {str(e)}', 'error')
+    
+    return render_template('folha/folha_form.html', form=form, folha=folha)
+
+@bp.route('/folhas/<int:folha_id>/pessoas')
+@login_required
+def folha_pessoas(folha_id):
+    folha = Folha.query.get_or_404(folha_id)
+    return render_template('folha/folha_pessoas.html', folha=folha)
+
+@bp.route('/folhas/pessoa/create', methods=['GET', 'POST'])
 @login_required
 def pessoa_folha_create():
     if not current_user.has_permission('create'):
         flash('Você não tem permissão para criar registros de folha de pagamento.', 'error')
         return redirect(url_for('main.folha_list'))
-    pessoa_id = request.form.get('pessoa_id')
-    valor = request.form.get('valor', type=float)
-    data_pagamento_str = request.form.get('data_pagamento')
-    status = request.form.get('status')
-    observacao = request.form.get('observacao')
-
-
-    if not all([pessoa_id, valor, data_pagamento_str, status]):
-        flash('Todos os campos são obrigatórios.', 'error')
-        return redirect(url_for('main.folha_list'))
     
-    try:
- 
-        data_pagamento = datetime.strptime(data_pagamento_str, '%Y-%m-%d').date()
-        
-        
-        folha = Folha(data=datetime.now().date())
-        db.session.add(folha)
-        db.session.flush()  
-        
-        pessoa = Pessoa.query.get(int(pessoa_id))
-        if not pessoa:
-            flash('Pessoa não encontrada.', 'error')
-            return redirect(url_for('main.folha_list'))
-        
-        pessoa_folha = PessoaFolha(
-            pessoa_id=int(pessoa_id),  
-            folha_id=folha.id,         
-            valor=float(valor),        
-            data_pagamento=data_pagamento,
-            status=status,
-            observacao=observacao
-        )
-        
-        db.session.add(pessoa_folha)
-        db.session.commit()
-        
-        flash('Pagamento criado com sucesso!', 'success')
-    except ValueError as e:
-        db.session.rollback()
-        flash('Data inválida ou valor inválido. Use o formato AAAA-MM-DD para a data.', 'error')
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Erro ao criar pagamento: {str(e)}', 'error')
+    folha_id = request.args.get('folha_id', type=int)
+    form = PessoaFolhaForm()
     
-    return redirect(url_for('main.folha_list'))
-
-@bp.route('/folhas/delete/<int:id>', methods=['GET'])
-@login_required
-def folha_delete(id):
-    if not current_user.has_permission('delete'):
-        flash('Você não tem permissão para excluir folhas de pagamento.', 'error')
-        return redirect(url_for('main.folha_list'))
-    folha = Folha.query.get_or_404(id)
-    try:
-        # Primeiro exclui todos os registros relacionados em pessoa_folha
-        PessoaFolha.query.filter_by(folha_id=id).delete()
+    # Preencher as opções dos selects
+    form.folha_id.choices = [(f.id, f.mes_ano) for f in Folha.query.order_by(Folha.data.desc()).all()]
+    form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.order_by(Pessoa.nome).all()]
+    
+    # Se folha_id foi passado, pré-selecionar
+    if folha_id:
+        form.folha_id.data = folha_id
+    
+    if form.validate_on_submit():
+        # Verificar se a pessoa já está na folha
+        existing = PessoaFolha.query.filter_by(
+            folha_id=form.folha_id.data,
+            pessoa_id=form.pessoa_id.data
+        ).first()
         
-        # Depois exclui a folha
-        db.session.delete(folha)
-        db.session.commit()
-        flash('Folha excluída com sucesso!', 'success')
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Erro ao excluir folha: {str(e)}', 'error')
-    return redirect(url_for('main.folha_list'))
+        if existing:
+            flash('Esta pessoa já está cadastrada nesta folha.', 'error')
+        else:
+            pessoa_folha = PessoaFolha(
+                folha_id=form.folha_id.data,
+                pessoa_id=form.pessoa_id.data,
+                valor=form.valor.data,
+                data_pagamento=form.data_pagamento.data,
+                status=form.status.data,
+                observacao=form.observacao.data
+            )
+            
+            db.session.add(pessoa_folha)
+            
+            try:
+                db.session.commit()
+                # Recalcular valor total da folha
+                folha = Folha.query.get(form.folha_id.data)
+                folha.calcular_valor_total()
+                db.session.commit()
+                
+                flash('Pessoa adicionada à folha com sucesso!', 'success')
+                return redirect(url_for('main.folha_pessoas', folha_id=form.folha_id.data))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Erro ao adicionar pessoa à folha: {str(e)}', 'error')
+    
+    return render_template('folha/pessoa_folha_form.html', form=form)
 
 @bp.route('/folhas/pessoa/<int:pessoa_folha_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -949,8 +963,9 @@ def pessoa_folha_edit(pessoa_folha_id):
     if not current_user.has_permission('edit'):
         flash('Você não tem permissão para editar registros de folha de pagamento.', 'error')
         return redirect(url_for('main.folha_list'))
-    pessoa_folha = PessoaFolha.query.get_or_404(pessoa_folha_id) 
-    form = PessoaFolhaForm(obj=pessoa_folha)
+    
+    pessoa_folha = PessoaFolha.query.get_or_404(pessoa_folha_id)
+    form = EditarPessoaFolhaForm(obj=pessoa_folha)
     
     if form.validate_on_submit():
         pessoa_folha.valor = form.valor.data
@@ -960,13 +975,62 @@ def pessoa_folha_edit(pessoa_folha_id):
         
         try:
             db.session.commit()
+            # Recalcular valor total da folha
+            pessoa_folha.folha.calcular_valor_total()
+            db.session.commit()
+            
             flash('Pagamento atualizado com sucesso!', 'success')
-            return redirect(url_for('main.folha_list'))
+            return redirect(url_for('main.folha_pessoas', folha_id=pessoa_folha.folha_id))
         except Exception as e:
             db.session.rollback()
             flash(f'Erro ao atualizar pagamento: {str(e)}', 'error')
     
     return render_template('folha/pessoa_folha_form.html', form=form, pessoa_folha=pessoa_folha)
+
+@bp.route('/folhas/pessoa/<int:pessoa_folha_id>/delete', methods=['GET'])
+@login_required
+def pessoa_folha_delete(pessoa_folha_id):
+    if not current_user.has_permission('delete'):
+        flash('Você não tem permissão para excluir registros de folha de pagamento.', 'error')
+        return redirect(url_for('main.folha_list'))
+    
+    pessoa_folha = PessoaFolha.query.get_or_404(pessoa_folha_id)
+    folha_id = pessoa_folha.folha_id
+    
+    try:
+        db.session.delete(pessoa_folha)
+        db.session.commit()
+        
+        # Recalcular valor total da folha
+        folha = Folha.query.get(folha_id)
+        folha.calcular_valor_total()
+        db.session.commit()
+        
+        flash('Pessoa removida da folha com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao remover pessoa da folha: {str(e)}', 'error')
+    
+    return redirect(url_for('main.folha_pessoas', folha_id=folha_id))
+
+@bp.route('/folhas/delete/<int:id>', methods=['GET'])
+@login_required
+def folha_delete(id):
+    if not current_user.has_permission('delete'):
+        flash('Você não tem permissão para excluir folhas de pagamento.', 'error')
+        return redirect(url_for('main.folha_list'))
+    
+    folha = Folha.query.get_or_404(id)
+    try:
+        # A exclusão em cascata será feita automaticamente devido ao cascade="all, delete-orphan"
+        db.session.delete(folha)
+        db.session.commit()
+        flash('Folha excluída com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao excluir folha: {str(e)}', 'error')
+    
+    return redirect(url_for('main.folha_list'))
 
 # --- CRUD Curso ---
 @bp.route('/cursos', methods=['GET'])
@@ -1970,17 +2034,20 @@ def lotacao_relatorio_pdf():
 @login_required
 def folha_relatorio_pdf():
     busca = request.args.get('busca', '')
+    mes_ano = request.args.get('mes_ano', '')
     page = request.args.get('page', 1, type=int)
 
     # Build query
-    query = PessoaFolha.query.join(Folha).join(Pessoa)
+    query = Folha.query
     if busca:
-        query = query.filter(Pessoa.nome.ilike(f'%{busca}%'))
+        query = query.filter(Folha.mes_ano.ilike(f'%{busca}%'))
+    if mes_ano:
+        query = query.filter(Folha.mes_ano == mes_ano)
 
-    # Pagination (assuming same logic as HTML route)
-    per_page = 10  # Adjust based on your app's pagination settings
-    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-    pessoa_folhas = pagination.items
+    # Pagination
+    per_page = 10
+    pagination = query.order_by(Folha.data.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    folhas = pagination.items
 
     # PDF setup
     buffer = BytesIO()
@@ -1991,7 +2058,7 @@ def folha_relatorio_pdf():
     styles = getSampleStyleSheet()
     title_style = styles['Heading1']
     title_style.alignment = 1
-    title = Paragraph("Relatório de Folha de Pagamento", title_style)
+    title = Paragraph("Relatório de Folhas de Pagamento", title_style)
     elements.append(title)
 
     subtitle_style = styles['Normal']
@@ -1999,151 +2066,29 @@ def folha_relatorio_pdf():
     subtitle_style.fontSize = 10
     subtitle = Paragraph(f"Gerado em: {datetime.now().strftime('%d de %B de %Y')}", subtitle_style)
     elements.append(subtitle)
-    if busca:
-        subtitle = Paragraph(f"Filtro: Nome contendo '{busca}'", subtitle_style)
-        elements.append(subtitle)
-    elements.append(Spacer(1, 1*cm))
-
-    # Table data
-    data = [['Data', 'Nome', 'Valor', 'Data Pagamento']]
-    for pessoa_folha in pessoa_folhas:
-        data.append([
-            pessoa_folha.folha.data.strftime('%d/%m/%Y'),
-            pessoa_folha.pessoa.nome,
-            f"R$ {pessoa_folha.valor:.2f}",
-            pessoa_folha.data_pagamento.strftime('%d/%m/%Y') if pessoa_folha.data_pagamento else '-'
-        ])
-
-    # Table styling
-    col_widths = [3*cm, 8*cm, 3*cm, 3*cm]
-    table = Table(data, colWidths=col_widths)
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.black),
-        ('BOX', (0, 0), (-1, -1), 1, colors.black),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('LEFTPADDING', (0, 0), (-1, -1), 4),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-    ]))
-
-    elements.append(table)
-    elements.append(Spacer(1, 1*cm))
-
-    # Footer
-    footer_style = styles['Normal']
-    footer_style.fontSize = 10
-    footer = Paragraph(f"Total de registros: {len(pessoa_folhas)} (Página {page} de {pagination.pages})", footer_style)
-    elements.append(footer)
-
-    # Generate PDF
-    try:
-        doc.build(elements)
-        buffer.seek(0)
-        return send_file(buffer, as_attachment=True, download_name='relatorio_folha.pdf', mimetype='application/pdf')
-    except Exception as e:
-        flash(f"Erro ao gerar o PDF: {str(e)}", "danger")
-        return redirect(url_for('main.folha_relatorio', busca=busca, page=page))
-
-
-@bp.route('/relatorio/capacitacao/pdf')
-@login_required
-def capacitacao_relatorio_pdf():
-    curso_id = request.args.get('curso', type=int)
-    data_inicio = request.args.get('data_inicio')
-    data_fim = request.args.get('data_fim')
-
-    # Build query
-    query = Capacitacao.query.join(Pessoa).join(Curso)
-    if curso_id:
-        query = query.filter(Capacitacao.curso_id == curso_id)
-    if data_inicio:
-        try:
-            data_inicio_dt = datetime.strptime(data_inicio, '%Y-%m-%d')
-            query = query.filter(Capacitacao.data >= data_inicio_dt)
-        except ValueError:
-            flash("Formato de data inicial inválido.", "danger")
-            return redirect(url_for('main.capacitacao_relatorio'))
-    if data_fim:
-        try:
-            data_fim_dt = datetime.strptime(data_fim, '%Y-%m-%d')
-            query = query.filter(
-                or_(
-                    Capacitacao.data_fim <= data_fim_dt,
-                    Capacitacao.data_fim.is_(None)
-                )
-            )
-        except ValueError:
-            flash("Formato de data final inválido.", "danger")
-            return redirect(url_for('main.capacitacao_relatorio'))
-
-    capacitacoes = query.all()
-
-    # PDF setup
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=2*cm, bottomMargin=2*cm, leftMargin=2*cm, rightMargin=2*cm)
-    elements = []
-
-    # Header
-    styles = getSampleStyleSheet()
-    title_style = styles['Heading1']
-    title_style.alignment = 1
-    title = Paragraph("Relatório de Capacitações", title_style)
-    elements.append(title)
-
-    subtitle_style = styles['Normal']
-    subtitle_style.alignment = 1
-    subtitle_style.fontSize = 10
-    subtitle = Paragraph(f"Gerado em: {datetime.now().strftime('%d de %B de %Y')}", subtitle_style)
-    elements.append(subtitle)
-    if curso_id or data_inicio or data_fim:
+    if busca or mes_ano:
         filters = []
-        if curso_id:
-            curso = Curso.query.get(curso_id)
-            filters.append(f"Curso: {curso.nome if curso else 'Inválido'}")
-        if data_inicio:
-            filters.append(f"Data Início: {data_inicio}")
-        if data_fim:
-            filters.append(f"Data Fim: {data_fim}")
+        if busca:
+            filters.append(f"Busca: '{busca}'")
+        if mes_ano:
+            filters.append(f"Mês/Ano: {mes_ano}")
         subtitle = Paragraph(f"Filtros: {', '.join(filters)}", subtitle_style)
         elements.append(subtitle)
     elements.append(Spacer(1, 1*cm))
 
-    # Summary
-    summary_style = styles['Normal']
-    summary_style.fontSize = 10
-    total_capacitacoes = len(capacitacoes)
-    total_cursos = len(set(c.curso_id for c in capacitacoes))
-    total_pessoas = len(set(c.pessoa_id for c in capacitacoes))
-    summary = Paragraph(
-        f"Total de Capacitações: {total_capacitacoes} | "
-        f"Total de Cursos: {total_cursos} | "
-        f"Total de Funcionários: {total_pessoas}",
-        summary_style
-    )
-    elements.append(summary)
-    elements.append(Spacer(1, 0.5*cm))
-
     # Table data
-    data = [['Funcionário', 'Curso', 'Descrição', 'Data Início', 'Data Fim']]
-    for capacitacao in capacitacoes:
+    data = [['Mês/Ano', 'Data', 'Valor Total', 'Status', 'Qtd. Pessoas']]
+    for folha in folhas:
         data.append([
-            capacitacao.pessoa.nome,
-            capacitacao.curso.nome,
-            capacitacao.descricao or '-',
-            capacitacao.data.strftime('%d/%m/%Y'),
-            capacitacao.data_fim.strftime('%d/%m/%Y') if capacitacao.data_fim else 'Em andamento'
+            folha.mes_ano,
+            folha.data.strftime('%d/%m/%Y'),
+            f"R$ {folha.valor_total:.2f}",
+            folha.status.title(),
+            str(len(folha.pessoa_folhas))
         ])
 
     # Table styling
-    col_widths = [5*cm, 4*cm, 4*cm, 3*cm, 3*cm]
+    col_widths = [3*cm, 3*cm, 4*cm, 3*cm, 3*cm]
     table = Table(data, colWidths=col_widths)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
@@ -2168,7 +2113,8 @@ def capacitacao_relatorio_pdf():
     # Footer
     footer_style = styles['Normal']
     footer_style.fontSize = 10
-    footer = Paragraph(f"Total de registros: {len(capacitacoes)}", footer_style)
+    total_valor = sum(f.valor_total for f in folhas)
+    footer = Paragraph(f"Total de folhas: {len(folhas)} | Valor total: R$ {total_valor:.2f} (Página {page} de {pagination.pages})", footer_style)
     elements.append(footer)
 
     # Generate PDF
@@ -2300,12 +2246,17 @@ def capacitacao_relatorio():
 @login_required
 def folha_relatorio():
     busca = request.args.get('busca', '')
+    mes_ano = request.args.get('mes_ano', '')
     page = request.args.get('page', 1, type=int)
     per_page = 12
 
     query = Folha.query.order_by(Folha.data.desc())
+    
     if busca:
-        query = query.join(Folha.pessoa_folhas).join(PessoaFolha.pessoa).filter(Pessoa.nome.ilike(f'%{busca}%'))
+        query = query.filter(Folha.mes_ano.ilike(f'%{busca}%'))
+    
+    if mes_ano:
+        query = query.filter(Folha.mes_ano == mes_ano)
 
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     folhas = pagination.items
@@ -2315,6 +2266,7 @@ def folha_relatorio():
         folhas=folhas,
         pagination=pagination,
         busca=busca,
+        mes_ano=mes_ano,
         now=datetime.now()
     )
 

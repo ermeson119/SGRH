@@ -5,11 +5,11 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Relatório de Folha de Pagamento</h2>
         <div>
-            <a href="{{ url_for('main.folha_relatorio_pdf', busca=busca, page=pagination.page) }}" class="btn btn-danger">
+            <a href="{{ url_for('main.folha_relatorio_pdf', busca=busca, mes_ano=mes_ano, page=pagination.page) }}" class="btn btn-danger">
                 <i class="fas fa-file-pdf"></i> Imprimir
             </a>
 
-            <a href="{{ url_for('main.folha_relatorio_xlsx', busca=busca) }}" class="btn btn-success">
+            <a href="{{ url_for('main.folha_relatorio_xlsx', busca=busca, mes_ano=mes_ano) }}" class="btn btn-success">
                 <i class="fas fa-file-excel"></i> Exportar XLSX
             </a>
 
@@ -18,32 +18,57 @@
             </a>
         </div>
     </div>
-    <form method="get" class="mb-4 d-flex" style="max-width: 400px;">
-        <input type="text" name="busca" class="form-control me-2" placeholder="Buscar por nome..." value="{{ busca|default('') }}">
-        <button class="btn btn-dark" type="submit">Buscar</button>
+    
+    <form method="get" class="mb-4">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <input type="text" name="busca" class="form-control" placeholder="Buscar por mês/ano..." value="{{ busca|default('') }}">
+            </div>
+            <div class="col-md-4">
+                <input type="month" name="mes_ano" class="form-control" value="{{ mes_ano|default('') }}">
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-dark" type="submit">Buscar</button>
+            </div>
+        </div>
     </form>
+    
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-striped table-hover">
                     <thead>
                         <tr>
+                            <th>Mês/Ano</th>
                             <th>Data</th>
-                            <th>Nome</th>
-                            <th>Valor</th>
-                            <th>Data Pagamento</th>
+                            <th>Valor Total</th>
+                            <th>Status</th>
+                            <th>Qtd. Pessoas</th>
+                            <th>Detalhes</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for folha in folhas %}
-                            {% for pessoa_folha in folha.pessoa_folhas %}
-                            <tr>
-                                <td>{{ folha.data.strftime('%d/%m/%Y') }}</td>
-                                <td>{{ pessoa_folha.pessoa.nome }}</td>
-                                <td>R$ {{ '%.2f'|format(pessoa_folha.valor) }}</td>
-                                <td>{{ pessoa_folha.data_pagamento.strftime('%d/%m/%Y') if pessoa_folha.data_pagamento else '-' }}</td>
-                            </tr>
-                            {% endfor %}
+                        <tr>
+                            <td>{{ folha.mes_ano }}</td>
+                            <td>{{ folha.data.strftime('%d/%m/%Y') }}</td>
+                            <td>R$ {{ '%.2f'|format(folha.valor_total) }}</td>
+                            <td>
+                                {% if folha.status == 'fechada' %}
+                                    <span class="badge bg-success">Fechada</span>
+                                {% elif folha.status == 'cancelada' %}
+                                    <span class="badge bg-danger">Cancelada</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Aberta</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ folha.pessoa_folhas|length }}</td>
+                            <td>
+                                <a href="{{ url_for('main.folha_pessoas', folha_id=folha.id) }}" class="btn btn-sm btn-outline-info">
+                                    Ver Pessoas
+                                </a>
+                            </td>
+                        </tr>
                         {% else %}
                         <tr>
                             <td colspan="6" class="text-center">Nenhuma folha encontrada.</td>
@@ -54,12 +79,13 @@
             </div>
         </div>
     </div>
+    
     {% if pagination.pages > 1 %}
     <nav aria-label="Navegação de páginas" class="mt-4">
         <ul class="pagination justify-content-center">
             {% if pagination.has_prev %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('main.folha_relatorio', page=pagination.prev_num, busca=busca) }}">Anterior</a>
+                    <a class="page-link" href="{{ url_for('main.folha_relatorio', page=pagination.prev_num, busca=busca, mes_ano=mes_ano) }}">Anterior</a>
                 </li>
             {% else %}
                 <li class="page-item disabled"><span class="page-link">Anterior</span></li>
@@ -67,13 +93,13 @@
 
             {% for p in range(1, pagination.pages + 1) %}
                 <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('main.folha_relatorio', page=p, busca=busca) }}">{{ p }}</a>
+                    <a class="page-link" href="{{ url_for('main.folha_relatorio', page=p, busca=busca, mes_ano=mes_ano) }}">{{ p }}</a>
                 </li>
             {% endfor %}
 
             {% if pagination.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('main.folha_relatorio', page=pagination.next_num, busca=busca) }}">Próximo</a>
+                    <a class="page-link" href="{{ url_for('main.folha_relatorio', page=pagination.next_num, busca=busca, mes_ano=mes_ano) }}">Próximo</a>
                 </li>
             {% else %}
                 <li class="page-item disabled"><span class="page-link">Próximo</span></li>

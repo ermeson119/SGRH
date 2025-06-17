@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="h3 mb-0">Pessoas da Folha - {{ folha.mes_ano }}</h2>
+            <p class="text-muted mb-0">Valor Total: R$ {{ "%.2f"|format(folha.valor_total) }} | Status: {{ folha.status|title }}</p>
+        </div>
+        <div class="col text-end">
+            <a href="{{ url_for('main.pessoa_folha_create', folha_id=folha.id) }}" class="btn btn-success">
+                <i class="bi bi-person-plus"></i> Adicionar Pessoa
+            </a>
+            <a href="{{ url_for('main.folha_list') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Lista de Pessoas da Folha -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nome</th>
+                            <th>Valor</th>
+                            <th>Data Pagamento</th>
+                            <th>Status</th>
+                            <th>Observação</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pessoa_folha in folha.pessoa_folhas %}
+                        <tr>
+                            <td>{{ pessoa_folha.pessoa.nome }}</td>
+                            <td>R$ {{ "%.2f"|format(pessoa_folha.valor) }}</td>
+                            <td>{{ pessoa_folha.data_pagamento.strftime('%d/%m/%Y') if pessoa_folha.data_pagamento else '-' }}</td>
+                            <td>
+                                {% if pessoa_folha.status == 'pago' %}
+                                    <span class="badge bg-success-subtle text-success">
+                                        <i class="bi bi-check-circle me-1"></i>Pago
+                                    </span>
+                                {% elif pessoa_folha.status == 'cancelado' %}
+                                    <span class="badge bg-danger-subtle text-danger">
+                                        <i class="bi bi-x-circle me-1"></i>Cancelado
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning-subtle text-warning">
+                                        <i class="bi bi-clock me-1"></i>Pendente
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>{{ pessoa_folha.observacao or '-' }}</td>
+                            <td class="text-end">
+                                {% if current_user.has_permission('edit') %}
+                                <a href="{{ url_for('main.pessoa_folha_edit', pessoa_folha_id=pessoa_folha.id) }}" 
+                                   class="btn btn-outline-primary btn-sm" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% endif %}
+                                {% if current_user.has_permission('delete') %}
+                                <a href="{{ url_for('main.pessoa_folha_delete', pessoa_folha_id=pessoa_folha.id) }}" 
+                                   class="btn btn-outline-danger btn-sm" title="Remover"
+                                   onclick="return confirm('Tem certeza que deseja remover esta pessoa da folha?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="bi bi-people fs-4 d-block mb-2"></i>
+                                    Nenhuma pessoa cadastrada nesta folha.
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

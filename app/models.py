@@ -94,7 +94,21 @@ class PessoaFolha(db.Model):
 class Folha(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.Date, nullable=False)
-    pessoa_folhas = db.relationship('PessoaFolha', back_populates='folha', overlaps="pessoas")
+    mes_ano = db.Column(db.String(7), nullable=False, index=True)  # Formato: YYYY-MM
+    valor_total = db.Column(db.Float, default=0.0)  # Soma de todos os pagamentos
+    status = db.Column(db.String(20), default='aberta')  # aberta, fechada, cancelada
+    observacao = db.Column(db.Text)
+    pessoa_folhas = db.relationship('PessoaFolha', back_populates='folha', overlaps="pessoas", cascade="all, delete-orphan")
+    
+    def calcular_valor_total(self):
+        """Calcula o valor total da folha baseado nos pagamentos das pessoas"""
+        total = sum(pf.valor for pf in self.pessoa_folhas)
+        self.valor_total = total
+        return total
+    
+    def get_mes_ano(self):
+        """Retorna o mês/ano no formato YYYY-MM"""
+        return self.data.strftime('%Y-%m')
 
 class Curso(db.Model):
     id = db.Column(db.Integer, primary_key=True)

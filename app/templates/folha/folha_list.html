@@ -9,9 +9,9 @@
             <a href="{{ url_for('main.folha_relatorio') }}" class="btn btn-outline-success ms-2">
                 <i class="bi bi-graph-up"></i> Relatório
             </a>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPessoaFolhaModal">
+            <a href="{{ url_for('main.folha_create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-lg"></i> Nova Folha
-            </button>
+            </a>
         </div>
     </div>
 
@@ -24,7 +24,7 @@
                         <i class="bi bi-search"></i>
                     </span>
                     <input type="text" id="filtro" name="busca" class="form-control"
-                           placeholder="Buscar por nome..." value="{{ busca }}">
+                           placeholder="Buscar por mês/ano..." value="{{ busca }}">
                 </div>
             </div>
             <div class="col-md-3">
@@ -32,9 +32,9 @@
                     <span class="input-group-text bg-light">
                         <i class="bi bi-calendar"></i>
                     </span>
-                    <input type="date" id="data" name="data" class="form-control" 
-                           value="{{ data }}"
-                           placeholder="Buscar por data">
+                    <input type="month" id="mes_ano" name="mes_ano" class="form-control" 
+                           value="{{ mes_ano }}"
+                           placeholder="Buscar por mês/ano">
                 </div>
             </div>
             <div class="col-md-3">
@@ -44,9 +44,9 @@
                     </span>
                     <select id="status" name="status" class="form-select">
                         <option value="">Todos os status</option>
-                        <option value="pendente" {% if status == 'pendente' %}selected{% endif %}>Pendente</option>
-                        <option value="pago" {% if status == 'pago' %}selected{% endif %}>Pago</option>
-                        <option value="cancelado" {% if status == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                        <option value="aberta" {% if status == 'aberta' %}selected{% endif %}>Aberta</option>
+                        <option value="fechada" {% if status == 'fechada' %}selected{% endif %}>Fechada</option>
+                        <option value="cancelada" {% if status == 'cancelada' %}selected{% endif %}>Cancelada</option>
                     </select>
                 </div>
             </div>
@@ -58,62 +58,6 @@
         </div>
     </form>
 
-    <!-- Modal for Creating New PessoaFolha -->
-    <div class="modal fade" id="createPessoaFolhaModal" tabindex="-1" aria-labelledby="createPessoaFolhaModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-light">
-                    <h5 class="modal-title" id="createPessoaFolhaModalLabel">
-                        <i class="bi bi-plus-circle me-2"></i>Nova Folha de Pagamento
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form method="POST" action="{{ url_for('main.pessoa_folha_create') }}">
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="pessoa_id" class="form-label">Pessoa</label>
-                            <select class="form-select" id="pessoa_id" name="pessoa_id" required onchange="document.getElementById('pessoa_name').value = this.options[this.selectedIndex].text">
-                                <option value="">Selecione uma pessoa</option>
-                                {% for pessoa in pessoas %}
-                                    <option value="{{ pessoa.id }}">{{ pessoa.nome }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="valor" class="form-label">Valor</label>
-                            <div class="input-group">
-                                <span class="input-group-text">R$</span>
-                                <input type="number" class="form-control" id="valor" name="valor" step="0.01" value="0.0" required>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="data_pagamento" class="form-label">Data de Pagamento</label>
-                            <input type="date" class="form-control" id="data_pagamento" name="data_pagamento" value="{{ current_date|default('') }}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="status" class="form-label">Status</label>
-                            <select class="form-select" id="status" name="status" required>
-                                <option value="pendente">Pendente</option>
-                                <option value="pago">Pago</option>
-                                <option value="cancelado">Cancelado</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="observacao" class="form-label">Observação</label>
-                            <textarea class="form-control" id="observacao" name="observacao" rows="3"></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer bg-light">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-lg me-1"></i>Salvar
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <!-- Lista de Folhas -->
     <div id="resultados-container">
         <div class="table-responsive">
@@ -121,55 +65,59 @@
                 <thead class="table-light">
                     <tr>
                         <th>Data</th>
-                        <th>Nome</th>
-                        <th>Valor</th>
-                        <th>Data Pagamento</th>
+                        <th>Mês/Ano</th>
+                        <th>Valor Total</th>
                         <th>Status</th>
+                        <th>Qtd. Pessoas</th>
                         <th class="text-end">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for folha in folhas %}
-                        {% for pessoa_folha in folha.pessoa_folhas %}
-                        <tr>
-                            <td>{{ folha.data.strftime('%d/%m/%Y') }}</td>
-                            <td>{{ pessoa_folha.pessoa.nome }}</td>
-                            <td>R$ {{ "%.2f"|format(pessoa_folha.valor) }}</td>
-                            <td>{{ pessoa_folha.data_pagamento.strftime('%d/%m/%Y') if pessoa_folha.data_pagamento else '-' }}</td>
-                            <td>
-                                {% if pessoa_folha.status == 'pago' %}
-                                    <span class="badge bg-success-subtle text-success">
-                                        <i class="bi bi-check-circle me-1"></i>Pago
-                                    </span>
-                                {% elif pessoa_folha.status == 'cancelado' %}
-                                    <span class="badge bg-danger-subtle text-danger">
-                                        <i class="bi bi-x-circle me-1"></i>Cancelado
-                                    </span>
-                                {% else %}
-                                    <span class="badge bg-warning-subtle text-warning">
-                                        <i class="bi bi-clock me-1"></i>Pendente
-                                    </span>
-                                {% endif %}
-                            </td>
-                            <td class="text-end">
-                                {% if current_user.has_permission('edit') %}
-                                <a href="{{ url_for('main.pessoa_folha_edit', pessoa_folha_id=pessoa_folha.id) }}" 
-                                   class="btn btn-outline-primary btn-sm" title="Editar">
-                                    <i class="bi bi-pencil"></i>
-                                    <span class="visually-hidden">Editar</span>
-                                </a>
-                                {% endif %}
-                                {% if current_user.has_permission('delete') %}
-                                <a href="{{ url_for('main.folha_delete', id=folha.id) }}" 
-                                   class="btn btn-outline-danger btn-sm" title="Excluir"
-                                   onclick="return confirm('Tem certeza que deseja excluir esta folha?')">
-                                    <i class="bi bi-trash"></i>
-                                    <span class="visually-hidden">Excluir</span>
-                                </a>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
+                    <tr>
+                        <td>{{ folha.data.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ folha.mes_ano }}</td>
+                        <td>R$ {{ "%.2f"|format(folha.valor_total) }}</td>
+                        <td>
+                            {% if folha.status == 'fechada' %}
+                                <span class="badge bg-success-subtle text-success">
+                                    <i class="bi bi-check-circle me-1"></i>Fechada
+                                </span>
+                            {% elif folha.status == 'cancelada' %}
+                                <span class="badge bg-danger-subtle text-danger">
+                                    <i class="bi bi-x-circle me-1"></i>Cancelada
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning-subtle text-warning">
+                                    <i class="bi bi-clock me-1"></i>Aberta
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ folha.pessoa_folhas|length }}</td>
+                        <td class="text-end">
+                            {% if current_user.has_permission('edit') %}
+                            <a href="{{ url_for('main.folha_edit', id=folha.id) }}" 
+                               class="btn btn-outline-primary btn-sm" title="Editar Folha">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{{ url_for('main.pessoa_folha_create', folha_id=folha.id) }}" 
+                               class="btn btn-outline-success btn-sm" title="Adicionar Pessoa">
+                                <i class="bi bi-person-plus"></i>
+                            </a>
+                            <a href="{{ url_for('main.folha_pessoas', folha_id=folha.id) }}" 
+                               class="btn btn-outline-info btn-sm" title="Ver Pessoas">
+                                <i class="bi bi-people"></i>
+                            </a>
+                            {% endif %}
+                            {% if current_user.has_permission('delete') %}
+                            <a href="{{ url_for('main.folha_delete', id=folha.id) }}" 
+                               class="btn btn-outline-danger btn-sm" title="Excluir"
+                               onclick="return confirm('Tem certeza que deseja excluir esta folha?')">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
                     {% else %}
                         <tr>
                             <td colspan="6" class="text-center py-4">
@@ -191,7 +139,7 @@
         <ul class="pagination justify-content-center">
             {% if pagination.has_prev %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('main.folha_list', page=pagination.prev_num, busca=busca, data=data, status=status) }}">
+                    <a class="page-link" href="{{ url_for('main.folha_list', page=pagination.prev_num, busca=busca, mes_ano=mes_ano, status=status) }}">
                         <i class="bi bi-chevron-left"></i>
                     </a>
                 </li>
@@ -205,13 +153,13 @@
 
             {% for p in range(1, pagination.pages + 1) %}
                 <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('main.folha_list', page=p, busca=busca, data=data, status=status) }}">{{ p }}</a>
+                    <a class="page-link" href="{{ url_for('main.folha_list', page=p, busca=busca, mes_ano=mes_ano, status=status) }}">{{ p }}</a>
                 </li>
             {% endfor %}
 
             {% if pagination.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('main.folha_list', page=pagination.next_num, busca=busca, data=data, status=status) }}">
+                    <a class="page-link" href="{{ url_for('main.folha_list', page=pagination.next_num, busca=busca, mes_ano=mes_ano, status=status) }}">
                         <i class="bi bi-chevron-right"></i>
                     </a>
                 </li>

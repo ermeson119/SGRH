@@ -5,16 +5,49 @@
         <div class="col-md-8">
             <div class="card shadow">
                 <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Editar Pagamento</h4>
+                    <h4 class="mb-0">
+                        {% if pessoa_folha %}
+                            Editar Pagamento
+                        {% else %}
+                            Adicionar Pessoa à Folha
+                        {% endif %}
+                    </h4>
                 </div>
                 <div class="card-body">
                     <form method="POST">
                         {{ form.hidden_tag() }}
                         
+                        {% if not pessoa_folha %}
+                        <div class="mb-3">
+                            {{ form.folha_id.label(class="form-label") }}
+                            {{ form.folha_id(class="form-select") }}
+                            {% if form.folha_id.errors %}
+                                {% for error in form.folha_id.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.pessoa_id.label(class="form-label") }}
+                            {{ form.pessoa_id(class="form-select") }}
+                            {% if form.pessoa_id.errors %}
+                                {% for error in form.pessoa_id.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        {% else %}
                         <div class="mb-3">
                             <label class="form-label">Pessoa</label>
                             <input type="text" class="form-control" value="{{ pessoa_folha.pessoa.nome }}" readonly>
                         </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Folha</label>
+                            <input type="text" class="form-control" value="{{ pessoa_folha.folha.mes_ano }}" readonly>
+                        </div>
+                        {% endif %}
 
                         <div class="mb-3">
                             {{ form.valor.label(class="form-label") }}
