@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4"><i class="fas fa-file-medical-alt"></i> Pedido de Exame ASO</h1>
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Selecionar Pessoa</h5>
+            <form method="GET" action="{{ url_for('main.exame_aro_risco') }}">
+                <div class="row">
+                    <div class="col-md-8">
+                        <select name="pessoa_id" class="form-select" onchange="this.form.submit()">
+                            <option value="">Selecione uma pessoa...</option>
+                            {% for p in pessoas %}
+                                <option value="{{ p.id }}" {% if selected_pessoa and selected_pessoa.id == p.id %}selected{% endif %}>
+                                    {{ p.nome }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary w-100">Buscar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if selected_pessoa %}
+    <div class="mt-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Informações do Pedido</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Nome:</strong> {{ selected_pessoa.nome }}</p>
+                        <p><strong>Matrícula:</strong> {{ selected_pessoa.matricula or 'N/A' }}</p>
+                        <p><strong>CPF:</strong> {{ selected_pessoa.cpf }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Lotação:</strong> {{ lotacao.setor.nome if lotacao and lotacao.setor else 'N/A' }}</p>
+                        <p><strong>Setor:</strong> {{ setor.nome if setor else 'N/A' }}</p>
+                    </div>
+                </div>
+                <hr>
+                <h5>Riscos Associados ao Setor</h5>
+                {% if riscos %}
+                    <ul>
+                        {% for risco in riscos %}
+                            <li>{{ risco.nome }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Nenhum risco associado a este setor.</p>
+                {% endif %}
+                <hr>
+                <h5>Exames Necessários</h5>
+                {% if exames %}
+                    <ul>
+                        {% for exame in exames %}
+                            <li>{{ exame.nome }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Nenhum exame necessário para os riscos identificados.</p>
+                {% endif %}
+            </div>
+            <div class="card-footer text-end">
+                <a href="{{ url_for('main.download_exame_aro_risco', pessoa_id=selected_pessoa.id) }}" class="btn btn-success">
+                    <i class="fas fa-download"></i> Baixar Pedido em PDF
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

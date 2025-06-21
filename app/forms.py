@@ -7,6 +7,16 @@ from app.models import Pessoa, Profissao, Curso
 from datetime import date
 from datetime import datetime
 
+EXAME_CHOICES = [
+    ('Exame de Glicemia', 'Exame de Glicemia'),
+    ('Exame de Colesterol', 'Exame de Colesterol'),
+    ('Exame de Urina', 'Exame de Urina'),
+    ('Exame de Hemograma', 'Exame de Hemograma'),
+    ('Exame de Vírus Hepatite B', 'Exame de Vírus Hepatite B'),
+    ('Exame de Vírus HIV', 'Exame de Vírus HIV'),
+    ('Outro', 'Outro')
+]
+
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Length(max=100), Email()])
     password = StringField('Senha', validators=[DataRequired()])
@@ -67,6 +77,18 @@ class LotacaoForm(FlaskForm):
 class SetorForm(FlaskForm):
     nome = StringField('Nome', validators=[DataRequired(), Length(max=100)])
     descricao = StringField('Descrição')
+    riscos = SelectMultipleField('Riscos Associados', coerce=int)
+    submit = SubmitField('Salvar')
+
+class RiscoForm(FlaskForm):
+    nome = StringField('Nome do Risco', validators=[DataRequired(), Length(max=100)])
+    descricao = TextAreaField('Descrição')
+    exames = SelectMultipleField('Exames Associados', coerce=int)
+    submit = SubmitField('Salvar')
+
+class ExameCatalogoForm(FlaskForm):
+    nome = SelectField('Nome do Exame', choices=EXAME_CHOICES, validators=[DataRequired()])
+    observacao = TextAreaField('Observação')
     submit = SubmitField('Salvar')
 
 class FolhaForm(FlaskForm):
@@ -213,15 +235,7 @@ class TermoRecusaForm(FlaskForm):
 
 class ExameForm(FlaskForm):
     pessoa_id = SelectField('Pessoa', coerce=int, validators=[DataRequired()])
-    tipo = SelectField('Tipo de Exame', choices=[
-        ('Exame de Glicemia', 'Exame de Glicemia'),
-        ('Exame de Colesterol', 'Exame de Colesterol'),
-        ('Exame de Urina', 'Exame de Urina'),
-        ('Exame de Hemograma', 'Exame de Hemograma'),
-        ('Exame de Vírus Hepatite B', 'Exame de Vírus Hepatite B'),
-        ('Exame de Vírus HIV', 'Exame de Vírus HIV'),
-        ('Outro', 'Outro')
-    ], validators=[DataRequired()])
+    tipo = SelectField('Tipo de Exame', choices=EXAME_CHOICES, validators=[DataRequired()])
     observacao = TextAreaField('Observação', validators=[Optional()])
     data = DateField('Data', validators=[DataRequired()], format='%Y-%m-%d')
     upload = FileField('Upload', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'], 'Somente imagens e documentos são permitidos.')])

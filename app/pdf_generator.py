@@ -378,3 +378,62 @@ def generate_termo_aso_pdf(form, pessoa):
     doc.build(elements)
     
     return filepath
+
+def generate_exame_aro_risco_pdf(pessoa, lotacao, setor, riscos, exames):
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"pedido_exame_aso_{pessoa.nome.replace(' ', '_')}_{timestamp}.pdf"
+    
+    temp_dir = tempfile.gettempdir()
+    filepath = os.path.join(temp_dir, filename)
+    
+    doc = SimpleDocTemplate(
+        filepath,
+        pagesize=A4,
+        rightMargin=2*cm,
+        leftMargin=2*cm,
+        topMargin=2*cm,
+        bottomMargin=2*cm
+    )
+
+    elements = []
+    styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle('CustomTitle', parent=styles['h1'], alignment=1, fontSize=16, spaceAfter=20)
+    subtitle_style = ParagraphStyle('CustomSubtitle', parent=styles['h2'], fontSize=12, spaceAfter=10)
+    normal_style = ParagraphStyle('CustomNormal', parent=styles['Normal'], fontSize=12, leading=16, spaceAfter=6)
+    
+    elements.append(Paragraph("PEDIDO DE EXAME ASO", title_style))
+    elements.append(Spacer(1, 20))
+    
+    elements.append(Paragraph("<b>DADOS DO SERVIDOR</b>", subtitle_style))
+    elements.append(Paragraph(f"<b>Nome:</b> {pessoa.nome}", normal_style))
+    elements.append(Paragraph(f"<b>Matrícula:</b> {pessoa.matricula or 'N/A'}", normal_style))
+    elements.append(Paragraph(f"<b>CPF:</b> {pessoa.cpf}", normal_style))
+    if lotacao and lotacao.setor:
+        elements.append(Paragraph(f"<b>Setor de Lotação:</b> {lotacao.setor.nome}", normal_style))
+    elements.append(Spacer(1, 20))
+
+    elements.append(Paragraph("<b>RISCOS OCUPACIONAIS</b>", subtitle_style))
+    if riscos:
+        for risco in riscos:
+            elements.append(Paragraph(f"• {risco.nome}", normal_style))
+    else:
+        elements.append(Paragraph("Nenhum risco específico identificado para o setor.", normal_style))
+    elements.append(Spacer(1, 20))
+    
+    elements.append(Paragraph("<b>EXAMES MÉDICOS NECESSÁRIOS</b>", subtitle_style))
+    if exames:
+        for exame in exames:
+            elements.append(Paragraph(f"• {exame.nome}", normal_style))
+    else:
+        elements.append(Paragraph("Nenhum exame específico necessário.", normal_style))
+    elements.append(Spacer(1, 40))
+
+    elements.append(Paragraph(f"Data de Emissão: {datetime.now().strftime('%d/%m/%Y')}", normal_style))
+    elements.append(Spacer(1, 40))
+
+    elements.append(Paragraph("________________________________________", normal_style))
+    elements.append(Paragraph("Assinatura do Responsável", normal_style))
+
+    doc.build(elements)
+    return filepath

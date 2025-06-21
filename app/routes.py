@@ -1,11 +1,11 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app, send_from_directory, send_file, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, oauth
-from app.models import User, Pessoa,Lotacao, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Curso, RegistrationRequest, PessoaFolha
+from app.models import User, Pessoa,Lotacao, Profissao, Setor, Folha, Capacitacao, Termo, Vacina, Exame, Atestado, Curso, RegistrationRequest, PessoaFolha, Risco, ExameCatalogo
 from app.forms import (
     LoginForm, RegisterForm, PessoaForm, LotacaoForm, ProfissaoForm, SetorForm, FolhaForm,
     CapacitacaoForm,TermoRecusaForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, CursoForm, ApproveRequestForm, PessoaFolhaForm, EditarPessoaFolhaForm,
-    TermoRecusaSaudeOcupacionalForm, TermoASOForm, UserPermissionsForm, RelatorioCompletoForm
+    TermoRecusaSaudeOcupacionalForm, TermoASOForm, UserPermissionsForm, RelatorioCompletoForm, RiscoForm, ExameCatalogoForm
 )
 from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -28,7 +28,7 @@ from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER
 from reportlab.lib import colors
 import locale
 import json
-from app.pdf_generator import generate_termo_recusa_saude_ocupacional_pdf, generate_termo_aso_pdf
+from app.pdf_generator import generate_termo_recusa_saude_ocupacional_pdf, generate_termo_aso_pdf, generate_exame_aro_risco_pdf
 import tempfile
 from werkzeug.urls import url_parse
 from app.forms import PessoaUploadCSVForm
@@ -755,41 +755,34 @@ def setor_list():
 @bp.route('/setores/create', methods=['GET', 'POST'])
 @login_required
 def setor_create():
-    if not current_user.has_permission('create'):
-        flash('Você não tem permissão para criar setores.', 'error')
-        return redirect(url_for('main.setor_list'))
     form = SetorForm()
+    form.riscos.choices = [(r.id, r.nome) for r in Risco.query.order_by('nome').all()]
     if form.validate_on_submit():
-        setor = Setor(nome=form.nome.data, descricao=form.descricao.data)
-        db.session.add(setor)
-        try:
-            db.session.commit()
-            flash('Setor criado com sucesso!', 'success')
-            return redirect(url_for('main.setor_list'))
-        except Exception as e:
-            db.session.rollback()
-            flash('Erro ao criar setor: ' + str(e), 'error')
-    return render_template('profissional/setor_form.html', form=form)
+        novo_setor = Setor(nome=form.nome.data, descricao=form.descricao.data)
+        riscos_selecionados = Risco.query.filter(Risco.id.in_(form.riscos.data)).all()
+        novo_setor.riscos = riscos_selecionados
+        db.session.add(novo_setor)
+        db.session.commit()
+        flash('Setor criado com sucesso!', 'success')
+        return redirect(url_for('main.setor_list'))
+    return render_template('profissional/setor_form.html', form=form, title="Novo Setor")
 
 @bp.route('/setores/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def setor_edit(id):
-    if not current_user.has_permission('edit'):
-        flash('Você não tem permissão para editar setores.', 'error')
-        return redirect(url_for('main.setor_list'))
     setor = Setor.query.get_or_404(id)
     form = SetorForm(obj=setor)
+    form.riscos.choices = [(r.id, r.nome) for r in Risco.query.order_by('nome').all()]
     if form.validate_on_submit():
         setor.nome = form.nome.data
         setor.descricao = form.descricao.data
-        try:
-            db.session.commit()
-            flash('Setor atualizado com sucesso!', 'success')
-            return redirect(url_for('main.setor_list'))
-        except Exception as e:
-            db.session.rollback()
-            flash('Erro ao atualizar setor: ' + str(e), 'error')
-    return render_template('profissional/setor_form.html', form=form, setor=setor)
+        setor.riscos = Risco.query.filter(Risco.id.in_(form.riscos.data)).all()
+        db.session.commit()
+        flash('Setor atualizado com sucesso!', 'success')
+        return redirect(url_for('main.setor_list'))
+    elif request.method == 'GET':
+        form.riscos.data = [r.id for r in setor.riscos]
+    return render_template('profissional/setor_form.html', form=form, title="Editar Setor")
 
 @bp.route('/setores/delete/<int:id>', methods=['GET'])
 @login_required
@@ -806,6 +799,95 @@ def setor_delete(id):
         db.session.rollback()
         flash('Erro ao excluir setor: ' + str(e), 'error')
     return redirect(url_for('main.setor_list'))
+
+# Rotas para Riscos
+@bp.route('/riscos', methods=['GET'])
+@login_required
+def risco_list():
+    riscos = Risco.query.all()
+    return render_template('profissional/risco_list.html', riscos=riscos)
+
+@bp.route('/riscos/create', methods=['GET', 'POST'])
+@login_required
+def risco_create():
+    form = RiscoForm()
+    form.exames.choices = [(e.id, e.nome) for e in ExameCatalogo.query.order_by('nome').all()]
+    if form.validate_on_submit():
+        novo_risco = Risco(nome=form.nome.data, descricao=form.descricao.data)
+        exames_selecionados = ExameCatalogo.query.filter(ExameCatalogo.id.in_(form.exames.data)).all()
+        novo_risco.exames = exames_selecionados
+        db.session.add(novo_risco)
+        db.session.commit()
+        flash('Risco criado com sucesso!', 'success')
+        return redirect(url_for('main.risco_list'))
+    return render_template('profissional/risco_form.html', form=form, title="Novo Risco")
+
+@bp.route('/riscos/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def risco_edit(id):
+    risco = Risco.query.get_or_404(id)
+    form = RiscoForm(obj=risco)
+    form.exames.choices = [(e.id, e.nome) for e in ExameCatalogo.query.order_by('nome').all()]
+    if form.validate_on_submit():
+        risco.nome = form.nome.data
+        risco.descricao = form.descricao.data
+        risco.exames = ExameCatalogo.query.filter(ExameCatalogo.id.in_(form.exames.data)).all()
+        db.session.commit()
+        flash('Risco atualizado com sucesso!', 'success')
+        return redirect(url_for('main.risco_list'))
+    elif request.method == 'GET':
+        form.exames.data = [e.id for e in risco.exames]
+    return render_template('profissional/risco_form.html', form=form, title="Editar Risco")
+
+@bp.route('/riscos/delete/<int:id>', methods=['GET'])
+@login_required
+def risco_delete(id):
+    risco = Risco.query.get_or_404(id)
+    db.session.delete(risco)
+    db.session.commit()
+    flash('Risco excluído com sucesso!', 'success')
+    return redirect(url_for('main.risco_list'))
+
+# Rotas para Catálogo de Exames
+@bp.route('/exames_catalogo', methods=['GET'])
+@login_required
+def exame_catalogo_list():
+    exames = ExameCatalogo.query.all()
+    return render_template('saude/exame_catalogo_list.html', exames=exames)
+
+@bp.route('/exames_catalogo/create', methods=['GET', 'POST'])
+@login_required
+def exame_catalogo_create():
+    form = ExameCatalogoForm()
+    if form.validate_on_submit():
+        novo_exame = ExameCatalogo(nome=form.nome.data, observacao=form.observacao.data)
+        db.session.add(novo_exame)
+        db.session.commit()
+        flash('Exame do catálogo criado com sucesso!', 'success')
+        return redirect(url_for('main.exame_catalogo_list'))
+    return render_template('saude/exame_catalogo_form.html', form=form, title="Novo Exame do Catálogo")
+
+@bp.route('/exames_catalogo/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def exame_catalogo_edit(id):
+    exame = ExameCatalogo.query.get_or_404(id)
+    form = ExameCatalogoForm(obj=exame)
+    if form.validate_on_submit():
+        exame.nome = form.nome.data
+        exame.observacao = form.observacao.data
+        db.session.commit()
+        flash('Exame do catálogo atualizado com sucesso!', 'success')
+        return redirect(url_for('main.exame_catalogo_list'))
+    return render_template('saude/exame_catalogo_form.html', form=form, title="Editar Exame do Catálogo")
+
+@bp.route('/exames_catalogo/delete/<int:id>', methods=['GET'])
+@login_required
+def exame_catalogo_delete(id):
+    exame = ExameCatalogo.query.get_or_404(id)
+    db.session.delete(exame)
+    db.session.commit()
+    flash('Exame do catálogo excluído com sucesso!', 'success')
+    return redirect(url_for('main.exame_catalogo_list'))
 
 # --- CRUD Folha de Pagamento ---
 @bp.route('/folhas')
@@ -1669,6 +1751,51 @@ def exame_delete(id):
         flash('Erro ao excluir exame: ' + str(e), 'error')
     return redirect(url_for('main.exame_list'))
 
+@bp.route('/exames/aro_risco', methods=['GET', 'POST'])
+@login_required
+def exame_aro_risco():
+    pessoa_id = request.args.get('pessoa_id', type=int)
+    pessoa = None
+    lotacao = None
+    setor = None
+    riscos = []
+    exames = []
+
+    if pessoa_id:
+        pessoa = Pessoa.query.get_or_404(pessoa_id)
+        lotacao = Lotacao.query.filter_by(pessoa_id=pessoa.id).order_by(Lotacao.data_inicio.desc()).first()
+        if lotacao:
+            setor = lotacao.setor
+            if setor:
+                riscos = setor.riscos
+                for risco in riscos:
+                    exames.extend(risco.exames)
+    
+    pessoas = Pessoa.query.all()
+    return render_template('saude/exame_aro_risco.html', 
+                           pessoas=pessoas, 
+                           selected_pessoa=pessoa,
+                           lotacao=lotacao,
+                           setor=setor,
+                           riscos=riscos,
+                           exames=list(set(exames)))
+
+@bp.route('/exames/aro_risco/download/<int:pessoa_id>')
+@login_required
+def download_exame_aro_risco(pessoa_id):
+    pessoa = Pessoa.query.get_or_404(pessoa_id)
+    lotacao = Lotacao.query.filter_by(pessoa_id=pessoa.id).order_by(Lotacao.data_inicio.desc()).first()
+    setor = lotacao.setor if lotacao else None
+    riscos = setor.riscos if setor else []
+    exames = []
+    if riscos:
+        for risco in riscos:
+            exames.extend(risco.exames)
+    
+    filepath = generate_exame_aro_risco_pdf(pessoa, lotacao, setor, riscos, list(set(exames)))
+    
+    return send_file(filepath, as_attachment=True)
+
 @bp.route('/exames/download/<int:exame_id>', methods=['GET'])
 @login_required
 def download_exame(exame_id):
@@ -1736,7 +1863,7 @@ def atestado_create():
         
         atestado = Atestado(
             pessoa_id=form.pessoa_id.data,
-            motivo=form.motivo.data,
+            observacao=form.observacao.data,
             data_inicio=form.data_inicio.data,
             data_fim=form.data_fim.data,
             documento=form.documento.data,

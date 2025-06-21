@@ -73,10 +73,37 @@ class Lotacao(db.Model):
     pessoa = db.relationship('Pessoa', backref='lotacoes')
     setor = db.relationship('Setor', backref='lotacoes')
 
+# Tabela de associação Setor-Risco
+setor_risco = db.Table('setor_risco',
+    db.Column('setor_id', db.Integer, db.ForeignKey('setor.id'), primary_key=True),
+    db.Column('risco_id', db.Integer, db.ForeignKey('risco.id'), primary_key=True)
+)
+
+# Tabela de associação Risco-ExameCatalogo
+risco_exame_catalogo = db.Table('risco_exame_catalogo',
+    db.Column('risco_id', db.Integer, db.ForeignKey('risco.id'), primary_key=True),
+    db.Column('exame_catalogo_id', db.Integer, db.ForeignKey('exame_catalogo.id'), primary_key=True)
+)
+
 class Setor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False, unique=True, index=True)
     descricao = db.Column(db.Text)
+    riscos = db.relationship('Risco', secondary=setor_risco, back_populates='setores')
+
+class Risco(db.Model):
+    __tablename__ = 'risco'
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), unique=True, nullable=False)
+    descricao = db.Column(db.Text)
+    setores = db.relationship('Setor', secondary=setor_risco, back_populates='riscos')
+    exames = db.relationship('ExameCatalogo', secondary=risco_exame_catalogo, backref='riscos')
+
+class ExameCatalogo(db.Model):
+    __tablename__ = 'exame_catalogo'
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), unique=True, nullable=False)
+    observacao = db.Column(db.Text)
 
 class PessoaFolha(db.Model):
     __tablename__ = 'pessoa_folha'
