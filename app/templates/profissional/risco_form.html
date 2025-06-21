@@ -23,9 +23,10 @@
                     {% endfor %}
                 </div>
                 <div class="mb-3">
-                    {{ form.exames.label(class="form-label") }}
-                    {{ form.exames(class="form-select", multiple=true, size=8) }}
-                    {% for error in form.exames.errors %}
+                    {{ form.exames_str.label(class="form-label") }}
+                    {{ form.exames_str(class="form-control", rows="4") }}
+                    <div class="form-text">Digite os nomes dos exames separados por vírgula.</div>
+                    {% for error in form.exames_str.errors %}
                         <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                 </div>

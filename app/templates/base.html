@@ -56,12 +56,6 @@
                         </a>
                     </li>
                     <li class="nav-item d-block d-md-none">
-                        <a class="nav-link {% if request.endpoint == 'main.exame_catalogo_list' %}active{% endif %}"
-                           href="{{ url_for('main.exame_catalogo_list') }}">
-                            <i class="fas fa-book-medical"></i> Cat. Exames
-                        </a>
-                    </li>
-                    <li class="nav-item d-block d-md-none">
                         <a class="nav-link {% if request.endpoint == 'main.lotacao_list' %}active{% endif %}" 
                            href="{{ url_for('main.lotacao_list') }}">
                             <i class="fas fa-map-marker-alt"></i> Lotações
@@ -175,12 +169,6 @@
                         <a class="nav-link {% if request.endpoint == 'main.risco_list' %}active{% endif %}"
                            href="{{ url_for('main.risco_list') }}">
                             <i class="fas fa-biohazard"></i> Riscos
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'main.exame_catalogo_list' %}active{% endif %}"
-                           href="{{ url_for('main.exame_catalogo_list') }}">
-                            <i class="fas fa-book-medical"></i> Cat. Exames
                         </a>
                     </li>
                     <li class="nav-item">

@@ -7,15 +7,6 @@ from app.models import Pessoa, Profissao, Curso
 from datetime import date
 from datetime import datetime
 
-EXAME_CHOICES = [
-    ('Exame de Glicemia', 'Exame de Glicemia'),
-    ('Exame de Colesterol', 'Exame de Colesterol'),
-    ('Exame de Urina', 'Exame de Urina'),
-    ('Exame de Hemograma', 'Exame de Hemograma'),
-    ('Exame de Vírus Hepatite B', 'Exame de Vírus Hepatite B'),
-    ('Exame de Vírus HIV', 'Exame de Vírus HIV'),
-    ('Outro', 'Outro')
-]
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Length(max=100), Email()])
@@ -83,14 +74,17 @@ class SetorForm(FlaskForm):
 class RiscoForm(FlaskForm):
     nome = StringField('Nome do Risco', validators=[DataRequired(), Length(max=100)])
     descricao = TextAreaField('Descrição')
-    exames = SelectMultipleField('Exames Associados', coerce=int)
+    exames_str = TextAreaField('Nome do Exames')
     submit = SubmitField('Salvar')
 
-class ExameCatalogoForm(FlaskForm):
-    nome = SelectField('Nome do Exame', choices=EXAME_CHOICES, validators=[DataRequired()])
-    observacao = TextAreaField('Observação')
+class ExameForm(FlaskForm):
+    pessoa_id = SelectField('Pessoa', coerce=int, validators=[DataRequired()])
+    tipo = SelectField('Tipo de Exame', validators=[DataRequired()])
+    observacao = TextAreaField('Observação', validators=[Optional()])
+    data = DateField('Data', validators=[DataRequired()], format='%Y-%m-%d')
+    upload = FileField('Upload', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'], 'Somente imagens e documentos são permitidos.')])
     submit = SubmitField('Salvar')
-
+    
 class FolhaForm(FlaskForm):
     data = DateField('Data', validators=[DataRequired()], format='%Y-%m-%d')
     status = SelectField('Status', choices=[
@@ -232,14 +226,6 @@ class TermoRecusaForm(FlaskForm):
             'Secretaria do Tocantins de Guaraí': 'static/img/logo_guarai.png'
         }
         self.logo_path.data = logo_mapping.get(field.data, 'static/img/logo_padrao.png')
-
-class ExameForm(FlaskForm):
-    pessoa_id = SelectField('Pessoa', coerce=int, validators=[DataRequired()])
-    tipo = SelectField('Tipo de Exame', choices=EXAME_CHOICES, validators=[DataRequired()])
-    observacao = TextAreaField('Observação', validators=[Optional()])
-    data = DateField('Data', validators=[DataRequired()], format='%Y-%m-%d')
-    upload = FileField('Upload', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'], 'Somente imagens e documentos são permitidos.')])
-    submit = SubmitField('Salvar')
 
 class AtestadoForm(FlaskForm):
     pessoa_id = SelectField('Pessoa', coerce=int, validators=[DataRequired()])

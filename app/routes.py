@@ -5,7 +5,7 @@ from app.models import User, Pessoa,Lotacao, Profissao, Setor, Folha, Capacitaca
 from app.forms import (
     LoginForm, RegisterForm, PessoaForm, LotacaoForm, ProfissaoForm, SetorForm, FolhaForm,
     CapacitacaoForm,TermoRecusaForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, CursoForm, ApproveRequestForm, PessoaFolhaForm, EditarPessoaFolhaForm,
-    TermoRecusaSaudeOcupacionalForm, TermoASOForm, UserPermissionsForm, RelatorioCompletoForm, RiscoForm, ExameCatalogoForm
+    TermoRecusaSaudeOcupacionalForm, TermoASOForm, UserPermissionsForm, RelatorioCompletoForm, RiscoForm
 )
 from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -811,11 +811,19 @@ def risco_list():
 @login_required
 def risco_create():
     form = RiscoForm()
-    form.exames.choices = [(e.id, e.nome) for e in ExameCatalogo.query.order_by('nome').all()]
     if form.validate_on_submit():
         novo_risco = Risco(nome=form.nome.data, descricao=form.descricao.data)
-        exames_selecionados = ExameCatalogo.query.filter(ExameCatalogo.id.in_(form.exames.data)).all()
-        novo_risco.exames = exames_selecionados
+        
+        # Processar exames
+        exames_nomes = [nome.strip() for nome in form.exames_str.data.split(',') if nome.strip()]
+        associated_exames = []
+        for nome_exame in exames_nomes:
+            exame = ExameCatalogo.query.filter_by(nome=nome_exame).first()
+            if not exame:
+                exame = ExameCatalogo(nome=nome_exame)
+            associated_exames.append(exame)
+        
+        novo_risco.exames = associated_exames
         db.session.add(novo_risco)
         db.session.commit()
         flash('Risco criado com sucesso!', 'success')
@@ -827,16 +835,25 @@ def risco_create():
 def risco_edit(id):
     risco = Risco.query.get_or_404(id)
     form = RiscoForm(obj=risco)
-    form.exames.choices = [(e.id, e.nome) for e in ExameCatalogo.query.order_by('nome').all()]
     if form.validate_on_submit():
         risco.nome = form.nome.data
         risco.descricao = form.descricao.data
-        risco.exames = ExameCatalogo.query.filter(ExameCatalogo.id.in_(form.exames.data)).all()
+        
+        # Processar exames
+        exames_nomes = [nome.strip() for nome in form.exames_str.data.split(',') if nome.strip()]
+        associated_exames = []
+        for nome_exame in exames_nomes:
+            exame = ExameCatalogo.query.filter_by(nome=nome_exame).first()
+            if not exame:
+                exame = ExameCatalogo(nome=nome_exame)
+            associated_exames.append(exame)
+            
+        risco.exames = associated_exames
         db.session.commit()
         flash('Risco atualizado com sucesso!', 'success')
         return redirect(url_for('main.risco_list'))
     elif request.method == 'GET':
-        form.exames.data = [e.id for e in risco.exames]
+        form.exames_str.data = ', '.join([e.nome for e in risco.exames])
     return render_template('profissional/risco_form.html', form=form, title="Editar Risco")
 
 @bp.route('/riscos/delete/<int:id>', methods=['GET'])
@@ -1653,27 +1670,24 @@ def exame_create():
         flash('Você não tem permissão para criar registros de exames.', 'error')
         return redirect(url_for('main.exame_list'))
     form = ExameForm()
-    form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
+    form.tipo.choices = [(exame.nome, exame.nome) for exame in ExameCatalogo.query.order_by('nome').all()]
+    form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.order_by('nome').all()]
     if form.validate_on_submit():
-        tipo = request.form.get('outro_exame') if form.tipo.data == 'Outro' else form.tipo.data
-        arquivo = form.upload.data
-        nome_arquivo = None
-        
-        if arquivo:
+        filename = None
+        if form.upload.data:
             # Gera um nome único para o arquivo
-            nome_arquivo = secure_filename(arquivo.filename)
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            nome_arquivo = f"{timestamp}_{nome_arquivo}"
+            filename = f"{timestamp}_{form.upload.data.filename}"
             
             # Salva o arquivo
-            arquivo.save(os.path.join(current_app.config['UPLOAD_FOLDER'], nome_arquivo))
+            form.upload.data.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
         
         exame = Exame(
             pessoa_id=form.pessoa_id.data,
-            tipo=tipo,
+            tipo=form.tipo.data,
             observacao=form.observacao.data,
             data=form.data.data,
-            arquivo=nome_arquivo
+            arquivo=filename
         )
         db.session.add(exame)
         try:
@@ -1693,12 +1707,10 @@ def exame_edit(id):
         return redirect(url_for('main.exame_list'))
     exame = Exame.query.get_or_404(id)
     form = ExameForm(obj=exame)
-    form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.all()]
+    form.tipo.choices = [(exame_cat.nome, exame_cat.nome) for exame_cat in ExameCatalogo.query.order_by('nome').all()]
+    form.pessoa_id.choices = [(p.id, p.nome) for p in Pessoa.query.order_by('nome').all()]
     if form.validate_on_submit():
-        tipo = request.form.get('outro_exame') if form.tipo.data == 'Outra' else form.tipo.data
-        arquivo = form.upload.data
-        
-        if arquivo:
+        if form.upload.data:
             # Remove o arquivo antigo se existir
             if exame.arquivo:
                 try:
@@ -1707,16 +1719,15 @@ def exame_edit(id):
                     pass
             
             # Gera um nome único para o novo arquivo
-            nome_arquivo = secure_filename(arquivo.filename)
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            nome_arquivo = f"{timestamp}_{nome_arquivo}"
-                
+            filename = f"{timestamp}_{form.upload.data.filename}"
+            
             # Salva o novo arquivo
-            arquivo.save(os.path.join(current_app.config['UPLOAD_FOLDER'], nome_arquivo))
-            exame.arquivo = nome_arquivo
+            form.upload.data.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+            exame.arquivo = filename
         
         exame.pessoa_id = form.pessoa_id.data
-        exame.tipo = tipo
+        exame.tipo = form.tipo.data
         exame.resultado = form.resultado.data
         exame.data = form.data.data
         
