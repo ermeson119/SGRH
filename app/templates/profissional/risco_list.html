@@ -16,6 +16,7 @@
                     <tr>
                         <th>Nome</th>
                         <th>Descrição</th>
+                        <th>Exames Associados</th>
                         <th class="text-end">Ações</th>
                     </tr>
                 </thead>
@@ -24,6 +25,17 @@
                     <tr>
                         <td>{{ risco.nome }}</td>
                         <td>{{ risco.descricao or 'N/A' }}</td>
+                        <td>
+                            {% if risco.exames %}
+                                <ul class="list-unstyled mb-0">
+                                    {% for exame in risco.exames %}
+                                        <li><i class="fas fa-stethoscope text-primary"></i> {{ exame.nome }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <span class="text-muted">Nenhum exame associado</span>
+                            {% endif %}
+                        </td>
                         <td class="text-end">
                             <a href="{{ url_for('main.risco_edit', id=risco.id) }}" class="btn btn-sm btn-outline-primary">
                                 <i class="fas fa-edit"></i> Editar

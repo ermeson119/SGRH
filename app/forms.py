@@ -68,13 +68,13 @@ class LotacaoForm(FlaskForm):
 class SetorForm(FlaskForm):
     nome = StringField('Nome', validators=[DataRequired(), Length(max=100)])
     descricao = StringField('Descrição')
-    riscos = SelectMultipleField('Riscos Associados', coerce=int)
+    riscos = SelectMultipleField('Tipo de Riscos', coerce=int)
     submit = SubmitField('Salvar')
 
 class RiscoForm(FlaskForm):
     nome = StringField('Nome do Risco', validators=[DataRequired(), Length(max=100)])
     descricao = TextAreaField('Descrição')
-    exames_str = TextAreaField('Nome do Exames')
+    exames = SelectMultipleField('Exames', coerce=int, validators=[Optional()])
     submit = SubmitField('Salvar')
 
 class ExameForm(FlaskForm):
@@ -369,3 +369,8 @@ class RelatorioCompletoForm(FlaskForm):
     ])
     data = DateField('Data', format='%Y-%m-%d', validators=[Optional()])
     submit = SubmitField('Buscar')
+
+class ExameCatalogoForm(FlaskForm):
+    nome = StringField('Nome do Exame', validators=[DataRequired(), Length(max=100)])
+    observacao = TextAreaField('Observação')
+    submit = SubmitField('Salvar')

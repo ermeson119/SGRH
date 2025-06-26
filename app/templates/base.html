@@ -98,6 +98,12 @@
                         </a>
                     </li>
                     <li class="nav-item d-block d-md-none">
+                        <a class="nav-link {% if request.endpoint == 'main.exame_catalogo_list' %}active{% endif %}" 
+                           href="{{ url_for('main.exame_catalogo_list') }}">
+                            <i class="fas fa-list-medical"></i> Catálogo de Exames
+                        </a>
+                    </li>
+                    <li class="nav-item d-block d-md-none">
                         <a class="nav-link {% if request.endpoint == 'main.exame_aro_risco' %}active{% endif %}"
                            href="{{ url_for('main.exame_aro_risco') }}">
                             <i class="fas fa-file-medical-alt"></i> Exame ARO Risco
@@ -211,6 +217,12 @@
                         <a class="nav-link {% if request.endpoint == 'main.exame_list' %}active{% endif %}" 
                            href="{{ url_for('main.exame_list') }}">
                             <i class="fas fa-notes-medical"></i> Exames
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.exame_catalogo_list' %}active{% endif %}" 
+                           href="{{ url_for('main.exame_catalogo_list') }}">
+                            <i class="fas fa-list-medical"></i> Catálogo de Exames
                         </a>
                     </li>
                     <li class="nav-item">

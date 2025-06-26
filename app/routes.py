@@ -5,7 +5,7 @@ from app.models import User, Pessoa,Lotacao, Profissao, Setor, Folha, Capacitaca
 from app.forms import (
     LoginForm, RegisterForm, PessoaForm, LotacaoForm, ProfissaoForm, SetorForm, FolhaForm,
     CapacitacaoForm,TermoRecusaForm, TermoForm, VacinaForm, ExameForm, AtestadoForm, CursoForm, ApproveRequestForm, PessoaFolhaForm, EditarPessoaFolhaForm,
-    TermoRecusaSaudeOcupacionalForm, TermoASOForm, UserPermissionsForm, RelatorioCompletoForm, RiscoForm
+    TermoRecusaSaudeOcupacionalForm, TermoASOForm, UserPermissionsForm, RelatorioCompletoForm, RiscoForm, ExameCatalogoForm
 )
 from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -804,26 +804,24 @@ def setor_delete(id):
 @bp.route('/riscos', methods=['GET'])
 @login_required
 def risco_list():
-    riscos = Risco.query.all()
+    riscos = Risco.query.options(joinedload(Risco.exames)).all()
     return render_template('profissional/risco_list.html', riscos=riscos)
 
 @bp.route('/riscos/create', methods=['GET', 'POST'])
 @login_required
 def risco_create():
     form = RiscoForm()
+    # Carregar as opções de exames do catálogo
+    form.exames.choices = [(e.id, e.nome) for e in ExameCatalogo.query.order_by('nome').all()]
+    
     if form.validate_on_submit():
         novo_risco = Risco(nome=form.nome.data, descricao=form.descricao.data)
         
-        # Processar exames
-        exames_nomes = [nome.strip() for nome in form.exames_str.data.split(',') if nome.strip()]
-        associated_exames = []
-        for nome_exame in exames_nomes:
-            exame = ExameCatalogo.query.filter_by(nome=nome_exame).first()
-            if not exame:
-                exame = ExameCatalogo(nome=nome_exame)
-            associated_exames.append(exame)
+        # Processar exames selecionados
+        if form.exames.data:
+            exames_selecionados = ExameCatalogo.query.filter(ExameCatalogo.id.in_(form.exames.data)).all()
+            novo_risco.exames = exames_selecionados
         
-        novo_risco.exames = associated_exames
         db.session.add(novo_risco)
         db.session.commit()
         flash('Risco criado com sucesso!', 'success')
@@ -835,25 +833,26 @@ def risco_create():
 def risco_edit(id):
     risco = Risco.query.get_or_404(id)
     form = RiscoForm(obj=risco)
+    # Carregar as opções de exames do catálogo
+    form.exames.choices = [(e.id, e.nome) for e in ExameCatalogo.query.order_by('nome').all()]
+    
     if form.validate_on_submit():
         risco.nome = form.nome.data
         risco.descricao = form.descricao.data
         
-        # Processar exames
-        exames_nomes = [nome.strip() for nome in form.exames_str.data.split(',') if nome.strip()]
-        associated_exames = []
-        for nome_exame in exames_nomes:
-            exame = ExameCatalogo.query.filter_by(nome=nome_exame).first()
-            if not exame:
-                exame = ExameCatalogo(nome=nome_exame)
-            associated_exames.append(exame)
+        # Processar exames selecionados
+        if form.exames.data:
+            exames_selecionados = ExameCatalogo.query.filter(ExameCatalogo.id.in_(form.exames.data)).all()
+            risco.exames = exames_selecionados
+        else:
+            risco.exames = []
             
-        risco.exames = associated_exames
         db.session.commit()
         flash('Risco atualizado com sucesso!', 'success')
         return redirect(url_for('main.risco_list'))
     elif request.method == 'GET':
-        form.exames_str.data = ', '.join([e.nome for e in risco.exames])
+        # Pré-selecionar os exames já associados ao risco
+        form.exames.data = [e.id for e in risco.exames]
     return render_template('profissional/risco_form.html', form=form, title="Editar Risco")
 
 @bp.route('/riscos/delete/<int:id>', methods=['GET'])
