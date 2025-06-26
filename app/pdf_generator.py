@@ -72,7 +72,7 @@ def generate_termo_recusa_pdf(form, pessoa):
     if os.path.exists(logo_full_path):
         try:
             # Ajusta largura e altura explicitamente
-            img = Image(logo_full_path, width=6*cm, height=3*cm)
+            img = Image(logo_full_path, width=8*cm, height=3*cm)
             elements.append(img)
             # Reduz o espaço depois da imagem
             elements.append(Spacer(1, 20))
@@ -197,7 +197,7 @@ def generate_termo_recusa_saude_ocupacional_pdf(form, pessoa):
     if os.path.exists(logo_full_path):
         try:
             # Ajusta largura e altura explicitamente
-            img = Image(logo_full_path, width=6*cm, height=3*cm)
+            img = Image(logo_full_path, width=8*cm, height=3*cm)
             elements.append(img)
             # Reduz o espaço depois da imagem
             elements.append(Spacer(1, 20))
@@ -323,7 +323,7 @@ def generate_termo_aso_pdf(form, pessoa):
     logo_full_path = os.path.join('app', form.logo_path.data) 
     if os.path.exists(logo_full_path):
         try:
-            img = Image(logo_full_path, width=6*cm, height=3*cm)
+            img = Image(logo_full_path, width=8*cm, height=3*cm)
             elements.append(img)
             elements.append(Spacer(1, 20))
         except Exception as e:
@@ -379,7 +379,7 @@ def generate_termo_aso_pdf(form, pessoa):
     
     return filepath
 
-def generate_exame_aro_risco_pdf(pessoa, lotacao, setor, riscos, exames):
+def generate_exame_aro_risco_pdf(pessoa, lotacao, setor, riscos, exames, logo_path='static/img/logo_padrao.png'):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"pedido_exame_aso_{pessoa.nome.replace(' ', '_')}_{timestamp}.pdf"
     
@@ -391,7 +391,7 @@ def generate_exame_aro_risco_pdf(pessoa, lotacao, setor, riscos, exames):
         pagesize=A4,
         rightMargin=2*cm,
         leftMargin=2*cm,
-        topMargin=2*cm,
+        topMargin=0*cm,
         bottomMargin=2*cm
     )
 
@@ -401,6 +401,17 @@ def generate_exame_aro_risco_pdf(pessoa, lotacao, setor, riscos, exames):
     title_style = ParagraphStyle('CustomTitle', parent=styles['h1'], alignment=1, fontSize=16, spaceAfter=20)
     subtitle_style = ParagraphStyle('CustomSubtitle', parent=styles['h2'], fontSize=12, spaceAfter=10)
     normal_style = ParagraphStyle('CustomNormal', parent=styles['Normal'], fontSize=12, leading=16, spaceAfter=6)
+    
+    # Adicionar a logo
+    logo_full_path = os.path.join('app', logo_path) 
+    if os.path.exists(logo_full_path):
+        try:
+            img = Image(logo_full_path, width=8*cm, height=3*cm)
+            elements.append(img)
+            elements.append(Spacer(1, 20))
+        except Exception as e:
+            print(f"Erro ao adicionar imagem {logo_full_path}: {e}")
+            pass 
     
     elements.append(Paragraph("PEDIDO DE EXAME ASO", title_style))
     elements.append(Spacer(1, 20))

@@ -1802,7 +1802,30 @@ def download_exame_aro_risco(pessoa_id):
         for risco in riscos:
             exames.extend(risco.exames)
     
-    filepath = generate_exame_aro_risco_pdf(pessoa, lotacao, setor, riscos, list(set(exames)))
+    # Determinar o logo baseado na lotação (se disponível)
+    logo_path = 'static/img/logo_padrao.png'  # Logo padrão
+    
+    # Se houver lotação e setor, tentar determinar o logo baseado no nome do setor
+    if lotacao and lotacao.setor:
+        setor_nome = lotacao.setor.nome.lower()
+        if 'palmas' in setor_nome:
+            logo_path = 'static/img/logo_palmas.png'
+        elif 'araguaina' in setor_nome or 'araguai' in setor_nome:
+            logo_path = 'static/img/logo_araguaina.png'
+        elif 'gurupi' in setor_nome:
+            logo_path = 'static/img/logo_gurupi.png'
+        elif 'porto nacional' in setor_nome:
+            logo_path = 'static/img/logo_porto_nacional.png'
+        elif 'paraiso' in setor_nome:
+            logo_path = 'static/img/logo_paraiso.png'
+        elif 'tocantinopolis' in setor_nome:
+            logo_path = 'static/img/logo_tocantinopolis.png'
+        elif 'alvorada' in setor_nome:
+            logo_path = 'static/img/logo_alvorada.png'
+        elif 'guarai' in setor_nome:
+            logo_path = 'static/img/logo_guarai.png'
+    
+    filepath = generate_exame_aro_risco_pdf(pessoa, lotacao, setor, riscos, list(set(exames)), logo_path)
     
     return send_file(filepath, as_attachment=True)
 
