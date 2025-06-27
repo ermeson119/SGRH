@@ -2362,7 +2362,6 @@ def vacina_relatorio_pdf():
 @login_required
 def capacitacao_relatorio():
     curso_id = request.args.get('curso', type=int)
-    tipo = request.args.get('tipo')
     data_inicio = request.args.get('data_inicio')
     data_fim = request.args.get('data_fim')
 
@@ -2370,8 +2369,6 @@ def capacitacao_relatorio():
 
     if curso_id:
         query = query.filter(Capacitacao.curso_id == curso_id)
-    if tipo:
-        query = query.filter(Capacitacao.tipo == tipo)
     if data_inicio:
         query = query.filter(Capacitacao.data >= datetime.strptime(data_inicio, '%Y-%m-%d'))
     if data_fim:
@@ -2389,15 +2386,21 @@ def capacitacao_relatorio():
         count = sum(1 for c in capacitacoes if c.data.strftime('%m/%Y') == mes)
         capacitacoes_por_mes.insert(0, count)
 
+    # Preparar dados para o gráfico de tipos (baseado no tipo do curso)
+    tipos_array = [len([c for c in capacitacoes if c.curso and c.curso.tipo == 'Graduação']),
+                   len([c for c in capacitacoes if c.curso and c.curso.tipo == 'Pós-Graduação']),
+                   len([c for c in capacitacoes if c.curso and c.curso.tipo == 'Formação']),
+                   len([c for c in capacitacoes if c.curso and c.curso.tipo == 'Capacitação'])]
+
     return render_template('capacitacao/capacitacao_relatorio.html',
                          capacitacoes=capacitacoes,
                          cursos=cursos,
                          curso_id=curso_id,
-                         tipo=tipo,
                          data_inicio=data_inicio,
                          data_fim=data_fim,
                          meses=meses,
                          capacitacoes_por_mes=capacitacoes_por_mes,
+                         tipos_array=tipos_array,
                          now=datetime.now())
 
 @bp.route('/relatorio/folhas')
@@ -2451,14 +2454,11 @@ def keep_session_alive(): # Manter sessao ativa.
 @login_required
 def capacitacao_relatorio_xlsx():
     curso_id = request.args.get('curso', type=int)
-    tipo = request.args.get('tipo')
     data_inicio = request.args.get('data_inicio')
     data_fim = request.args.get('data_fim')
     query = Capacitacao.query.join(Pessoa).join(Curso)
     if curso_id:
         query = query.filter(Capacitacao.curso_id == curso_id)
-    if tipo:
-        query = query.filter(Capacitacao.tipo == tipo)
     if data_inicio:
         query = query.filter(Capacitacao.data >= datetime.strptime(data_inicio, '%Y-%m-%d'))
     if data_fim:
@@ -2479,6 +2479,123 @@ def capacitacao_relatorio_xlsx():
         df.to_excel(writer, index=False, sheet_name='Capacitacoes')
     output.seek(0)
     return send_file(output, download_name='relatorio_capacitacoes.xlsx', as_attachment=True, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+# --- Exportação PDF: Capacitações ---
+@bp.route('/relatorio/capacitacoes/pdf')
+@login_required
+def capacitacao_relatorio_pdf():
+    from io import BytesIO
+    from reportlab.lib.pagesizes import A4
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.lib import colors
+    
+    curso_id = request.args.get('curso', type=int)
+    data_inicio = request.args.get('data_inicio')
+    data_fim = request.args.get('data_fim')
+    
+    query = Capacitacao.query.join(Pessoa).join(Curso)
+    if curso_id:
+        query = query.filter(Capacitacao.curso_id == curso_id)
+    if data_inicio:
+        query = query.filter(Capacitacao.data >= datetime.strptime(data_inicio, '%Y-%m-%d'))
+    if data_fim:
+        query = query.filter(Capacitacao.data <= datetime.strptime(data_fim, '%Y-%m-%d'))
+    
+    capacitacoes = query.all()
+    
+    # Criar o PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    elements = []
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=16,
+        spaceAfter=30,
+        alignment=TA_CENTER
+    )
+    
+    # Título
+    title = Paragraph("Relatório de Capacitações", title_style)
+    elements.append(title)
+    
+    # Filtros aplicados
+    filtros_texto = []
+    if curso_id:
+        curso = Curso.query.get(curso_id)
+        if curso:
+            filtros_texto.append(f"Curso: {curso.nome}")
+    if data_inicio:
+        filtros_texto.append(f"Data Início: {data_inicio}")
+    if data_fim:
+        filtros_texto.append(f"Data Fim: {data_fim}")
+    
+    if filtros_texto:
+        filtros_style = ParagraphStyle(
+            'Filtros',
+            parent=styles['Normal'],
+            fontSize=10,
+            spaceAfter=20
+        )
+        filtros = Paragraph("Filtros aplicados: " + " | ".join(filtros_texto), filtros_style)
+        elements.append(filtros)
+    
+    # Dados da tabela
+    if capacitacoes:
+        data = [['Funcionário', 'Curso', 'Descrição', 'Data Início', 'Data Fim']]
+        for c in capacitacoes:
+            data.append([
+                c.pessoa.nome,
+                c.curso.nome if c.curso else '',
+                c.descricao,
+                c.data.strftime('%d/%m/%Y'),
+                c.data_fim.strftime('%d/%m/%Y') if c.data_fim else 'Em andamento'
+            ])
+        
+        # Criar tabela
+        table = Table(data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        elements.append(table)
+    else:
+        no_data_style = ParagraphStyle(
+            'NoData',
+            parent=styles['Normal'],
+            fontSize=12,
+            spaceAfter=20,
+            alignment=TA_CENTER
+        )
+        no_data = Paragraph("Nenhuma capacitação encontrada com os filtros aplicados.", no_data_style)
+        elements.append(no_data)
+    
+    # Rodapé
+    footer_style = styles['Normal']
+    footer_style.fontSize = 10
+    footer = Paragraph(f"Total de registros: {len(capacitacoes)}", footer_style)
+    elements.append(footer)
+    
+    # Geração do PDF
+    doc.build(elements)
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name='relatorio_capacitacoes.pdf', mimetype='application/pdf')
 
 # --- Exportação XLSX: Folhas de Pagamento ---
 @bp.route('/relatorio/folhas/xlsx')

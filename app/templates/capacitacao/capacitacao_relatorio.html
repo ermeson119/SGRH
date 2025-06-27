@@ -9,7 +9,7 @@
                 <i class="fas fa-file-pdf"></i> Imprimir
             </a>
 
-            <a href="{{ url_for('main.capacitacao_relatorio_xlsx', curso=curso_id, tipo=tipo, data_inicio=data_inicio, data_fim=data_fim) }}" class="btn btn-success">
+            <a href="{{ url_for('main.capacitacao_relatorio_xlsx', curso=curso_id, data_inicio=data_inicio, data_fim=data_fim) }}" class="btn btn-success">
                 <i class="fas fa-file-excel"></i> Exportar XLSX
             </a>
 
@@ -115,6 +115,26 @@
         </div>
     </div>
 
+    <!-- Gráficos -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Capacitações por Tipo</h5>
+                    <canvas id="tipoChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Capacitações por Mês</h5>
+                    <canvas id="mesChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 {% endblock %}
 
@@ -127,7 +147,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Dados para o gráfico de tipos
-    const tipos = ['Interno', 'Externo'];
+    const tipos = ['Graduação', 'Pós-Graduação', 'Formação', 'Capacitação'];
     const capacitacoesPorTipo = JSON.parse(document.getElementById('capacitacoes-por-tipo').textContent);
     const meses = JSON.parse(document.getElementById('meses-json').textContent);
     const capacitacoesPorMes = JSON.parse(document.getElementById('capacitacoes-por-mes-json').textContent);
@@ -142,11 +162,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 data: capacitacoesPorTipo,
                 backgroundColor: [
                     'rgba(54, 162, 235, 0.5)',
-                    'rgba(255, 99, 132, 0.5)'
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(255, 205, 86, 0.5)',
+                    'rgba(75, 192, 192, 0.5)'
                 ],
                 borderColor: [
                     'rgba(54, 162, 235, 1)',
-                    'rgba(255, 99, 132, 1)'
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(255, 205, 86, 1)',
+                    'rgba(75, 192, 192, 1)'
                 ],
                 borderWidth: 1
             }]
